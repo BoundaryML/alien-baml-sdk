@@ -1,0 +1,90 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "apikey_ye96yxs1tjnrrwulp8frhapikeyy",
+          "description": "description-value",
+          "keyPrefix": "keyPrefix-value",
+          "type": "workspace",
+          "role": "role-value",
+          "workspaceId": "workspaceId-value",
+          "projectId": "projectId-value",
+          "deploymentId": "deploymentId-value",
+          "deploymentGroupId": "deploymentGroupId-value",
+          "managerId": "managerId-value",
+          "enabled": true,
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "expiresAt": "2026-10-01T00:00:00.000Z",
+          "lastUsedAt": "2026-10-01T00:00:00.000Z",
+          "revokedAt": "2026-10-01T00:00:00.000Z",
+          "deploymentSetupConfig": {
+            "metadata": {
+              "metadata-key": {
+                "key": "value"
+              }
+            },
+            "policy": {
+              "allowedPlatforms": [
+                "aws"
+              ],
+              "allowedSetupMethods": [
+                "cloudformation"
+              ]
+            },
+            "environmentVariables": [
+              {
+                "name": "A",
+                "type": "plain",
+                "targetResources": [
+                  "targetResources-item-value"
+                ]
+              }
+            ]
+          },
+          "createdByUser": {
+            "id": "id-value",
+            "email": "email-value",
+            "image": "image-value"
+          }
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&limit=2&project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].lastUsedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].revokedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

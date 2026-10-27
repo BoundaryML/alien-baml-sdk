@@ -1,0 +1,243 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "name": "acme-prod",
+      "publicSubdomain": "p",
+      "status": "pending",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "platform": "aws",
+      "basePlatform": "aws",
+      "region": "region-value",
+      "deploymentProtocolVersion": 2,
+      "deploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "membershipRevision": 2,
+      "membershipProjectionRevision": 2,
+      "purpose": "application",
+      "environmentInfo": {
+        "accountId": "accountId-value",
+        "region": "region-value",
+        "platform": "aws"
+      },
+      "stackSettings": {},
+      "stackState": {
+        "platform": "aws",
+        "resourcePrefix": "resourcePrefix-value",
+        "resources": {
+          "resources-key": {
+            "config": {
+              "id": "id-value",
+              "type": "type-value",
+              "additionalProperties": {
+                "extra-property": {
+                  "key": "value"
+                }
+              }
+            },
+            "status": "pending",
+            "type": "type-value"
+          }
+        }
+      },
+      "runtimeMetadata": {},
+      "currentReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "desiredReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "pinnedReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "releaseChannel": "r",
+      "importSource": "cloudformation",
+      "setupMethod": "cloudformation",
+      "setupMetadata": {
+        "setupMetadata-key": {
+          "key": "value"
+        }
+      },
+      "setupTarget": "setupTarget-value",
+      "setupFingerprint": "setupFingerprint-value",
+      "setupFingerprintVersion": 2,
+      "operatorScope": "operatorScope-value",
+      "operatorPermission": "operatorPermission-value",
+      "operatorVersion": "operatorVersion-value",
+      "capabilities": [
+        {
+          "key": "key-value",
+          "state": "granted"
+        }
+      ],
+      "observedOperationsBundleHash": "observedOperationsBundleHash-value",
+      "observedOperations": [
+        {
+          "plugin": "plugin-value",
+          "pluginVersion": "pluginVersion-value",
+          "name": "name-value"
+        }
+      ],
+      "retryRequested": true,
+      "lastHeartbeatAt": "2026-10-01T00:00:00.000Z",
+      "error": {
+        "code": "code-value",
+        "internal": true,
+        "message": "message-value",
+        "retryable": false
+      },
+      "updateState": {
+        "active": {
+          "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+          "status": "blocked",
+          "reasons": [
+            "configuration"
+          ],
+          "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "changedKeys": [
+            "changedKeys-item-value"
+          ],
+          "requestedAt": "2026-10-01T00:00:00.000Z"
+        },
+        "next": {
+          "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+          "status": "blocked",
+          "reasons": [
+            "configuration"
+          ],
+          "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "changedKeys": [
+            "changedKeys-item-value"
+          ],
+          "requestedAt": "2026-10-01T00:00:00.000Z"
+        },
+        "latest": {
+          "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+          "status": "blocked",
+          "reasons": [
+            "configuration"
+          ],
+          "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "changedKeys": [
+            "changedKeys-item-value"
+          ],
+          "requestedAt": "2026-10-01T00:00:00.000Z"
+        }
+      },
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "updatedAt": "2026-10-01T00:00:00.000Z",
+      "managerId": "mgr_anagerdvaluemanagerdvalueman",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "customerKeyUnavailable": true,
+      "resources": [
+        {
+          "id": "id-value",
+          "type": "type-value",
+          "status": "pending",
+          "error": {
+            "code": "code-value",
+            "internal": true,
+            "message": "message-value",
+            "retryable": false
+          },
+          "retryAttempt": 2
+        }
+      ],
+      "resourceObservedAt": "2026-10-01T00:00:00.000Z",
+      "release": {
+        "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+        "version": "version-value",
+        "createdAt": "2026-10-01T00:00:00.000Z"
+      },
+      "desiredRelease": {
+        "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+        "version": "version-value",
+        "createdAt": "2026-10-01T00:00:00.000Z"
+      },
+      "deploymentGroup": {
+        "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+        "name": "prod-us-east-1",
+        "externalId": "ext_example_01"
+      },
+      "project": {
+        "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+        "name": "my-app"
+      },
+      "operatorSync": {
+        "id": "dosy_uxveigz3biyrosqycaqubbrdosyu",
+        "status": "preparing",
+        "targetBundleHash": "targetBundleHash-value",
+        "targetSetAt": "2026-10-01T00:00:00.000Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.lastHeartbeatAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.error.retryable",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": false
+    },
+    {
+      "path": "result.updateState.active.requestedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updateState.next.requestedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updateState.latest.requestedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.resources[0].error.retryable",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": false
+    },
+    {
+      "path": "result.resourceObservedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.release.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.desiredRelease.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.operatorSync.targetSetAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

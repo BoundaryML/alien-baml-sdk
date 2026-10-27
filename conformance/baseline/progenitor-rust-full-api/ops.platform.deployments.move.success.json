@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "blockers": [
+        "blockers-item-value"
+      ],
+      "deploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "membershipRevision": 2,
+      "previousDeploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "projectionStatus": "not-required",
+      "result": "preview"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

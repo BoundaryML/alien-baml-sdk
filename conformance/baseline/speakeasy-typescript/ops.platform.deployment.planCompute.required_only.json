@@ -1,0 +1,71 @@
+{
+  "outcome": {
+    "ok": {
+      "pools": [
+        {
+          "poolId": "poolId-value",
+          "workloads": [
+            "workloads-item-value"
+          ],
+          "requirements": {
+            "cpu": "cpu-value",
+            "memoryBytes": 2,
+            "ephemeralStorageBytes": 2
+          },
+          "scale": {
+            "type": "fixed",
+            "machines": {
+              "min": 2,
+              "max": 2,
+              "default": 2
+            }
+          },
+          "selected": {
+            "machines": 2,
+            "mode": "fixed"
+          },
+          "recommended": {
+            "machines": 2,
+            "mode": "fixed"
+          },
+          "machines": [
+            {
+              "machine": "machine-value",
+              "profile": {
+                "cpu": "cpu-value",
+                "memoryBytes": 2,
+                "ephemeralStorageBytes": 2
+              },
+              "recommended": true
+            }
+          ]
+        }
+      ],
+      "containers": [
+        {
+          "containerId": "containerId-value",
+          "choices": {},
+          "cpu": {
+            "min": "min-value",
+            "desired": "desired-value"
+          },
+          "memory": {
+            "min": "min-value",
+            "desired": "desired-value"
+          }
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "outcome": {
+    "ok": {
+      "tokens": [
+        {
+          "createdAt": "createdAt-value",
+          "createdBy": "createdBy-value",
+          "id": "id-value",
+          "joinCount": 2
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

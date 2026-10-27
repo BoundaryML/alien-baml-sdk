@@ -1,0 +1,33 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "projectId": "projectId-value",
+      "deploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "setupMethod": "cloudformation",
+      "operationId": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+      "attemptId": "duat_uve04tou5eoua3q17dar1pzduatu",
+      "current": {
+        "platform": "aws",
+        "protocolVersion": 2,
+        "status": "pending"
+      },
+      "config": {
+        "environmentVariables": {
+          "createdAt": "createdAt-value",
+          "hash": "hash-value",
+          "variables": [
+            {
+              "name": "name-value",
+              "type": "plain",
+              "value": "value-value"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

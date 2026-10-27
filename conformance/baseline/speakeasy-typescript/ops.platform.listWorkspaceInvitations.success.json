@@ -1,0 +1,41 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "winv_DsgltMIFV0GmqtxV5NYTtrknrnawinvD",
+          "email": "user@example.com",
+          "role": "workspace.member",
+          "status": "pending",
+          "deliveryStatus": "pending",
+          "expiresAt": "2026-10-01T00:00:00.000Z",
+          "lastSentAt": "2026-10-01T00:00:00.000Z",
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "inviteUrl": "https://example.com/inviteUrl"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.items[0].expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].lastSentAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

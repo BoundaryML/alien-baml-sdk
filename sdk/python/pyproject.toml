@@ -1,0 +1,30 @@
+[project]
+name = "alien-sdk"
+version = "0.0.0"
+description = "Alien SDK for Python, generated from one BAML project (reference implementation)"
+requires-python = ">=3.10"
+dependencies = [
+    "baml-bridge==0.23.0",
+    "pydantic>=2.6",
+    "typing-extensions>=4.14.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+# `uv pip install sdk/python` (or pip) builds a wheel of the facade and the
+# generated package; baml_sdk/ is gitignored, so it is listed as an artifact.
+[tool.hatch.build.targets.wheel]
+packages = ["alien_sdk", "baml_sdk"]
+artifacts = ["baml_sdk/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,28 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+      "name": "primary",
+      "targets": [
+        "aws"
+      ],
+      "managementConfigs": {},
+      "isSystem": false,
+      "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+      "status": "healthy",
+      "managedDeploymentCount": 0,
+      "defaultProjectCount": 0,
+      "createdAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

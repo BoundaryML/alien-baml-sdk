@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "ok": {
+      "sessions": [
+        {
+          "id": "id-value",
+          "triggerType": "triggerType-value",
+          "subjectId": "subjectId-value",
+          "subject": {
+            "deploymentName": "deploymentName-value",
+            "deploymentGroupId": "deploymentGroupId-value",
+            "deploymentGroupName": "deploymentGroupName-value",
+            "releaseId": "releaseId-value",
+            "releaseCommitMessage": "releaseCommitMessage-value",
+            "releaseCommitRef": "releaseCommitRef-value",
+            "projectId": "projectId-value",
+            "projectName": "projectName-value"
+          },
+          "status": "status-value",
+          "createdAt": "createdAt-value",
+          "updatedAt": "updatedAt-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

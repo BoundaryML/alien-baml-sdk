@@ -1,0 +1,76 @@
+{
+  "id": "platform.getManager.malformed_field",
+  "phase": 1,
+  "notes": "A 2xx body that is JSON but does not match the type says where it failed (`json_path`) and why (`decode_error`, the decoder's whole message).",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+          "name": "primary",
+          "targets": [
+            "aws",
+            "future-cloud"
+          ],
+          "cloud": "aws",
+          "region": "us-east-1",
+          "setupStatus": "active",
+          "url": "https://manager.example.com",
+          "managementConfigs": {
+            "aws": {
+              "managingRoleArn": 7,
+              "platform": "aws"
+            }
+          },
+          "isSystem": false,
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "status": "future-status",
+          "version": "1.2.3",
+          "metrics": {
+            "activeDeployments": 3,
+            "pendingDeployments": 0,
+            "memoryUsageMb": 512.5,
+            "cpuUsagePercent": 12.25,
+            "futureMetric": 7
+          },
+          "lastHeartbeatAt": null,
+          "logsDatabaseId": null,
+          "managedDeploymentCount": 3,
+          "defaultProjectCount": 1,
+          "createdAt": "2026-10-01T00:00:00Z",
+          "futureTopLevel": {
+            "nested": true
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "MALFORMED_RESPONSE",
+    "retryable": false,
+    "http_status": 200,
+    "context": {
+      "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+      "json_path": ".managementConfigs.aws.managingRoleArn",
+      "decode_error": "expected string"
+    }
+  },
+  "assert": []
+}

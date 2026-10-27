@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "2026-10-01T00:00:00Z",
+          "id": 1.5,
+          "installationId": 1.5,
+          "name": "name-value",
+          "provider": "github",
+          "slug": "slug-value",
+          "type": "team"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

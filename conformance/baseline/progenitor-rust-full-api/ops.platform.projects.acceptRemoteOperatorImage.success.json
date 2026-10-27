@@ -1,0 +1,17 @@
+{
+  "outcome": {
+    "ok": {
+      "operatorImage": {
+        "digest": "sha256:deaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeae",
+        "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+        "packageId": "packageId-value",
+        "packageVersion": "packageVersion-value",
+        "renderedAt": "2026-10-01T00:00:00Z",
+        "source": "package"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "email": "email-value",
+      "image": "image-value",
+      "joinedAt": "2026-10-01T00:00:00Z",
+      "name": "name-value",
+      "role": "workspace.member",
+      "userId": "userId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

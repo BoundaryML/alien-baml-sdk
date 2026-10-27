@@ -1,0 +1,40 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "projectId": "projectId-value",
+      "version": "version-value",
+      "title": "title-value",
+      "gitMetadata": {},
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "stack": {},
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "target": "target-value",
+          "fingerprint": "fingerprint-value",
+          "version": 2
+        }
+      },
+      "rootDirectory": "rootDirectory-value",
+      "createdByUserId": "createdByUserId-value",
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&deploymentId=deploymentId value",
+      "got": "deploymentId=deploymentId value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "outcome": {
+    "ok": {
+      "name": "name-value",
+      "spec": {
+        "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+        "resources": {
+          "cpu": "0.1",
+          "memory": "1Mi"
+        },
+        "replicas": 2,
+        "ports": [
+          2
+        ]
+      },
+      "generation": 2,
+      "appliedGeneration": 2,
+      "status": "pending",
+      "statusMessage": "statusMessage-value",
+      "internalServices": [
+        {
+          "internalDns": "internalDns-value",
+          "port": 2
+        }
+      ],
+      "deleted": true,
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "updatedAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

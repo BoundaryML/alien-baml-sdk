@@ -1,0 +1,21 @@
+{
+  "outcome": {
+    "ok": {
+      "events": [
+        {
+          "createdAt": "createdAt-value",
+          "payload": {
+            "status": "status-value"
+          },
+          "seq": 1.5,
+          "type": "status"
+        }
+      ],
+      "hasMore": true,
+      "latestSeq": 1.5
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

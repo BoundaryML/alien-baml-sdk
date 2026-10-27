@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "error": {
+      "code": "UNEXPECTED_RESPONSE",
+      "retryable": false,
+      "http_status": 429,
+      "message": "Unexpected response: 429 Too Many Requests",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "PLATFORM_HTTP_ERROR",
+      "got": "UNEXPECTED_RESPONSE"
+    },
+    {
+      "path": "error.retryable",
+      "kind": "different",
+      "want": true,
+      "got": false
+    }
+  ]
+}

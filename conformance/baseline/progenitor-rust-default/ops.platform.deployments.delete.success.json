@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "action": "cleanup",
+      "message": "message-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

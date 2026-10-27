@@ -1,0 +1,17 @@
+{
+  "id": "compat.roles.scope",
+  "phase": 1,
+  "rule": "roles.rs",
+  "call": {
+    "fn": "compat.roleScope",
+    "args": {
+      "json": "\"deployment-group.deployer\""
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "deployment-group \"deployment-group.deployer\""
+  },
+  "expect_error": null,
+  "assert": []
+}

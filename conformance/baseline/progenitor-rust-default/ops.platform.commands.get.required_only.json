@@ -1,0 +1,41 @@
+{
+  "outcome": {
+    "ok": {
+      "accessRequestId": "accessRequestId-value",
+      "attempt": 1.5,
+      "completedAt": "2026-10-01T00:00:00Z",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "deadline": "2026-10-01T00:00:00Z",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "deploymentModel": "push",
+      "dispatchedAt": "2026-10-01T00:00:00Z",
+      "error": {
+        "error-key": {
+          "key": "value"
+        }
+      },
+      "id": "cmd_2sxjXxvOYct7IohT3ukliAzfcmd2",
+      "name": "name-value",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "requestSizeBytes": 1.5,
+      "responseSizeBytes": 1.5,
+      "result": {
+        "key": "value"
+      },
+      "resultAvailability": "available",
+      "state": "PENDING_UPLOAD",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      },
+      "verification": {
+        "reason": "reason-value",
+        "state": "not-required"
+      },
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

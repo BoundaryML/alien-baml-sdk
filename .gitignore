@@ -1,0 +1,36 @@
+# BAML state and caches (never the developer's ~/.baml)
+/.baml_home/
+.baml/
+/.cache/
+/.verify/
+
+# Generated SDKs: scripts/generate.sh recreates them
+baml_sdk/
+/sdk/go/alien/operations.go
+/sdk/go/alien/operations_table_test.go
+
+# Local BAML build overrides, written by scripts/generate.sh (they hold local paths)
+/sdk/go/go.work
+/sdk/go/go.work.sum
+/sdk/rust/.cargo/
+
+# Build outputs and dependencies
+node_modules/
+dist/
+.venv/
+__pycache__/
+.pytest_cache/
+target/
+telemetry/.baml_home/
+
+# README quickstarts, written by scripts/verify.sh from README.md
+/sdk/typescript/quickstart.mjs
+/sdk/python/quickstart.py
+/sdk/go/cmd/quickstart/
+/sdk/rust/examples/quickstart.rs
+
+# examples/coexistence repro outputs
+/examples/coexistence/**/node_modules/
+/examples/coexistence/**/.venv/
+
+.DS_Store

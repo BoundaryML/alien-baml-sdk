@@ -1,0 +1,38 @@
+{
+  "outcome": {
+    "ok": {
+      "setup": {
+        "accessKeyId": "accessKeyId-value",
+        "externalKeyId": "externalKeyId-value",
+        "proxyUriEndpoint": "https://example.com/proxyUriEndpoint",
+        "proxyUriPath": "proxyUriPath-value",
+        "secretAccessKey": "secretAccessKey-value"
+      },
+      "virtualKey": {
+        "alias": "alias-value",
+        "awsAccountId": "000000000000",
+        "awsRegion": "aw-s-0",
+        "canaryPassedAt": "2026-10-01T00:00:00Z",
+        "createdAt": "2026-10-01T00:00:00Z",
+        "customKeyStoreId": "customKeyStoreId-value",
+        "deletionScheduledAt": "2026-10-01T00:00:00Z",
+        "deletionWindowDays": 2,
+        "description": "description-value",
+        "externalKeyId": "externalKeyId-value",
+        "finalDeletionObservedAt": "2026-10-01T00:00:00Z",
+        "id": "vkey_0p9nwqgtftugsoey99lqyqqvkey0",
+        "kmsKeyArn": "kmsKeyArn-value",
+        "observedAt": "2026-10-01T00:00:00Z",
+        "projectId": "projectId-value",
+        "status": "provisioning",
+        "tags": {
+          "tags-key": "tags-value"
+        },
+        "updatedAt": "2026-10-01T00:00:00Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

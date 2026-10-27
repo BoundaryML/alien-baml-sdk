@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "blockerCode": "blockerCode-value",
+      "completedAt": "2026-10-01T00:00:00Z",
+      "error": {
+        "key": "value"
+      },
+      "id": "id-value",
+      "publicModel": "publicModel-value",
+      "requestedAt": "2026-10-01T00:00:00Z",
+      "status": "pending"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

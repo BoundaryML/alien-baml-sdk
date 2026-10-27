@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "SERVICE_UNAVAILABLE",
+      "retryable": true,
+      "http_status": 503,
+      "message": "The API cannot serve the request right now.",
+      "variant": "ErrorResponse",
+      "context": {
+        "requestId": "00000000-0000-4000-8000-000000000000",
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

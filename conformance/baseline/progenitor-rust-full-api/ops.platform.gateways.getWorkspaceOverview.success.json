@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "ok": {
+      "generatedAt": "2026-10-01T00:00:00Z",
+      "projects": [
+        {
+          "connectedCustomers": 2,
+          "id": "id-value",
+          "name": "name-value",
+          "needsAttentionCustomers": 2,
+          "revokedCustomers": 2,
+          "settingUpCustomers": 2,
+          "state": "not-set-up"
+        }
+      ],
+      "summary": {
+        "activeProjects": 2,
+        "connectedCustomers": 2,
+        "gatewayProjects": 2,
+        "needsAttentionProjects": 2,
+        "setupInProgressProjects": 2,
+        "totalProjects": 2
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

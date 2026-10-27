@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienDefaultError)",
+      "http_status": 404,
+      "message": "API error occurred: Status 404"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "RESOURCE_NOT_FOUND",
+      "got": "(AlienDefaultError)"
+    }
+  ]
+}

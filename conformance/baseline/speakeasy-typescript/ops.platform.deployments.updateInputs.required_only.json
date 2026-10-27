@@ -1,0 +1,55 @@
+{
+  "outcome": {
+    "ok": {
+      "inputs": [
+        {
+          "description": "description-value",
+          "id": "id-value",
+          "kind": "string",
+          "label": "label-value",
+          "providedBy": [
+            "developer"
+          ],
+          "required": true
+        }
+      ],
+      "values": {
+        "values-key": "values-value"
+      },
+      "providedInputIds": [
+        "providedInputIds-item-value"
+      ],
+      "runtimeUpdateRequested": true,
+      "outcome": "accepted",
+      "operation": {
+        "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+        "status": "blocked",
+        "reasons": [
+          "configuration"
+        ],
+        "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+        "changedKeys": [
+          "changedKeys-item-value"
+        ],
+        "requestedAt": "2026-10-01T00:00:00.000Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "result.operation.requestedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "UNEXPECTED_RESPONSE",
+      "retryable": false,
+      "http_status": 400,
+      "message": "Unexpected response: 400 Bad Request",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "INVALID_COMMAND",
+      "got": "UNEXPECTED_RESPONSE"
+    }
+  ]
+}

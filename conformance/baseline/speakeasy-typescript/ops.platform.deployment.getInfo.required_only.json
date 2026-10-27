@@ -1,0 +1,156 @@
+{
+  "outcome": {
+    "ok": {
+      "setupUpdate": {
+        "deploymentId": "deploymentId-value",
+        "updateOperationId": "updateOperationId-value",
+        "releaseId": "releaseId-value",
+        "name": "name-value",
+        "platform": "aws",
+        "setupMethod": "cloudformation",
+        "setupMetadata": {
+          "setupMetadata-key": {
+            "key": "value"
+          }
+        },
+        "setupTarget": "setupTarget-value",
+        "resourcePrefix": "resourcePrefix-value",
+        "stackSettings": {}
+      },
+      "tokenType": "deployment",
+      "deployment": {
+        "name": "name-value",
+        "platform": "aws"
+      },
+      "deploymentGroup": {
+        "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+        "name": "name-value",
+        "pinnedSubdomain": "pinnedSubdomain-value",
+        "maxDeployments": 2,
+        "currentCount": 2
+      },
+      "workspace": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "project": {
+        "name": "name-value",
+        "portal": {
+          "appearance": {
+            "preset": "clean",
+            "accentColor": "blue",
+            "density": "comfortable"
+          }
+        }
+      },
+      "packages": {
+        "ready": true
+      },
+      "installContext": {
+        "targets": {
+          "targets-key": {
+            "platform": "aws",
+            "managerUrl": "https://example.com/managerUrl"
+          }
+        }
+      },
+      "supportedRegions": {
+        "aws": [
+          "aws-item-value"
+        ],
+        "gcp": [
+          "gcp-item-value"
+        ],
+        "azure": [
+          "azure-item-value"
+        ]
+      },
+      "modelAvailabilitySources": [
+        {
+          "deploymentId": "deploymentId-value",
+          "resourceId": "resourceId-value",
+          "observedAt": "2026-10-01T00:00:00.000Z",
+          "status": "current"
+        }
+      ],
+      "setupItems": [
+        {
+          "item": "deployment",
+          "source": {
+            "type": "project-release",
+            "releaseChannel": "releaseChannel-value",
+            "releaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW"
+          },
+          "required": true,
+          "status": "not-started",
+          "deploymentIds": [
+            "deploymentIds-item-value"
+          ]
+        }
+      ],
+      "setupConfig": {
+        "metadata": {
+          "metadata-key": {
+            "key": "value"
+          }
+        },
+        "policy": {
+          "allowedPlatforms": [
+            "aws"
+          ],
+          "allowedSetupMethods": [
+            "cloudformation"
+          ]
+        },
+        "environmentVariables": [
+          {
+            "name": "A",
+            "type": "plain",
+            "targetResources": [
+              "targetResources-item-value"
+            ]
+          }
+        ]
+      },
+      "readiness": {
+        "status": "ready",
+        "checks": [
+          {
+            "code": "code-value",
+            "status": "passed",
+            "message": "message-value",
+            "checkedAt": "checkedAt-value"
+          }
+        ]
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.project.portal.appearance.preset",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "clean"
+    },
+    {
+      "path": "result.project.portal.appearance.accentColor",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "blue"
+    },
+    {
+      "path": "result.project.portal.appearance.density",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "comfortable"
+    },
+    {
+      "path": "result.modelAvailabilitySources[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

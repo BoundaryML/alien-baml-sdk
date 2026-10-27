@@ -1,0 +1,42 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "createdAt-value",
+      "currentReleaseId": "currentReleaseId-value",
+      "deploymentGroup": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "deploymentGroupId": "deploymentGroupId-value",
+      "deploymentProtocolVersion": 2,
+      "desiredReleaseId": "desiredReleaseId-value",
+      "environmentInfo": {
+        "key": "value"
+      },
+      "error": {
+        "key": "value"
+      },
+      "id": "id-value",
+      "importSource": "cloudformation",
+      "name": "name-value",
+      "platform": "aws",
+      "projectId": "projectId-value",
+      "retryRequested": true,
+      "runtimeMetadata": {
+        "key": "value"
+      },
+      "stackSettings": {
+        "key": "value"
+      },
+      "stackState": {
+        "key": "value"
+      },
+      "status": "status-value",
+      "updatedAt": "updatedAt-value",
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

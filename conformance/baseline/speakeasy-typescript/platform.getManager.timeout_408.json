@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienDefaultError)",
+      "http_status": 408,
+      "message": "API error occurred: Status 408 Content-Type text/plain. Body: \"\""
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "PLATFORM_HTTP_ERROR",
+      "got": "(AlienDefaultError)"
+    }
+  ]
+}

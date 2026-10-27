@@ -1,0 +1,25 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ResponseValidationError)",
+      "http_status": 200,
+      "message": "Response validation failed",
+      "detail": "✖ Invalid option: expected one of \"healthy\"|\"degraded\"|\"unhealthy\"|\"unknown\" → at status ✖ Invalid option: expected one of \"aws\"|\"gcp\"|\"azure\"|\"kubernetes\"|\"machines\"|\"local\"|\"test\" → at targets[1]"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "outcome",
+      "kind": "different",
+      "want": "success",
+      "got": {
+        "code": "(ResponseValidationError)",
+        "http_status": 200,
+        "message": "Response validation failed",
+        "detail": "✖ Invalid option: expected one of \"healthy\"|\"degraded\"|\"unhealthy\"|\"unknown\" → at status ✖ Invalid option: expected one of \"aws\"|\"gcp\"|\"azure\"|\"kubernetes\"|\"machines\"|\"local\"|\"test\" → at targets[1]"
+      }
+    }
+  ]
+}

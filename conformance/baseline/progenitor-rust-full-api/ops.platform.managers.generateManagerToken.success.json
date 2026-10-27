@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "accessToken": "accessToken-value",
+      "controlPlaneUrl": "controlPlaneUrl-value",
+      "databaseId": "databaseId-value",
+      "expiresIn": 1.5,
+      "managerUrl": "managerUrl-value",
+      "tokenType": "Bearer"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

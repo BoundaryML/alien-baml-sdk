@@ -1,0 +1,56 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+          "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+          "type": "cli",
+          "status": "pending",
+          "version": "version-value",
+          "setupFingerprints": {
+            "setupFingerprints-key": {
+              "target": "target-value",
+              "fingerprint": "fingerprint-value",
+              "version": 2
+            }
+          },
+          "packageBuildInputHash": "packageBuildInputHash-value",
+          "config": {
+            "displayName": "displayName-value",
+            "name": "name-value",
+            "type": "cli"
+          },
+          "retries": 2,
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "updatedAt": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&type=cli&status=pending&sourceReleaseId=rel_sourceReleaseIdvaluesourceRe&compatibleWithReleaseId=rel_compatibleWithReleaseIdvalue&search=search value&limit=2&cursor=cursor value",
+      "got": "compatibleWithReleaseId=rel_compatibleWithReleaseIdvalue&cursor=cursor value&limit=2&project=project value&search=search value&sourceReleaseId=rel_sourceReleaseIdvaluesourceRe&status=pending&type=cli&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

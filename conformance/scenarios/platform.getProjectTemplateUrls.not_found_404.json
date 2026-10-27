@@ -1,0 +1,40 @@
+{
+  "id": "platform.getProjectTemplateUrls.not_found_404",
+  "phase": 1,
+  "call": {
+    "fn": "platform.getProjectTemplateUrls",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "idOrName": "missing-project"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/missing-project/template-urls?workspace=my-workspace"
+      },
+      "respond": {
+        "status": 404,
+        "json": {
+          "code": "NOT_FOUND",
+          "message": "Project not found.",
+          "internal": false,
+          "retryable": false,
+          "httpStatusCode": 404
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "NOT_FOUND",
+    "retryable": false,
+    "http_status": 404
+  },
+  "assert": []
+}

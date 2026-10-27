@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": [
+      {
+        "createdAt": "2026-10-01T00:00:00Z",
+        "defaultProjectCount": 2,
+        "id": "mgr_idvalueidvalueidvalueidvalue",
+        "isSystem": true,
+        "managedDeploymentCount": 2,
+        "managementConfigs": {},
+        "name": "name-value",
+        "status": "healthy",
+        "targets": [
+          "aws"
+        ],
+        "workspaceId": "workspaceId-value"
+      }
+    ]
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

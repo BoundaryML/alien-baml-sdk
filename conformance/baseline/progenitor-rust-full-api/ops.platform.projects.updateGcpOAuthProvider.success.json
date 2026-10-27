@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "mode": "alien-managed",
+      "redirectUris": [
+        "https://example.com/redirectUris-item"
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

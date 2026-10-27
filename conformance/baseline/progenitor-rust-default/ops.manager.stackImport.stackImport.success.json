@@ -1,0 +1,37 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentId": "deploymentId-value",
+      "deploymentToken": "deploymentToken-value",
+      "stackSettings": {},
+      "stackState": {
+        "platform": "aws",
+        "resourcePrefix": "resourcePrefix-value",
+        "resources": {
+          "resources-key": {
+            "config": {
+              "id": "id-value",
+              "type": "type-value"
+            },
+            "status": "pending",
+            "type": "type-value"
+          }
+        }
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "result.stackState.resources.resources-key.config.additionalProperties",
+      "kind": "different: left out",
+      "want": {
+        "extra-property": {
+          "key": "value"
+        }
+      },
+      "got": null
+    }
+  ]
+}

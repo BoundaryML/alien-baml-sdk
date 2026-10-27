@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "ok": {
+      "billableQuantities": {
+        "billableQuantities-key": 1.5
+      },
+      "features": {
+        "airgapped": true,
+        "auditLogs": true,
+        "customDomains": true,
+        "operationsCustomPlugins": true,
+        "privateManagers": true,
+        "ssoSaml": true
+      },
+      "limits": {
+        "creditUsd": 1.5,
+        "maxCustomDomains": 1.5,
+        "maxDeployments": 1.5,
+        "maxProjects": 1.5,
+        "maxSeats": 1.5,
+        "seatsIncluded": 1.5
+      },
+      "planId": "starter",
+      "planStatus": "active",
+      "stale": true,
+      "syncedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,57 @@
+{
+  "outcome": {
+    "ok": {
+      "agentSessionId": "agentSessionId-value",
+      "approvalChannels": [
+        "kubectl"
+      ],
+      "approvedBy": {
+        "actorId": "actorId-value",
+        "at": "at-value",
+        "method": "method-value"
+      },
+      "approvedUntil": "approvedUntil-value",
+      "commands": [
+        {
+          "command": "kubernetes/get-pods",
+          "summary": "List pods in the ingestion namespace"
+        }
+      ],
+      "createdAt": "createdAt-value",
+      "debugGrant": {
+        "tool": "kubectl"
+      },
+      "deniedBy": {
+        "actorId": "actorId-value",
+        "at": "at-value"
+      },
+      "deployment": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "deploymentId": "deploymentId-value",
+      "id": "id-value",
+      "kubectlApprove": "kubectlApprove-value",
+      "maxRisk": "read-only",
+      "operationPattern": "operationPattern-value",
+      "queuedAt": "queuedAt-value",
+      "queuedBy": "queuedBy-value",
+      "reason": "reason-value",
+      "remediationPlanId": "remediationPlanId-value",
+      "requestedExpiresAt": "requestedExpiresAt-value",
+      "requesterId": "requesterId-value",
+      "requesterKind": "user",
+      "revokedBy": {
+        "actorId": "actorId-value",
+        "actorKind": "user",
+        "at": "at-value",
+        "reason": "reason-value"
+      },
+      "status": "pending-approval",
+      "title": "title-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

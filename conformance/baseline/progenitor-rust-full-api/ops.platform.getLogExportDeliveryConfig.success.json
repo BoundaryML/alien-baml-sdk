@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "enabled": true,
+      "endpoint": "endpoint-value",
+      "headers": {
+        "headers-key": "headers-value"
+      },
+      "revision": "revision-value",
+      "updatedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "ws_It13CUaGEhLLAB87simX0wsI",
+      "name": "my-workspace",
+      "logoUrl": "https://example.com/logoUrl",
+      "createdAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

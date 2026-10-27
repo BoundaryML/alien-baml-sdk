@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "RESOURCE_NOT_FOUND",
+      "retryable": false,
+      "http_status": 404,
+      "message": "No such resource.",
+      "context": {
+        "requestId": "req_fixture_1",
+        "hint": "Check the ID.",
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&from=2026-10-01T00:00:00Z&to=2026-10-01T00:00:00Z&service=service value&replica=replica value",
+      "got": "from=2026-10-01T00:00:00.000Z&replica=replica value&service=service value&to=2026-10-01T00:00:00.000Z&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

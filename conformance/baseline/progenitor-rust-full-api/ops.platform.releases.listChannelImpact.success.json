@@ -1,0 +1,50 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "channel": "channel-value",
+          "currentRelease": {
+            "createdAt": "2026-10-01T00:00:00Z",
+            "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+            "version": "version-value"
+          },
+          "deploymentCount": 2,
+          "effects": {
+            "alreadyOn": 2,
+            "customerApplies": 2,
+            "notAffected": 2,
+            "pinned": 2,
+            "retries": 2,
+            "unconfirmed": 2,
+            "updates": 2,
+            "waitsForApproval": 2,
+            "waitsForInputs": 2,
+            "waitsForOwner": 2
+          },
+          "rollbackRelease": {
+            "createdAt": "2026-10-01T00:00:00Z",
+            "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+            "version": "version-value"
+          },
+          "rolloutEffects": {
+            "alreadyOn": 2,
+            "customerApplies": 2,
+            "notAffected": 2,
+            "pinned": 2,
+            "retries": 2,
+            "unconfirmed": 2,
+            "updates": 2,
+            "waitsForApproval": 2,
+            "waitsForInputs": 2,
+            "waitsForOwner": 2
+          },
+          "runsThisRelease": true
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

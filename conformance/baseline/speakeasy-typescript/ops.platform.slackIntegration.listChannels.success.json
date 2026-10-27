@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "channels": [
+        {
+          "id": "id-value",
+          "name": "name-value",
+          "isMember": true
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

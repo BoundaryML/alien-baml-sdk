@@ -1,0 +1,37 @@
+{
+  "outcome": {
+    "ok": {
+      "operation": {
+        "changedKeys": [
+          "changedKeys-item-value"
+        ],
+        "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+        "reasons": [
+          "configuration"
+        ],
+        "requestedAt": "2026-10-01T00:00:00Z",
+        "status": "blocked",
+        "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW"
+      },
+      "outcome": "accepted"
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "different",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "body",
+      "kind": "different",
+      "want": "(empty)",
+      "got": "{}",
+      "exchange": 1
+    }
+  ]
+}

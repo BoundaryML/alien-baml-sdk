@@ -1,0 +1,12 @@
+{
+  "outcome": {
+    "ok": {
+      "managerUrl": "${stub.base}/mgr",
+      "token": "${secrets.managerToken}",
+      "expiresAt": "${now…}"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "error": {
+      "code": "UNEXPECTED_RESPONSE",
+      "retryable": true,
+      "http_status": 502,
+      "message": "Unexpected response: 502 Bad Gateway",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MANAGER_HTTP_ERROR",
+      "got": "UNEXPECTED_RESPONSE"
+    },
+    {
+      "path": "error.retryable",
+      "kind": "different",
+      "want": false,
+      "got": true
+    }
+  ]
+}

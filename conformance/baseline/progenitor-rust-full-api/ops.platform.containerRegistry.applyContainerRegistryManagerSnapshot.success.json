@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "appliedRevision": 2,
+      "status": "applying"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

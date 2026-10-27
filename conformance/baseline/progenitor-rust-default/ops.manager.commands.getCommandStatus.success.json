@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "attempt": 2,
+      "commandId": "commandId-value",
+      "response": {
+        "response": {
+          "inlineBase64": "inlineBase64-value",
+          "mode": "inline"
+        },
+        "status": "success"
+      },
+      "state": "PENDING_UPLOAD",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

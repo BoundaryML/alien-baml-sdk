@@ -1,0 +1,49 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+          "name": "name-value",
+          "status": "pending",
+          "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "platform": "aws",
+          "deploymentProtocolVersion": 2,
+          "deploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+          "purpose": "application",
+          "releaseChannel": "r",
+          "retryRequested": true,
+          "updateBlocked": true,
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "updatedAt": "2026-10-01T00:00:00.000Z",
+          "managerId": "mgr_enxscjrqiiu2lrc672hwwuc5mgre",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentGroup=deploymentGroup value&name=name value&managerId=managerId value&purpose=application&search=search value&status=pending&status=preflights-failed&environment=aws&environment=gcp&include=release&include=deploymentGroup&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&deploymentGroup=deploymentGroup value&environment=aws&environment=gcp&include=release&include=deploymentGroup&limit=2&managerId=managerId value&name=name value&project=project value&purpose=application&search=search value&status=pending&status=preflights-failed&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

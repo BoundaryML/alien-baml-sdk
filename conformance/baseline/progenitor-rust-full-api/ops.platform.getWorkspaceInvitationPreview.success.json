@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "emailHint": "emailHint-value",
+      "expiresAt": "2026-10-01T00:00:00Z",
+      "inviter": {
+        "image": "https://example.com/image",
+        "name": "name-value"
+      },
+      "kind": "email",
+      "role": "workspace.member",
+      "state": "active",
+      "workspace": {
+        "id": "ws_It13CUaGEhLLAB87simX0wsI",
+        "logoUrl": "https://example.com/logoUrl",
+        "name": "name-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

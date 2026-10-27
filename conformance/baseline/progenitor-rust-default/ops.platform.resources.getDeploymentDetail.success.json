@@ -1,0 +1,105 @@
+{
+  "outcome": {
+    "ok": {
+      "deployment": {
+        "backend": "backend-value",
+        "controllerPlatform": "controllerPlatform-value",
+        "currentCount": 2,
+        "deploymentGroupId": "deploymentGroupId-value",
+        "deploymentGroupName": "deploymentGroupName-value",
+        "deploymentId": "deploymentId-value",
+        "deploymentName": "deploymentName-value",
+        "desiredCount": 2,
+        "desiredImage": "desiredImage-value",
+        "health": "health-value",
+        "lifecycle": "lifecycle-value",
+        "message": "message-value",
+        "observedAt": "2026-10-01T00:00:00Z",
+        "partial": true,
+        "platformStale": true,
+        "providerStale": true,
+        "readyCount": 2,
+        "resourceId": "resourceId-value",
+        "resourceType": "resourceType-value"
+      },
+      "heartbeat": {
+        "backend": "backend-value",
+        "controllerPlatform": "controllerPlatform-value",
+        "deploymentId": "deploymentId-value",
+        "heartbeat": {
+          "backend": "aws",
+          "controllerPlatform": "aws",
+          "data": {
+            "data": {
+              "backend": "awsS3",
+              "encryptionConfigPresent": true,
+              "lifecyclePresent": true,
+              "name": "name-value",
+              "publicAccessBlockPresent": true,
+              "status": {
+                "collectionIssues": [
+                  {
+                    "message": "message-value",
+                    "reason": "forbidden",
+                    "severity": "info",
+                    "source": "source-value"
+                  }
+                ],
+                "health": "unknown",
+                "lifecycle": "unknown",
+                "partial": true,
+                "stale": true
+              }
+            },
+            "resourceType": "storage"
+          },
+          "observedAt": "2026-10-01T00:00:00Z",
+          "raw": [
+            {
+              "body": "body-value",
+              "collectedAt": "2026-10-01T00:00:00Z",
+              "format": "json",
+              "source": "source-value",
+              "truncated": true
+            }
+          ],
+          "resourceId": "resourceId-value",
+          "resourceType": "resourceType-value"
+        },
+        "observedAt": "2026-10-01T00:00:00Z",
+        "platformStale": true,
+        "raw": [
+          {
+            "key": "value"
+          }
+        ],
+        "resourceId": "resourceId-value",
+        "resourceType": "resourceType-value",
+        "staleAt": "2026-10-01T00:00:00Z",
+        "status": "available"
+      },
+      "replicaReleases": [
+        {
+          "image": "image-value",
+          "release": {
+            "id": "id-value",
+            "relation": "desired",
+            "version": "version-value"
+          },
+          "replicaId": "replicaId-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

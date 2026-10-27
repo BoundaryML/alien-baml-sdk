@@ -1,0 +1,37 @@
+{
+  "id": "setup.launchUrlForProject.platform_error",
+  "phase": 1,
+  "call": {
+    "fn": "setup.launchUrlForProject",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "project": "my-project",
+      "region": "us-west-2",
+      "stackName": "alien-setup",
+      "parameters": {}
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/my-project/template-urls?workspace=my-workspace"
+      },
+      "respond": {
+        "status": 502,
+        "text": "bad gateway"
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": true,
+    "http_status": 502
+  },
+  "assert": []
+}

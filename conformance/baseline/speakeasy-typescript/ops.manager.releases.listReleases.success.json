@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "createdAt-value",
+          "id": "id-value",
+          "projectId": "projectId-value",
+          "stack": {},
+          "workspaceId": "workspaceId-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

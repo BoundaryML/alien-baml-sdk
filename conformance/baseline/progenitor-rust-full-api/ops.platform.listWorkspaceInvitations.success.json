@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "2026-10-01T00:00:00Z",
+          "deliveryStatus": "pending",
+          "email": "user@example.com",
+          "expiresAt": "2026-10-01T00:00:00Z",
+          "id": "winv_DsgltMIFV0GmqtxV5NYTtrknrnawinvD",
+          "inviteUrl": "https://example.com/inviteUrl",
+          "lastSentAt": "2026-10-01T00:00:00Z",
+          "role": "workspace.member",
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

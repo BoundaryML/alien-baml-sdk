@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "incident": {
+        "agentSessionId": "agentSessionId-value",
+        "createdAt": "2026-10-01T00:00:00Z",
+        "deploymentId": "deploymentId-value",
+        "id": "id-value",
+        "number": 2,
+        "projectId": "projectId-value",
+        "reference": "reference-value",
+        "releaseId": "releaseId-value",
+        "scopeLabel": "scopeLabel-value",
+        "sessionStatus": "queued",
+        "title": "title-value",
+        "updatedAt": "2026-10-01T00:00:00Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

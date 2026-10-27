@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "ok": {
+      "userId": "userId-value",
+      "email": "email-value",
+      "name": "name-value",
+      "image": "image-value",
+      "role": "workspace.member",
+      "joinedAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "result.joinedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

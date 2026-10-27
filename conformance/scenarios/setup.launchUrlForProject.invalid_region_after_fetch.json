@@ -1,0 +1,42 @@
+{
+  "id": "setup.launchUrlForProject.invalid_region_after_fetch",
+  "phase": 1,
+  "call": {
+    "fn": "setup.launchUrlForProject",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "project": "my-project",
+      "region": "us-gov-west-1",
+      "stackName": "alien-setup",
+      "parameters": {}
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/my-project/template-urls?workspace=my-workspace"
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "aws": {
+            "templateUrl": "https://example.com/t.yaml",
+            "launchStackUrl": "https://example.com/l"
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "SETUP_REGION_UNSUPPORTED",
+    "retryable": false,
+    "http_status": null
+  },
+  "assert": []
+}

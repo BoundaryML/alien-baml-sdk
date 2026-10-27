@@ -1,0 +1,38 @@
+{
+  "outcome": {
+    "error": {
+      "code": "INVALID_RESPONSE_PAYLOAD",
+      "retryable": false,
+      "http_status": null,
+      "message": "Failed to parse response: expected value at line 1 column 1",
+      "variant": "InvalidResponsePayload",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "PLATFORM_HTTP_ERROR",
+      "got": "INVALID_RESPONSE_PAYLOAD"
+    },
+    {
+      "path": "error.retryable",
+      "kind": "different",
+      "want": true,
+      "got": false
+    },
+    {
+      "path": "error.http_status",
+      "kind": "different",
+      "want": 500,
+      "got": null
+    }
+  ]
+}

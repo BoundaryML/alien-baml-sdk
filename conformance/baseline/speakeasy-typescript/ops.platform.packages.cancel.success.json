@@ -1,0 +1,96 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "type": "cli",
+      "status": "pending",
+      "version": "version-value",
+      "sourceReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "dependsOnPackageId": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "target": "target-value",
+          "fingerprint": "fingerprint-value",
+          "version": 2
+        }
+      },
+      "packageBuildInputHash": "packageBuildInputHash-value",
+      "config": {
+        "displayName": "displayName-value",
+        "name": "name-value",
+        "type": "cli"
+      },
+      "outputs": {
+        "binaries": {
+          "binaries-key": {
+            "sha256": "sha256-value",
+            "size": 2,
+            "url": "url-value"
+          }
+        },
+        "buildInfo": {
+          "alienSha": "alienSha-value",
+          "horizonSha": "horizonSha-value",
+          "platformSha": "platformSha-value",
+          "sourceCliBinarySha256": "sourceCliBinarySha256-value"
+        },
+        "type": "cli"
+      },
+      "error": {
+        "key": "value"
+      },
+      "sourceBinarySha256": "sourceBinarySha256-value",
+      "retries": 2,
+      "lockedAt": "2026-10-01T00:00:00.000Z",
+      "lockedBy": "lockedBy-value",
+      "leaseExpiresAt": "2026-10-01T00:00:00.000Z",
+      "buildPhase": "building",
+      "lastProgressAt": "2026-10-01T00:00:00.000Z",
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "updatedAt": "2026-10-01T00:00:00.000Z",
+      "completedAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.lockedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.leaseExpiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.lastProgressAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.completedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

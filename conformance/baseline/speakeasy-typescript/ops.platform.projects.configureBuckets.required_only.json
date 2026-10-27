@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "ok": {
+      "projectCapabilities": {
+        "schemaVersion": 1,
+        "capabilities": {}
+      },
+      "source": {
+        "definitionId": "customer-ai",
+        "definitionVersion": "definitionVersion-value",
+        "releaseId": "releaseId-value"
+      },
+      "packages": [
+        {
+          "type": "cloudformation",
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    }
+  ]
+}

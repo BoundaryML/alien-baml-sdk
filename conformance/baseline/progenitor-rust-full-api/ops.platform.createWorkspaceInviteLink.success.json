@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "expiresAt": "2026-10-01T00:00:00Z",
+      "id": "wil_RgcthDSZ37rmFLekuItpFS7btjXoYwou1gE4wilR",
+      "inviteUrl": "https://example.com/inviteUrl",
+      "lastUsedAt": "2026-10-01T00:00:00Z",
+      "role": "workspace.member",
+      "useCount": 2
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

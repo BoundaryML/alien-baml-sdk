@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "FORBIDDEN",
+      "retryable": false,
+      "http_status": 403,
+      "message": "Not allowed.",
+      "variant": "ErrorResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

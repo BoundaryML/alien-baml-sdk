@@ -1,0 +1,28 @@
+{
+  "id": "compat.unknown_response_fields.package_types",
+  "phase": 1,
+  "rule": "unknown_response_fields.rs",
+  "call": {
+    "fn": "compat.decodeMaterialization",
+    "args": {
+      "json": "{\"packages\":[{\"type\":\"sandbox-bundle\",\"status\":\"ready\"},{\"type\":\"future-package-type\",\"status\":\"ready\"}],\"source\":{\"releaseId\":\"rel_x\"}}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": {
+      "packages": [
+        {
+          "type": "sandbox-bundle",
+          "status": "ready"
+        },
+        {
+          "type": "future-package-type",
+          "status": "ready"
+        }
+      ]
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

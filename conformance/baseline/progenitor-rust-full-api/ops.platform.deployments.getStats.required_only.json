@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "byCurrentRelease": {
+        "byCurrentRelease-key": 1.5
+      },
+      "byOrigin": {},
+      "byPinnedRelease": {
+        "byPinnedRelease-key": 1.5
+      },
+      "byPlatform": {
+        "byPlatform-key": 1.5
+      },
+      "byStatus": {
+        "byStatus-key": 1.5
+      },
+      "total": 1.5
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

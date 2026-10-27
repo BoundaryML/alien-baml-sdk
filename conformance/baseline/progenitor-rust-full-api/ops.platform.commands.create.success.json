@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "deliveryMode": "push",
+      "deploymentModel": "push",
+      "id": "cmd_2sxjXxvOYct7IohT3ukliAzfcmd2",
+      "operationResultContractPersisted": true,
+      "projectId": "projectId-value",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "affected": [
+        {
+          "deploymentGroupId": "deploymentGroupId-value",
+          "externalId": "externalId-value",
+          "name": "name-value",
+          "provider": "provider-value",
+          "reason": "provider-no-longer-compatible"
+        }
+      ],
+      "affectedCustomers": 2,
+      "connectedCustomers": 2,
+      "truncated": true,
+      "verificationNeeded": 2
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

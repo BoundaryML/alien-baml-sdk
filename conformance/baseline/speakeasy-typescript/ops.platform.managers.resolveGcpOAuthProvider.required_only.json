@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "mode": "alien-managed"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    }
+  ]
+}

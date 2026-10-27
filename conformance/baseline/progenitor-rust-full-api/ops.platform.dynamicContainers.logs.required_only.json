@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "cursorRestarted": true,
+      "errorCount": 1.5,
+      "logs": [
+        {
+          "level": "level-value",
+          "message": "message-value",
+          "replicaId": "replicaId-value",
+          "timestamp": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value",
+      "numHits": 1.5,
+      "partial": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

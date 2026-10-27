@@ -1,0 +1,44 @@
+{
+  "id": "compat.optional_success_body.accepted_202",
+  "phase": 1,
+  "rule": "optional_success_body.rs",
+  "call": {
+    "fn": "compat.acceptKeySetup",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "request": {
+        "action": "delete"
+      }
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "POST",
+        "path": "/v1/aws-key-setups",
+        "json": {
+          "action": "delete"
+        }
+      },
+      "respond": {
+        "status": 202,
+        "json": {
+          "operationId": "op-test",
+          "physicalResourceId": "key-test"
+        }
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {
+      "operationId": "op-test",
+      "physicalResourceId": "key-test"
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

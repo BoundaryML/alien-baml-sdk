@@ -1,0 +1,62 @@
+{
+  "outcome": {
+    "ok": {
+      "leases": [
+        {
+          "attempt": 2,
+          "commandId": "commandId-value",
+          "envelope": {
+            "attempt": 2,
+            "command": "command-value",
+            "commandId": "commandId-value",
+            "deploymentId": "deploymentId-value",
+            "params": {
+              "inlineBase64": "inlineBase64-value",
+              "mode": "inline"
+            },
+            "protocol": "protocol-value",
+            "responseHandling": {
+              "maxInlineBytes": 2,
+              "storageUploadRequest": {
+                "backend": {
+                  "headers": {
+                    "headers-key": "headers-value"
+                  },
+                  "method": "method-value",
+                  "type": "http",
+                  "url": "url-value"
+                },
+                "expiration": "2026-10-01T00:00:00.000Z",
+                "operation": "put",
+                "path": "path-value"
+              },
+              "submitResponseUrl": "submitResponseUrl-value"
+            },
+            "target": {
+              "resourceId": "resourceId-value",
+              "resourceType": "worker"
+            }
+          },
+          "leaseExpiresAt": "2026-10-01T00:00:00.000Z",
+          "leaseId": "leaseId-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.leases[0].envelope.responseHandling.storageUploadRequest.expiration",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.leases[0].leaseExpiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

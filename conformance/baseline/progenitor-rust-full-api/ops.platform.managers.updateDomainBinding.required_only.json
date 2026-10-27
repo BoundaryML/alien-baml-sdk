@@ -1,0 +1,46 @@
+{
+  "outcome": {
+    "ok": {
+      "managerDomainBinding": {
+        "createdAt": "2026-10-01T00:00:00Z",
+        "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+        "hostname": "hostname-value",
+        "id": "dend_1bb6gdvm1bs74acqkjstcgvdend1",
+        "kind": "deployment_portal",
+        "managedDnsRecords": [
+          {
+            "name": "name-value",
+            "type": "type-value",
+            "value": "value-value"
+          }
+        ],
+        "owner": {
+          "id": "id-value",
+          "type": "workspace"
+        },
+        "retryAttempts": 2,
+        "status": "waiting_for_domain",
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+      }
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "different",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "body",
+      "kind": "different",
+      "want": "(empty)",
+      "got": "{}",
+      "exchange": 1
+    }
+  ]
+}

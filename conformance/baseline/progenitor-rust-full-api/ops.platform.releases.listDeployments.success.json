@@ -1,0 +1,40 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "durationMs": 2,
+          "id": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+          "name": "name-value",
+          "platform": "aws",
+          "releasedAt": "2026-10-01T00:00:00Z",
+          "rolloutState": "updated",
+          "status": "pending"
+        }
+      ],
+      "nextCursor": "nextCursor-value",
+      "stateCounts": {
+        "failed": 2,
+        "onOther": 2,
+        "pending": 2,
+        "pinnedOther": 2,
+        "superseded": 2,
+        "updated": 2,
+        "updating": 2,
+        "waitingOnInputs": 2,
+        "waitingOnOwner": 2
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&state=updated&state=updating&deploymentGroup=deploymentGroup value&channel=c&effectScope=promotion&effect=updates&limit=2&cursor=cursor value",
+      "got": "channel=c&cursor=cursor value&deploymentGroup=deploymentGroup value&effect=updates&effectScope=promotion&limit=2&state=updated&state=updating&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

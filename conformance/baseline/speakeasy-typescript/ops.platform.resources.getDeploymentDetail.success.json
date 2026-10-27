@@ -1,0 +1,135 @@
+{
+  "outcome": {
+    "ok": {
+      "deployment": {
+        "deploymentId": "deploymentId-value",
+        "deploymentName": "deploymentName-value",
+        "deploymentGroupId": "deploymentGroupId-value",
+        "deploymentGroupName": "deploymentGroupName-value",
+        "resourceType": "resourceType-value",
+        "resourceId": "resourceId-value",
+        "backend": "backend-value",
+        "controllerPlatform": "controllerPlatform-value",
+        "health": "health-value",
+        "lifecycle": "lifecycle-value",
+        "message": "message-value",
+        "partial": true,
+        "providerStale": true,
+        "platformStale": true,
+        "desiredCount": 2,
+        "currentCount": 2,
+        "readyCount": 2,
+        "observedAt": "2026-10-01T00:00:00.000Z",
+        "desiredImage": "desiredImage-value"
+      },
+      "heartbeat": {
+        "status": "available",
+        "deploymentId": "deploymentId-value",
+        "resourceId": "resourceId-value",
+        "resourceType": "resourceType-value",
+        "backend": "backend-value",
+        "controllerPlatform": "controllerPlatform-value",
+        "observedAt": "2026-10-01T00:00:00.000Z",
+        "staleAt": "2026-10-01T00:00:00.000Z",
+        "platformStale": true,
+        "heartbeat": {
+          "backend": "aws",
+          "controllerPlatform": "aws",
+          "data": {
+            "data": {
+              "encryptionConfigPresent": true,
+              "lifecyclePresent": true,
+              "name": "name-value",
+              "publicAccessBlockPresent": true,
+              "status": {
+                "collectionIssues": [
+                  {
+                    "message": "message-value",
+                    "reason": "forbidden",
+                    "severity": "info",
+                    "source": "source-value"
+                  }
+                ],
+                "health": "unknown",
+                "lifecycle": "unknown",
+                "partial": true,
+                "stale": true
+              },
+              "backend": "awsS3"
+            },
+            "resourceType": "storage"
+          },
+          "observedAt": "2026-10-01T00:00:00.000Z",
+          "raw": [
+            {
+              "body": "body-value",
+              "collectedAt": "2026-10-01T00:00:00.000Z",
+              "format": "json",
+              "source": "source-value",
+              "truncated": true
+            }
+          ],
+          "resourceId": "resourceId-value",
+          "resourceType": "resourceType-value"
+        },
+        "raw": [
+          {
+            "key": "value"
+          }
+        ]
+      },
+      "replicaReleases": [
+        {
+          "replicaId": "replicaId-value",
+          "image": "image-value",
+          "release": {
+            "id": "id-value",
+            "version": "version-value",
+            "relation": "desired"
+          }
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.deployment.observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.heartbeat.observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.heartbeat.staleAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.heartbeat.heartbeat.observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.heartbeat.heartbeat.raw[0].collectedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

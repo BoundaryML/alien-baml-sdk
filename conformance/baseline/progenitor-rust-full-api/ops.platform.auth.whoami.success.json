@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "email": "user@example.com",
+      "id": "id-value",
+      "kind": "user",
+      "role": "workspace.member",
+      "workspaceId": "workspaceId-value",
+      "workspaceName": "workspaceName-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

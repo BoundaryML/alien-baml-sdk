@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "packagesCreated": 2
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "createdAt-value",
+      "gitMetadata": {},
+      "id": "id-value",
+      "projectId": "projectId-value",
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "key": "value"
+        }
+      },
+      "stack": {},
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

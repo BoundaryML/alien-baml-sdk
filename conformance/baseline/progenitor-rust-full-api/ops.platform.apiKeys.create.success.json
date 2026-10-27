@@ -1,0 +1,51 @@
+{
+  "outcome": {
+    "ok": {
+      "apiKey": "apiKey-value",
+      "keyInfo": {
+        "createdAt": "2026-10-01T00:00:00Z",
+        "deploymentGroupId": "deploymentGroupId-value",
+        "deploymentId": "deploymentId-value",
+        "deploymentSetupConfig": {
+          "environmentVariables": [
+            {
+              "name": "A",
+              "targetResources": [
+                "targetResources-item-value"
+              ],
+              "type": "plain"
+            }
+          ],
+          "metadata": {
+            "metadata-key": {
+              "key": "value"
+            }
+          },
+          "policy": {
+            "allowedPlatforms": [
+              "aws"
+            ],
+            "allowedSetupMethods": [
+              "cloudformation"
+            ]
+          }
+        },
+        "description": "description-value",
+        "enabled": true,
+        "expiresAt": "2026-10-01T00:00:00Z",
+        "id": "apikey_ye96yxs1tjnrrwulp8frhapikeyy",
+        "keyPrefix": "keyPrefix-value",
+        "lastUsedAt": "2026-10-01T00:00:00Z",
+        "managerId": "managerId-value",
+        "projectId": "projectId-value",
+        "revokedAt": "2026-10-01T00:00:00Z",
+        "role": "role-value",
+        "type": "workspace",
+        "workspaceId": "workspaceId-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

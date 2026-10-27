@@ -1,0 +1,85 @@
+{
+  "outcome": {
+    "ok": {
+      "current": {
+        "platform": "aws",
+        "protocolVersion": 2,
+        "status": "pending"
+      },
+      "success": true,
+      "target": {
+        "config": {
+          "environmentVariables": {
+            "createdAt": "createdAt-value",
+            "hash": "hash-value",
+            "variables": [
+              {
+                "name": "name-value",
+                "type": "plain",
+                "value": "value-value"
+              }
+            ]
+          }
+        },
+        "releaseInfo": {
+          "stack": {
+            "id": "id-value",
+            "resources": {
+              "resources-key": {
+                "config": {
+                  "id": "id-value",
+                  "type": "type-value",
+                  "additionalProperties": {
+                    "extra-property": {
+                      "key": "value"
+                    }
+                  }
+                },
+                "dependencies": [
+                  {
+                    "id": "id-value",
+                    "type": "type-value"
+                  }
+                ],
+                "lifecycle": "frozen"
+              }
+            }
+          }
+        }
+      },
+      "targetDynamicContainers": [
+        {
+          "cpu": "0.1",
+          "deleted": true,
+          "env": {
+            "env-key": "env-value"
+          },
+          "generation": 2,
+          "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+          "memory": "1Mi",
+          "name": "name-value",
+          "ports": [
+            2
+          ],
+          "replicas": 2,
+          "secretEnv": {
+            "secretEnv-key": "secretEnv-value"
+          }
+        }
+      ],
+      "targetOperationsBundleSet": {
+        "bundles": [
+          {
+            "plugin": "plugin-value",
+            "pluginVersion": "pluginVersion-value",
+            "url": "https://example.com/url"
+          }
+        ],
+        "hash": "hash-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

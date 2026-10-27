@@ -1,0 +1,75 @@
+{
+  "outcome": {
+    "ok": {
+      "domains": [
+        {
+          "claimToken": "claimToken-value",
+          "createdAt": "2026-10-01T00:00:00Z",
+          "domain": "domain-value",
+          "endpoints": [
+            {
+              "createdAt": "2026-10-01T00:00:00Z",
+              "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+              "hostname": "hostname-value",
+              "id": "dend_1bb6gdvm1bs74acqkjstcgvdend1",
+              "kind": "deployment_portal",
+              "managedDnsRecords": [
+                {
+                  "name": "name-value",
+                  "type": "type-value",
+                  "value": "value-value"
+                }
+              ],
+              "owner": {
+                "id": "id-value",
+                "type": "workspace"
+              },
+              "retryAttempts": 2,
+              "status": "waiting_for_domain",
+              "updatedAt": "2026-10-01T00:00:00Z",
+              "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+            }
+          ],
+          "id": "dom_469m0agk8luj4s16sakmmpdddom4",
+          "isSystem": true,
+          "status": "pending-zone-creation",
+          "updatedAt": "2026-10-01T00:00:00Z",
+          "usage": {
+            "deploymentUrlProjects": [
+              {
+                "id": "id-value",
+                "name": "name-value"
+              }
+            ],
+            "managerBindings": [
+              {
+                "hostname": "hostname-value",
+                "id": "id-value",
+                "managerId": "managerId-value",
+                "managerName": "managerName-value"
+              }
+            ],
+            "packageDomains": [
+              {
+                "hostname": "hostname-value",
+                "id": "id-value"
+              }
+            ],
+            "portalBindings": [
+              {
+                "hostname": "hostname-value",
+                "id": "id-value",
+                "projectId": "projectId-value",
+                "projectName": "projectName-value"
+              }
+            ]
+          },
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

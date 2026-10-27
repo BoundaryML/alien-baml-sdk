@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "capabilities": {},
+      "schemaVersion": 1
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

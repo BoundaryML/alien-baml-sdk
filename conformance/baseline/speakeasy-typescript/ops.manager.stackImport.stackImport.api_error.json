@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienManagerDefaultError)",
+      "http_status": 404,
+      "message": "API error occurred: Status 404"
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "body.resources[0].importData.key",
+      "kind": "different: left out",
+      "want": "value",
+      "got": null,
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "NOT_FOUND",
+      "got": "(AlienManagerDefaultError)"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "outcome": {
+    "ok": {
+      "operations": [
+        {
+          "commandId": "commandId-value",
+          "invocationId": "invocationId-value",
+          "command": "command-value",
+          "state": "state-value",
+          "createdAt": "createdAt-value",
+          "dispatchedAt": "dispatchedAt-value",
+          "completedAt": "completedAt-value",
+          "verification": {
+            "state": "not-required",
+            "reason": "reason-value"
+          }
+        }
+      ],
+      "debugSessions": [
+        {
+          "id": "id-value",
+          "state": "pending",
+          "owner": "owner-value",
+          "createdAt": "createdAt-value",
+          "expiresAt": "expiresAt-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

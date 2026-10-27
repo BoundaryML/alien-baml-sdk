@@ -1,0 +1,47 @@
+{
+  "outcome": {
+    "ok": {
+      "managerId": "mgr_anagerdvaluemanagerdvalueman",
+      "setupStatus": "pending",
+      "setupToken": "setupToken-value",
+      "setupTokenId": "setupTokenId-value",
+      "deploymentLink": "deploymentLink-value",
+      "setupConfig": {
+        "metadata": {
+          "metadata-key": {
+            "key": "value"
+          }
+        },
+        "policy": {
+          "allowedPlatforms": [
+            "aws"
+          ],
+          "allowedSetupMethods": [
+            "cloudformation"
+          ]
+        },
+        "environmentVariables": [
+          {
+            "name": "name-value",
+            "type": "plain",
+            "targetResources": [
+              "targetResources-item-value"
+            ]
+          }
+        ]
+      },
+      "setup": {
+        "method": "cloudformation",
+        "deploymentPortalUrl": "deploymentPortalUrl-value",
+        "launchUrl": "launchUrl-value",
+        "templateUrl": "templateUrl-value",
+        "stackName": "stackName-value",
+        "region": "region-value",
+        "stackSettings": {}
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

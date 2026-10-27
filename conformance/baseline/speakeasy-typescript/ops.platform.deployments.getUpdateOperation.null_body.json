@@ -1,0 +1,25 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ResponseValidationError)",
+      "http_status": 200,
+      "message": "Response validation failed",
+      "detail": "✖ Invalid input: expected object, received null"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "outcome",
+      "kind": "different",
+      "want": "success",
+      "got": {
+        "code": "(ResponseValidationError)",
+        "http_status": 200,
+        "message": "Response validation failed",
+        "detail": "✖ Invalid input: expected object, received null"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "installContext": {
+        "managementConfig": {
+          "managingRoleArn": "managingRoleArn-value",
+          "platform": "aws"
+        },
+        "platform": "aws"
+      },
+      "managerCloud": "aws",
+      "managerId": "managerId-value",
+      "managerIsSystem": true,
+      "managerName": "managerName-value",
+      "managerUrl": "https://example.com/managerUrl",
+      "projectId": "projectId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&platform=aws&project=project value",
+      "got": "platform=aws&project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

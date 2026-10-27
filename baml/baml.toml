@@ -1,0 +1,33 @@
+[package]
+name = "alien"
+
+[generator.typescript]
+output_type = "typescript/node"
+naming_convention = "preserve-case"
+output_dir = "../sdk/typescript"
+
+[generator.python]
+output_type = "python/pydantic"
+naming_convention = "preserve-case"
+output_dir = "../sdk/python"
+
+[generator.go]
+output_type = "go"
+naming_convention = "language"
+sdk_import_path = "example.com/alien-baml-sdk/go/baml_sdk"   # placeholder module path; the real one is Alien's choice
+output_dir = "../sdk/go"
+
+[generator.rust]
+output_type = "rust"
+naming_convention = "preserve-case"
+output_dir = "../sdk/rust"
+
+[bridge]
+# Telemetry failures stay silent: when the telemetry endpoint cannot be reached
+# or rejects the key, the runtime drops telemetry without printing anything (the
+# default, "warn", prints a warning to stderr) and the program continues.
+on_initial_telemetry_failure = "ignore"
+http_bodies = false   # Alien responses carry Manager and setup-link tokens: record no HTTP bodies
+
+[bridge.env_var_names]
+BAML_TELEMETRY = "ALIEN_TELEMETRY"   # the SDK reads ALIEN_TELEMETRY instead of BAML_TELEMETRY

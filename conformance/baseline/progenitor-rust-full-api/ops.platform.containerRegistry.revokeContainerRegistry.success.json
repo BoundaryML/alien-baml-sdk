@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "appliedRevision": 2,
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "desiredRevision": 2,
+      "id": "crroute_c9t4xoy7fmiq7equtu20crroutec",
+      "lastError": "lastError-value",
+      "lastVerifiedAt": "2026-10-01T00:00:00Z",
+      "managerId": "managerId-value",
+      "resourceId": "resourceId-value",
+      "resourceRevision": "resourceRevision-value",
+      "status": "resolving"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

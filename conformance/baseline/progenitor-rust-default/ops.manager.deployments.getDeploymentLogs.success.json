@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "attributes": {
+            "attributes-key": "attributes-value"
+          },
+          "message": "message-value",
+          "severity": "severity-value",
+          "timestamp": "2026-10-01T00:00:00Z"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

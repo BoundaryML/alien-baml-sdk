@@ -1,0 +1,71 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "name": "my-app",
+      "gitRepository": {
+        "type": "github",
+        "repo": "alien/my-agent"
+      },
+      "rootDirectory": "rootDirectory-value",
+      "deploymentPortalAppearance": {
+        "preset": "clean",
+        "accentColor": "blue",
+        "density": "comfortable"
+      },
+      "packagesConfig": {},
+      "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+      "defaultManagers": {},
+      "projectCapabilities": {
+        "schemaVersion": 1,
+        "capabilities": {}
+      },
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "githubSetup": {
+        "pullRequestUrl": "https://example.com/pullRequestUrl",
+        "workflowUrl": "https://example.com/workflowUrl"
+      },
+      "gitRepositoryWarning": {
+        "code": "code-value",
+        "message": "message-value",
+        "retryable": false,
+        "internal": true
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.deploymentPortalAppearance.preset",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "clean"
+    },
+    {
+      "path": "result.deploymentPortalAppearance.accentColor",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "blue"
+    },
+    {
+      "path": "result.deploymentPortalAppearance.density",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "comfortable"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.gitRepositoryWarning.retryable",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": false
+    }
+  ]
+}

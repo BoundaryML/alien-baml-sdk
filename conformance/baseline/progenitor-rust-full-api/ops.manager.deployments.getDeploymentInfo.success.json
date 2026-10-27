@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "commands": {
+        "deploymentId": "deploymentId-value",
+        "url": "url-value"
+      },
+      "error": {
+        "key": "value"
+      },
+      "platform": "aws",
+      "resources": {
+        "resources-key": {
+          "resourceType": "resourceType-value"
+        }
+      },
+      "status": "status-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

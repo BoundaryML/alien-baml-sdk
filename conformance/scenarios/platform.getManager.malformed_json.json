@@ -1,0 +1,34 @@
+{
+  "id": "platform.getManager.malformed_json",
+  "phase": 1,
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+      },
+      "respond": {
+        "status": 200,
+        "text": "<html>not json</html>"
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "MALFORMED_RESPONSE",
+    "retryable": false,
+    "http_status": 200
+  },
+  "assert": []
+}

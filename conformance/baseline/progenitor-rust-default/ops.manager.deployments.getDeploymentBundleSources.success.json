@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "chart": {
+        "credentials": "caller",
+        "reference": "reference-value"
+      },
+      "deployCli": [
+        {
+          "platform": "platform-value",
+          "url": "url-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

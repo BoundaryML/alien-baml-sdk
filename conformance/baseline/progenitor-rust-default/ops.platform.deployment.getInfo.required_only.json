@@ -1,0 +1,127 @@
+{
+  "outcome": {
+    "ok": {
+      "deployment": {
+        "name": "name-value",
+        "platform": "aws"
+      },
+      "deploymentGroup": {
+        "currentCount": 2,
+        "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+        "maxDeployments": 2,
+        "name": "name-value",
+        "pinnedSubdomain": "pinnedSubdomain-value"
+      },
+      "installContext": {
+        "targets": {
+          "targets-key": {
+            "managerUrl": "https://example.com/managerUrl",
+            "platform": "aws"
+          }
+        }
+      },
+      "modelAvailabilitySources": [
+        {
+          "deploymentId": "deploymentId-value",
+          "observedAt": "2026-10-01T00:00:00Z",
+          "resourceId": "resourceId-value",
+          "status": "current"
+        }
+      ],
+      "packages": {
+        "ready": true
+      },
+      "project": {
+        "name": "name-value",
+        "portal": {
+          "appearance": {}
+        }
+      },
+      "readiness": {
+        "checks": [
+          {
+            "checkedAt": "checkedAt-value",
+            "code": "code-value",
+            "message": "message-value",
+            "status": "passed"
+          }
+        ],
+        "status": "ready"
+      },
+      "setupConfig": {
+        "environmentVariables": [
+          {
+            "name": "A",
+            "targetResources": [
+              "targetResources-item-value"
+            ],
+            "type": "plain"
+          }
+        ],
+        "metadata": {
+          "metadata-key": {
+            "key": "value"
+          }
+        },
+        "policy": {
+          "allowedPlatforms": [
+            "aws"
+          ],
+          "allowedSetupMethods": [
+            "cloudformation"
+          ]
+        }
+      },
+      "setupItems": [
+        {
+          "deploymentIds": [
+            "deploymentIds-item-value"
+          ],
+          "item": "deployment",
+          "required": true,
+          "source": {
+            "releaseChannel": "releaseChannel-value",
+            "releaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+            "type": "project-release"
+          },
+          "status": "not-started"
+        }
+      ],
+      "setupUpdate": {
+        "deploymentId": "deploymentId-value",
+        "name": "name-value",
+        "platform": "aws",
+        "releaseId": "releaseId-value",
+        "resourcePrefix": "resourcePrefix-value",
+        "setupMetadata": {
+          "setupMetadata-key": {
+            "key": "value"
+          }
+        },
+        "setupMethod": "cloudformation",
+        "setupTarget": "setupTarget-value",
+        "stackSettings": {},
+        "updateOperationId": "updateOperationId-value"
+      },
+      "supportedRegions": {
+        "aws": [
+          "aws-item-value"
+        ],
+        "azure": [
+          "azure-item-value"
+        ],
+        "gcp": [
+          "gcp-item-value"
+        ]
+      },
+      "tokenType": "deployment",
+      "workspace": {
+        "id": "id-value",
+        "name": "name-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

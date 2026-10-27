@@ -1,0 +1,44 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "projectId": "projectId-value",
+          "version": "version-value",
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "setupFingerprints": {
+            "setupFingerprints-key": {
+              "target": "target-value",
+              "fingerprint": "fingerprint-value",
+              "version": 2
+            }
+          },
+          "workspaceId": "workspaceId-value",
+          "currentChannels": [
+            "c"
+          ],
+          "commitUrl": "https://example.com/commitUrl"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "allChannels=false&limit=20",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

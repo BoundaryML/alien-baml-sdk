@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "setupId": "setupId-value",
+      "operationId": "operationId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

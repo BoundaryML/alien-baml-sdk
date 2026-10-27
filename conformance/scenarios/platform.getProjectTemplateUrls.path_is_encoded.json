@@ -1,0 +1,33 @@
+{
+  "id": "platform.getProjectTemplateUrls.path_is_encoded",
+  "phase": 1,
+  "notes": "Path parameters are percent-encoded; trailing slashes on the base URL are ignored.",
+  "call": {
+    "fn": "platform.getProjectTemplateUrls",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}//",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "idOrName": "my project/ü"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/my%20project%2F%C3%BC/template-urls?workspace=my-workspace"
+      },
+      "respond": {
+        "status": 200,
+        "json": {}
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {}
+  },
+  "expect_error": null,
+  "assert": []
+}

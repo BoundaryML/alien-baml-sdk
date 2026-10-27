@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "managerUrl": "https://example.com/managerUrl",
+      "token": "token-value",
+      "expiresAt": "2026-10-01T00:00:00.000Z",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "container"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

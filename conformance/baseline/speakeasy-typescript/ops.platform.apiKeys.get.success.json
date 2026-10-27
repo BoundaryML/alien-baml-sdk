@@ -1,0 +1,78 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "apikey_ye96yxs1tjnrrwulp8frhapikeyy",
+      "description": "description-value",
+      "keyPrefix": "keyPrefix-value",
+      "type": "workspace",
+      "role": "role-value",
+      "workspaceId": "workspaceId-value",
+      "projectId": "projectId-value",
+      "deploymentId": "deploymentId-value",
+      "deploymentGroupId": "deploymentGroupId-value",
+      "managerId": "managerId-value",
+      "enabled": true,
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "expiresAt": "2026-10-01T00:00:00.000Z",
+      "lastUsedAt": "2026-10-01T00:00:00.000Z",
+      "revokedAt": "2026-10-01T00:00:00.000Z",
+      "deploymentSetupConfig": {
+        "metadata": {
+          "metadata-key": {
+            "key": "value"
+          }
+        },
+        "policy": {
+          "allowedPlatforms": [
+            "aws"
+          ],
+          "allowedSetupMethods": [
+            "cloudformation"
+          ]
+        },
+        "environmentVariables": [
+          {
+            "name": "A",
+            "type": "plain",
+            "targetResources": [
+              "targetResources-item-value"
+            ]
+          }
+        ]
+      },
+      "createdByUser": {
+        "id": "id-value",
+        "email": "email-value",
+        "image": "image-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.lastUsedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.revokedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "outcome": {
+    "error": {
+      "code": "INVALID_REQUEST",
+      "retryable": false,
+      "http_status": 400,
+      "message": "Invalid Request: no value supplied for domain",
+      "variant": "InvalidRequest",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "request",
+      "kind": "different",
+      "want": "POST /v1/domains?workspace=my-workspace",
+      "got": "no request",
+      "exchange": 1
+    },
+    {
+      "path": "outcome",
+      "kind": "different",
+      "want": "success",
+      "got": {
+        "code": "INVALID_REQUEST",
+        "retryable": false,
+        "http_status": 400,
+        "message": "Invalid Request: no value supplied for domain",
+        "variant": "InvalidRequest",
+        "context": {
+          "requestId": null,
+          "hint": null,
+          "details": null
+        }
+      }
+    }
+  ]
+}

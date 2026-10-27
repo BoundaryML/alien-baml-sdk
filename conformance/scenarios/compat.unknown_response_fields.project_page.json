@@ -1,0 +1,60 @@
+{
+  "id": "compat.unknown_response_fields.project_page",
+  "phase": 1,
+  "rule": "unknown_response_fields.rs",
+  "call": {
+    "fn": "compat.decodeProjectPage",
+    "args": {
+      "json": "{\"items\":[{\"id\":\"prj_bbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"name\":\"my-app\",\"createdAt\":\"2026-09-29T00:00:00Z\",\"workspaceId\":\"ws_AAAAAAAAAAAAAAAAAAAAAAAA\",\"projectCapabilities\":{\"schemaVersion\":1,\"capabilities\":{\"remoteSandbox\":{\"enabled\":true,\"baseImage\":\"public.ecr.aws/docker/library/buildpack-deps@sha256:abc\",\"maxLifetimeSeconds\":3600,\"azure\":{\"catalogImage\":\"ubuntu\",\"idleSuspendSeconds\":600}}}}},{\"id\":\"prj_aaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"name\":\"my-app\",\"createdAt\":\"2026-09-29T00:00:00Z\",\"workspaceId\":\"ws_AAAAAAAAAAAAAAAAAAAAAAAA\",\"projectCapabilities\":{\"schemaVersion\":1,\"capabilities\":{\"remoteSandbox\":{\"enabled\":true,\"futureField\":\"value\",\"baseImage\":\"ghcr.io/example/img@sha256:abc\",\"maxLifetimeSeconds\":3600,\"futureCloud\":{\"image\":\"registry.example.com/img@sha256:abc\",\"maxLifetimeSeconds\":3600},\"azure\":{\"catalogImage\":\"ubuntu\",\"futureImage\":\"ghcr.io/example/img@sha256:def\",\"idleSuspendSeconds\":600}}}}}],\"nextCursor\":null}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": {
+      "items": [
+        {
+          "id": "prj_bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "name": "my-app",
+          "createdAt": "2026-09-29T00:00:00Z",
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "projectCapabilities": {
+            "schemaVersion": 1,
+            "capabilities": {
+              "remoteSandbox": {
+                "enabled": true,
+                "baseImage": "public.ecr.aws/docker/library/buildpack-deps@sha256:abc",
+                "maxLifetimeSeconds": 3600,
+                "azure": {
+                  "catalogImage": "ubuntu",
+                  "idleSuspendSeconds": 600
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "prj_aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "name": "my-app",
+          "createdAt": "2026-09-29T00:00:00Z",
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "projectCapabilities": {
+            "schemaVersion": 1,
+            "capabilities": {
+              "remoteSandbox": {
+                "enabled": true,
+                "baseImage": "ghcr.io/example/img@sha256:abc",
+                "maxLifetimeSeconds": 3600,
+                "azure": {
+                  "catalogImage": "ubuntu",
+                  "idleSuspendSeconds": 600
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

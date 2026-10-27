@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": {
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "name": "name-value",
+      "currentReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "deploymentCount": 2,
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "updatedAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

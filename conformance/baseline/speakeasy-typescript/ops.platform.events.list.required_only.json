@@ -1,0 +1,52 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "event_MtSA24M3pWuAkQYxgZxuRIeventM",
+          "data": {
+            "type": "DeploymentCheckRequested",
+            "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0"
+          },
+          "state": {
+            "failed": {}
+          },
+          "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ],
+      "nextCursor": "nextCursor-value",
+      "releases": [
+        {
+          "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "version": "version-value",
+          "createdAt": "2026-10-01T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "limit=20",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.releases[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

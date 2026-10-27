@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienManagerDefaultError)",
+      "http_status": 502,
+      "message": "API error occurred: Status 502 Content-Type text/plain. Body: bad gateway"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MANAGER_HTTP_ERROR",
+      "got": "(AlienManagerDefaultError)"
+    }
+  ]
+}

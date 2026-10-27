@@ -1,0 +1,25 @@
+{
+  "outcome": {
+    "ok": {
+      "binding": {
+        "bucketName": "bucketName-value"
+      },
+      "clientConfig": {
+        "accountId": "accountId-value",
+        "credentials": {
+          "accessKeyId": "accessKeyId-value",
+          "expiresAt": "expiresAt-value",
+          "secretAccessKey": "secretAccessKey-value",
+          "sessionToken": "sessionToken-value",
+          "type": "sessionCredentials"
+        },
+        "region": "region-value"
+      },
+      "expiresAt": "expiresAt-value",
+      "service": "s3"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

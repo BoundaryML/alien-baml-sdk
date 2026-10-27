@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "catalogObservedAt": "2026-10-01T00:00:00Z",
+      "catalogProviderModelIds": [
+        "catalogProviderModelIds-item-value"
+      ],
+      "credentialCheckedAt": "2026-10-01T00:00:00Z",
+      "credentialRevision": 2,
+      "credentialStatus": "pending",
+      "id": "id-value",
+      "keyFingerprint": "keyFingerprint-value",
+      "provider": "anthropic",
+      "providerClientId": "providerClientId-value",
+      "providerEndpoint": "providerEndpoint-value",
+      "requiredModelCoverage": [
+        {
+          "accessObservedAt": "2026-10-01T00:00:00Z",
+          "accessStatus": "verified",
+          "available": true,
+          "publicModelId": "publicModelId-value"
+        }
+      ],
+      "updatedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

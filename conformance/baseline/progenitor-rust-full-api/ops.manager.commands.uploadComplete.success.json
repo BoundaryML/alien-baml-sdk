@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "commandId": "commandId-value",
+      "state": "PENDING_UPLOAD"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

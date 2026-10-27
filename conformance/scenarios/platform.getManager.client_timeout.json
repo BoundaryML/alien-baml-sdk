@@ -1,0 +1,54 @@
+{
+  "id": "platform.getManager.client_timeout",
+  "phase": 1,
+  "notes": "The client's timeout (TypeScript timeoutMs, Python timeout_ms, Go Options.Timeout, Rust Options::timeout) limits each request: a response 3 s late fails after 300 ms with COMMUNICATION_ERROR.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null,
+        "timeout_ms": 300
+      },
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+          "name": "primary",
+          "targets": [
+            "aws"
+          ],
+          "managementConfigs": {},
+          "isSystem": false,
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "status": "healthy",
+          "managedDeploymentCount": 0,
+          "defaultProjectCount": 0,
+          "createdAt": "2026-10-01T00:00:00Z"
+        },
+        "delay_ms": 3000
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMUNICATION_ERROR",
+    "retryable": true,
+    "http_status": null,
+    "context": {
+      "method": "GET",
+      "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+    }
+  },
+  "assert": []
+}

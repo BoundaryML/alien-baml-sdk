@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "cmd_2sxjXxvOYct7IohT3ukliAzfcmd2",
+      "projectId": "projectId-value",
+      "deploymentModel": "push",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      },
+      "deliveryMode": "push",
+      "operationResultContractPersisted": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    }
+  ]
+}

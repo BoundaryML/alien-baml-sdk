@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "arc": {
+        "url": "https://example.com/url",
+        "deploymentId": "deploymentId-value"
+      },
+      "resources": {
+        "resources-key": {
+          "type": "type-value"
+        }
+      },
+      "status": "pending",
+      "platform": "platform-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

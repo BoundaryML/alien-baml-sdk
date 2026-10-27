@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "supportedRegions": {
+        "aws": [
+          "aws-item-value"
+        ],
+        "gcp": [
+          "gcp-item-value"
+        ],
+        "azure": [
+          "azure-item-value"
+        ]
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

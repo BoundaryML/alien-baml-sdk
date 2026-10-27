@@ -1,0 +1,19 @@
+{
+  "id": "compat.expires_in.fractional",
+  "phase": 1,
+  "rule": "probe: expiresIn is float?",
+  "call": {
+    "fn": "compat.decodeRemoteAccess",
+    "args": {
+      "json": "{\"expiresIn\":299.5}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": {
+      "expiresIn": 299.5
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

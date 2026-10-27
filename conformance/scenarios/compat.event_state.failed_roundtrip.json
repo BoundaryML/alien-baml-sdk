@@ -1,0 +1,17 @@
+{
+  "id": "compat.event_state.failed_roundtrip",
+  "phase": 1,
+  "rule": "event_state.rs",
+  "call": {
+    "fn": "compat.roundtripEvent",
+    "args": {
+      "json": "{\"id\":\"event_aaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"state\":{\"failed\":{\"error\":{\"code\":\"UPDATE_FAILED\",\"message\":\"candidate did not become ready\",\"internal\":false,\"retryable\":true}}},\"createdAt\":\"2026-10-10T06:26:48.506Z\"}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "{\"id\":\"event_aaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"state\":{\"failed\":{\"error\":{\"code\":\"UPDATE_FAILED\",\"message\":\"candidate did not become ready\",\"internal\":false,\"retryable\":true}}},\"createdAt\":\"2026-10-10T06:26:48.506Z\"}"
+  },
+  "expect_error": null,
+  "assert": []
+}

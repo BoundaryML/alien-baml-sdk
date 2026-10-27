@@ -1,0 +1,50 @@
+{
+  "outcome": {
+    "ok": {
+      "commandId": "commandId-value",
+      "created": true,
+      "inlineAllowedUpTo": 2,
+      "next": "next-value",
+      "state": "PENDING_UPLOAD",
+      "storageUpload": {
+        "expiresAt": "2026-10-01T00:00:00.000Z",
+        "putRequest": {
+          "backend": {
+            "headers": {
+              "headers-key": "headers-value"
+            },
+            "method": "method-value",
+            "type": "http",
+            "url": "url-value"
+          },
+          "expiration": "2026-10-01T00:00:00.000Z",
+          "operation": "put",
+          "path": "path-value"
+        }
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "body.deadline",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "result.storageUpload.expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.storageUpload.putRequest.expiration",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

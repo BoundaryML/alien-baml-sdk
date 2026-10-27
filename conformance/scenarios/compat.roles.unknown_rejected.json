@@ -1,0 +1,19 @@
+{
+  "id": "compat.roles.unknown_rejected",
+  "phase": 1,
+  "rule": "roles.rs",
+  "call": {
+    "fn": "compat.roleScope",
+    "args": {
+      "json": "\"workspace.unknown\""
+    }
+  },
+  "exchanges": [],
+  "expect_result": null,
+  "expect_error": {
+    "code": "MALFORMED_RESPONSE",
+    "retryable": false,
+    "http_status": 200
+  },
+  "assert": []
+}

@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "updated": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

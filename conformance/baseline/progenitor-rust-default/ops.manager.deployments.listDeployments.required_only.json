@@ -1,0 +1,24 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "createdAt-value",
+          "deploymentGroupId": "deploymentGroupId-value",
+          "deploymentProtocolVersion": 2,
+          "id": "id-value",
+          "name": "name-value",
+          "platform": "aws",
+          "projectId": "projectId-value",
+          "retryRequested": true,
+          "status": "status-value",
+          "workspaceId": "workspaceId-value"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

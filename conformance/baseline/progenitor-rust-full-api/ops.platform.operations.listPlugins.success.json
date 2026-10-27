@@ -1,0 +1,105 @@
+{
+  "outcome": {
+    "ok": {
+      "plugins": [
+        {
+          "builtin": true,
+          "name": "name-value",
+          "operations": [
+            {
+              "description": "description-value",
+              "inputSchema": {
+                "inputSchema-key": {
+                  "key": "value"
+                }
+              },
+              "name": "name-value",
+              "outputSchema": {
+                "outputSchema-key": {
+                  "key": "value"
+                }
+              },
+              "permissions": {
+                "aws": [
+                  {
+                    "actions": [
+                      "actions-item-value"
+                    ],
+                    "condition": {
+                      "condition-key": {
+                        "condition-key": "condition-value"
+                      }
+                    },
+                    "effect": "Allow",
+                    "reason": "reason-value",
+                    "resources": [
+                      "resources-item-value"
+                    ]
+                  }
+                ],
+                "azure": [
+                  "azure-item-value"
+                ],
+                "gcp": [
+                  {
+                    "permissions": [
+                      "permissions-item-value"
+                    ],
+                    "reason": "reason-value",
+                    "scope": "projects/${projectName}"
+                  }
+                ]
+              },
+              "requiredPermissions": [
+                "requiredPermissions-item-value"
+              ],
+              "retries": {
+                "intervalSeconds": 2,
+                "maxAttempts": 2
+              },
+              "sensitiveOutput": {
+                "kind": "none"
+              },
+              "tier": "read-only",
+              "timeoutSeconds": 2,
+              "verification": {
+                "changes": "changes-value",
+                "pollOperation": "pollOperation-value",
+                "pollParamsFromResult": {
+                  "pollParamsFromResult-key": "pollParamsFromResult-value"
+                },
+                "successField": "successField-value",
+                "successValue": "successValue-value",
+                "timeoutSeconds": 2
+              }
+            }
+          ],
+          "tier": "read-only",
+          "version": "version-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deployment=deployment value",
+      "got": "deployment=deployment value&project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.installations",
+      "kind": "different: left out",
+      "want": {
+        "total": 2,
+        "ready": 2,
+        "syncing": 2,
+        "stuck": 2
+      },
+      "got": null
+    }
+  ]
+}

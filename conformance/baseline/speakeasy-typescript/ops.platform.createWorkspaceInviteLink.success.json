@@ -1,0 +1,35 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "wil_RgcthDSZ37rmFLekuItpFS7btjXoYwou1gE4wilR",
+      "role": "workspace.member",
+      "expiresAt": "2026-10-01T00:00:00.000Z",
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "useCount": 2,
+      "lastUsedAt": "2026-10-01T00:00:00.000Z",
+      "inviteUrl": "https://example.com/inviteUrl"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.expiresAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.lastUsedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

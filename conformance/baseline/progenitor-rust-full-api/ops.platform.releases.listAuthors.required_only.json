@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "avatarUrl": "https://example.com/avatarUrl",
+          "login": "login-value",
+          "name": "name-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

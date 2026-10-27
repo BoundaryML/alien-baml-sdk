@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "status": "unavailable",
+      "reason": "not-configured"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&range=24h",
+      "got": "range=24h&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

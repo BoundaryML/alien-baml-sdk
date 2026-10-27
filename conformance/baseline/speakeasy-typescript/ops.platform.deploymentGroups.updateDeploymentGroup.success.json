@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "name": "prod-us-east-1",
+      "externalId": "ext_example_01",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "maxDeployments": 2,
+      "createdAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

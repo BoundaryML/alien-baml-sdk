@@ -1,0 +1,158 @@
+{
+  "outcome": {
+    "ok": {
+      "name": "name-value",
+      "tier": "read-only",
+      "version": "version-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "body.metadata.tier",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": "destructive",
+      "exchange": 1
+    },
+    {
+      "path": "result.enabled",
+      "kind": "different: left out",
+      "want": true,
+      "got": null
+    },
+    {
+      "path": "result.permissionDiff",
+      "kind": "different: left out",
+      "want": {
+        "aws": {
+          "added": [
+            {
+              "effect": "Allow",
+              "actions": [
+                "actions-item-value"
+              ],
+              "resources": [
+                "resources-item-value"
+              ],
+              "condition": {
+                "condition-key": {
+                  "condition-key": "condition-value"
+                }
+              },
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ],
+          "removed": [
+            {
+              "effect": "Allow",
+              "actions": [
+                "actions-item-value"
+              ],
+              "resources": [
+                "resources-item-value"
+              ],
+              "condition": {
+                "condition-key": {
+                  "condition-key": "condition-value"
+                }
+              },
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ]
+        },
+        "gcp": {
+          "added": [
+            {
+              "permission": "permission-value",
+              "scope": "projects/${projectName}",
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ],
+          "removed": [
+            {
+              "permission": "permission-value",
+              "scope": "projects/${projectName}",
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ]
+        },
+        "kubernetes": {
+          "added": [
+            {
+              "apiGroup": "apiGroup-value",
+              "resource": "resource-value",
+              "verbs": [
+                "verbs-item-value"
+              ],
+              "resourceNames": [
+                "resourceNames-item-value"
+              ],
+              "remediationOnly": true,
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ],
+          "removed": [
+            {
+              "apiGroup": "apiGroup-value",
+              "resource": "resource-value",
+              "verbs": [
+                "verbs-item-value"
+              ],
+              "resourceNames": [
+                "resourceNames-item-value"
+              ],
+              "remediationOnly": true,
+              "sources": [
+                {
+                  "plugin": "plugin-value",
+                  "operation": "operation-value",
+                  "reason": "reason-value"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "got": null
+    }
+  ]
+}

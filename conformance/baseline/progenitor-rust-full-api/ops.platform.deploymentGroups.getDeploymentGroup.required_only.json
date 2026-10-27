@@ -1,0 +1,21 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "deploymentCount": 2,
+      "externalId": "ext_example_01",
+      "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+      "maxDeployments": 2,
+      "name": "prod-us-east-1",
+      "project": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,117 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "dom_469m0agk8luj4s16sakmmpdddom4",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "domain": "domain-value",
+      "isSystem": true,
+      "claimToken": "claimToken-value",
+      "hostedZoneId": "hostedZoneId-value",
+      "nameServers": [
+        "nameServers-item-value"
+      ],
+      "status": "pending-zone-creation",
+      "error": {
+        "key": "value"
+      },
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "updatedAt": "2026-10-01T00:00:00.000Z",
+      "verifiedAt": "2026-10-01T00:00:00.000Z",
+      "endpoints": [
+        {
+          "id": "dend_1bb6gdvm1bs74acqkjstcgvdend1",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+          "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+          "kind": "deployment_portal",
+          "owner": {
+            "type": "workspace",
+            "id": "id-value"
+          },
+          "hostname": "hostname-value",
+          "status": "waiting_for_domain",
+          "managedDnsRecords": [
+            {
+              "name": "name-value",
+              "type": "type-value",
+              "value": "value-value"
+            }
+          ],
+          "retryAttempts": 2,
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "updatedAt": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "usage": {
+        "deploymentUrlProjects": [
+          {
+            "id": "id-value",
+            "name": "name-value"
+          }
+        ],
+        "portalBindings": [
+          {
+            "id": "id-value",
+            "projectId": "projectId-value",
+            "projectName": "projectName-value",
+            "hostname": "hostname-value"
+          }
+        ],
+        "packageDomains": [
+          {
+            "id": "id-value",
+            "hostname": "hostname-value"
+          }
+        ],
+        "managerBindings": [
+          {
+            "id": "id-value",
+            "managerId": "managerId-value",
+            "managerName": "managerName-value",
+            "hostname": "hostname-value"
+          }
+        ]
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.verifiedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.endpoints[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.endpoints[0].updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

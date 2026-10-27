@@ -1,0 +1,59 @@
+{
+  "outcome": {
+    "ok": {
+      "buildPhase": "building",
+      "completedAt": "2026-10-01T00:00:00Z",
+      "config": {
+        "displayName": "displayName-value",
+        "name": "name-value",
+        "type": "cli"
+      },
+      "createdAt": "2026-10-01T00:00:00Z",
+      "dependsOnPackageId": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+      "error": {
+        "key": "value"
+      },
+      "id": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+      "lastProgressAt": "2026-10-01T00:00:00Z",
+      "leaseExpiresAt": "2026-10-01T00:00:00Z",
+      "lockedAt": "2026-10-01T00:00:00Z",
+      "lockedBy": "lockedBy-value",
+      "outputs": {
+        "binaries": {
+          "binaries-key": {
+            "sha256": "sha256-value",
+            "size": 2,
+            "url": "url-value"
+          }
+        },
+        "buildInfo": {
+          "alienSha": "alienSha-value",
+          "horizonSha": "horizonSha-value",
+          "platformSha": "platformSha-value",
+          "sourceCliBinarySha256": "sourceCliBinarySha256-value"
+        },
+        "type": "cli"
+      },
+      "packageBuildInputHash": "packageBuildInputHash-value",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "retries": 2,
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "fingerprint": "fingerprint-value",
+          "target": "target-value",
+          "version": 2
+        }
+      },
+      "sourceBinarySha256": "sourceBinarySha256-value",
+      "sourceReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "status": "pending",
+      "type": "cli",
+      "updatedAt": "2026-10-01T00:00:00Z",
+      "version": "version-value",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

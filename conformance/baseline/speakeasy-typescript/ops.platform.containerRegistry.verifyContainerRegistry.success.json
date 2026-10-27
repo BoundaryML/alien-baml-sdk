@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "crroute_c9t4xoy7fmiq7equtu20crroutec",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "managerId": "managerId-value",
+      "resourceId": "resourceId-value",
+      "resourceRevision": "resourceRevision-value",
+      "desiredRevision": 2,
+      "appliedRevision": 2,
+      "status": "resolving",
+      "lastVerifiedAt": "2026-10-01T00:00:00.000Z",
+      "lastError": "lastError-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.lastVerifiedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

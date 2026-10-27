@@ -1,0 +1,39 @@
+{
+  "outcome": {
+    "ok": {
+      "commandsUrl": "commandsUrl-value",
+      "currentState": {
+        "key": "value"
+      },
+      "executionClaim": {
+        "attemptId": "attemptId-value",
+        "operationId": "operationId-value"
+      },
+      "target": {
+        "key": "value"
+      },
+      "targetDynamicContainers": [
+        {
+          "cpu": "cpu-value",
+          "deleted": true,
+          "generation": 2,
+          "image": "image-value",
+          "memory": "memory-value",
+          "name": "name-value",
+          "ports": [
+            2
+          ],
+          "replicas": 2
+        }
+      ],
+      "targetOperationsBundleSet": {
+        "hash": "hash-value"
+      },
+      "targetOperatorImage": "targetOperatorImage-value",
+      "tunnelUrl": "tunnelUrl-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

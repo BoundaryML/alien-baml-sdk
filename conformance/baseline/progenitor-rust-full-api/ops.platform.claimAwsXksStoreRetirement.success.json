@@ -1,0 +1,12 @@
+{
+  "outcome": {
+    "ok": {
+      "retirement": {
+        "customKeyStoreId": "cks-u"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

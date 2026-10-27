@@ -1,0 +1,28 @@
+{
+  "name": "@alien-baml/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Alien SDK for TypeScript, generated from one BAML project (reference implementation)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p test && vitest run"
+  },
+  "dependencies": {
+    "@boundaryml/baml-bridge": "0.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

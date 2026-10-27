@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentGroupId": "deploymentGroupId-value",
+      "token": "token-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

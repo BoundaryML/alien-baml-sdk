@@ -1,0 +1,31 @@
+{
+  "outcome": {
+    "ok": {
+      "operatorImage": {
+        "source": "package",
+        "packageId": "packageId-value",
+        "packageVersion": "packageVersion-value",
+        "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+        "digest": "sha256:deaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeae",
+        "renderedAt": "2026-10-01T00:00:00.000Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "body.operatorImage.renderedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "result.operatorImage.renderedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

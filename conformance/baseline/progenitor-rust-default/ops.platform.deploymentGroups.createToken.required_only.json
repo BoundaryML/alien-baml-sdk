@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentLink": "deploymentLink-value",
+      "token": "token-value"
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "different",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "body",
+      "kind": "different",
+      "want": "(empty)",
+      "got": "{}",
+      "exchange": 1
+    }
+  ]
+}

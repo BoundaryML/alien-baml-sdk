@@ -1,0 +1,14 @@
+{
+  "outcome": {
+    "ok": {
+      "desiredState": "present",
+      "id": "crrepo_625temdq3bnu25jw9rcuxcrrepo6",
+      "logicalName": "logicalName-value",
+      "status": "pending",
+      "verifiedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

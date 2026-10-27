@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "aws": {
+        "launchStackUrl": "https://example.com/launchStackUrl",
+        "templateUrl": "https://example.com/templateUrl"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

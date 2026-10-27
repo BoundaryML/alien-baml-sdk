@@ -1,0 +1,27 @@
+# Runs conformance scenarios through Alien's Progenitor Rust clients
+# (alien-platform-api and alien-manager-api), built by bench/build.sh from the
+# copy of the Alien repository it extracts into .cache/incumbents/alien.
+# Driven by run.mjs, which generates the operation table (README).
+[package]
+name = "progenitor_conformance"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+# Every Platform operation; without it, only the ones Alien's own Rust code calls.
+full-api = ["alien-platform-api/full-api"]
+
+[dependencies]
+alien-manager-api = { path = "../../../.cache/incumbents/alien/client-sdks/manager/rust" }
+alien-platform-api = { path = "../../../.cache/incumbents/alien/client-sdks/platform/rust" }
+# Types the clients' builder methods take (date-times, UUIDs).
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+reqwest = { version = "0.12", default-features = false }
+serde = "1"
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "macros"] }
+uuid = { version = "1", features = ["serde"] }

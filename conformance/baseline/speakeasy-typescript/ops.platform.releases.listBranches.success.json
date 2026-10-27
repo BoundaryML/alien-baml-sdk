@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        "items-item-value"
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&search=search value&limit=2",
+      "got": "limit=2&project=project value&search=search value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

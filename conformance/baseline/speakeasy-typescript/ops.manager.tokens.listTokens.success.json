@@ -1,0 +1,17 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "createdAt-value",
+          "id": "id-value",
+          "keyPrefix": "keyPrefix-value",
+          "tokenType": "tokenType-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

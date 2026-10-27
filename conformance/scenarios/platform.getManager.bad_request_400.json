@@ -1,0 +1,34 @@
+{
+  "id": "platform.getManager.bad_request_400",
+  "phase": 1,
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "not-a-manager-id"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/not-a-manager-id"
+      },
+      "respond": {
+        "status": 400,
+        "text": "bad request"
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": false,
+    "http_status": 400
+  },
+  "assert": []
+}

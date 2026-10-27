@@ -1,0 +1,323 @@
+{
+  "outcome": {
+    "ok": {
+      "access": {
+        "data": {
+          "active": 2,
+          "pending": 2,
+          "recent": [
+            {
+              "approvedUntil": "2026-10-01T00:00:00Z",
+              "deploymentId": "deploymentId-value",
+              "id": "id-value",
+              "status": "pending-approval",
+              "title": "title-value",
+              "updatedAt": "2026-10-01T00:00:00Z"
+            }
+          ]
+        },
+        "error": {
+          "code": "code-value",
+          "message": "message-value"
+        },
+        "freshness": "fresh",
+        "sourceUpdatedAt": "2026-10-01T00:00:00Z",
+        "status": "ready"
+      },
+      "activity": {
+        "data": {
+          "debugSessions": [
+            {
+              "createdAt": "2026-10-01T00:00:00Z",
+              "deploymentId": "deploymentId-value",
+              "expiresAt": "2026-10-01T00:00:00Z",
+              "id": "id-value",
+              "state": "state-value"
+            }
+          ],
+          "investigations": [
+            {
+              "createdAt": "2026-10-01T00:00:00Z",
+              "deploymentId": "deploymentId-value",
+              "id": "id-value",
+              "status": "status-value",
+              "triggerType": "triggerType-value",
+              "updatedAt": "2026-10-01T00:00:00Z"
+            }
+          ],
+          "lastVerifiedOperation": {
+            "accessRequestId": "accessRequestId-value",
+            "commandId": "commandId-value",
+            "commandState": "SUCCEEDED",
+            "completedAt": "2026-10-01T00:00:00Z",
+            "createdAt": "2026-10-01T00:00:00Z",
+            "deploymentId": "deploymentId-value",
+            "invocationId": "invocationId-value",
+            "operation": "operation-value",
+            "plugin": "plugin-value",
+            "pluginVersion": "pluginVersion-value",
+            "resultAvailable": true,
+            "sensitiveOutput": {
+              "kind": "none"
+            },
+            "tier": "read-only",
+            "updatedAt": "2026-10-01T00:00:00Z",
+            "verification": {
+              "attempts": 2,
+              "deadline": "2026-10-01T00:00:00Z",
+              "maxAttempts": 2,
+              "reason": "reason-value",
+              "state": "not-required"
+            },
+            "verificationState": "not-required"
+          },
+          "recent": [
+            {
+              "accessRequestId": "accessRequestId-value",
+              "commandId": "commandId-value",
+              "commandState": "commandState-value",
+              "createdAt": "2026-10-01T00:00:00Z",
+              "deploymentId": "deploymentId-value",
+              "invocationId": "invocationId-value",
+              "operation": "operation-value",
+              "plugin": "plugin-value",
+              "pluginVersion": "pluginVersion-value",
+              "tier": "read-only",
+              "updatedAt": "2026-10-01T00:00:00Z",
+              "verificationState": "not-required"
+            }
+          ]
+        },
+        "error": {
+          "code": "code-value",
+          "message": "message-value"
+        },
+        "freshness": "fresh",
+        "sourceUpdatedAt": "2026-10-01T00:00:00Z",
+        "status": "ready"
+      },
+      "generatedAt": "2026-10-01T00:00:00Z",
+      "installations": {
+        "data": {
+          "items": [
+            {
+              "application": {
+                "desired": {
+                  "helmChart": {
+                    "chart": "chart-value",
+                    "version": "version-value"
+                  },
+                  "images": [
+                    "images-item-value"
+                  ],
+                  "releaseId": "releaseId-value",
+                  "source": "channel",
+                  "version": "version-value"
+                },
+                "reason": "reason-value",
+                "releaseChannel": "releaseChannel-value",
+                "reported": {
+                  "releaseId": "releaseId-value",
+                  "version": "version-value"
+                },
+                "rollback": {
+                  "releaseId": "releaseId-value",
+                  "version": "version-value"
+                },
+                "state": "no-desired"
+              },
+              "deploymentGroupId": "deploymentGroupId-value",
+              "expectedImage": {
+                "digest": "sha256:deaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeae",
+                "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+                "packageId": "packageId-value",
+                "packageVersion": "packageVersion-value",
+                "renderedAt": "2026-10-01T00:00:00Z",
+                "source": "package"
+              },
+              "id": "id-value",
+              "imageStatus": "matching",
+              "lastHeartbeatAt": "2026-10-01T00:00:00Z",
+              "lastSuccessfulDiagnosticAt": "2026-10-01T00:00:00Z",
+              "name": "name-value",
+              "operationSync": {
+                "error": "error-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "observedBundleHash": "observedBundleHash-value",
+                "status": "preparing",
+                "targetBundleHash": "targetBundleHash-value",
+                "targetSetAt": "2026-10-01T00:00:00Z"
+              },
+              "operatorPermission": "operatorPermission-value",
+              "operatorScope": "operatorScope-value",
+              "operatorUpdate": {
+                "builtAt": "2026-10-01T00:00:00Z",
+                "digest": "digest-value",
+                "image": "image-value",
+                "packageId": "packageId-value",
+                "packageVersion": "packageVersion-value"
+              },
+              "operatorVersion": "operatorVersion-value",
+              "permissions": {
+                "reason": "reason-value",
+                "recordedAt": "2026-10-01T00:00:00Z",
+                "status": "current"
+              },
+              "platform": "kubernetes",
+              "previousExpectedImage": {
+                "digest": "sha256:deaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeae",
+                "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+                "packageId": "packageId-value",
+                "packageVersion": "packageVersion-value",
+                "renderedAt": "2026-10-01T00:00:00Z",
+                "source": "package"
+              },
+              "region": "region-value",
+              "runningImage": {
+                "digest": "sha256:deaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeaedeae",
+                "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "packageId": "packageId-value",
+                "packageVersion": "packageVersion-value",
+                "source": "package"
+              },
+              "state": "unhealthy",
+              "stateReason": "stateReason-value",
+              "status": "status-value"
+            }
+          ],
+          "unregisteredSetups": [
+            {
+              "createdAt": "2026-10-01T00:00:00Z",
+              "deploymentGroupId": "deploymentGroupId-value",
+              "name": "name-value",
+              "platform": "kubernetes",
+              "valuesExpireAt": "2026-10-01T00:00:00Z"
+            }
+          ]
+        },
+        "error": {
+          "code": "code-value",
+          "message": "message-value"
+        },
+        "freshness": "fresh",
+        "sourceUpdatedAt": "2026-10-01T00:00:00Z",
+        "status": "ready"
+      },
+      "nextAction": {
+        "deploymentId": "deploymentId-value",
+        "kind": "connect",
+        "message": "message-value",
+        "target": "setup"
+      },
+      "operations": {
+        "data": {
+          "generatedPermissions": [
+            {
+              "cloud": {
+                "aws": [
+                  {
+                    "actions": [
+                      "actions-item-value"
+                    ],
+                    "condition": {
+                      "condition-key": {
+                        "condition-key": "condition-value"
+                      }
+                    },
+                    "effect": "Allow",
+                    "reason": "reason-value",
+                    "resources": [
+                      "resources-item-value"
+                    ]
+                  }
+                ],
+                "azure": [
+                  "azure-item-value"
+                ],
+                "gcp": [
+                  {
+                    "permissions": [
+                      "permissions-item-value"
+                    ],
+                    "reason": "reason-value",
+                    "scope": "projects/${projectName}"
+                  }
+                ]
+              },
+              "operation": "operation-value",
+              "plugin": "plugin-value",
+              "pluginVersion": "pluginVersion-value",
+              "tier": "read-only"
+            }
+          ],
+          "selected": [
+            {
+              "name": "name-value",
+              "operations": [
+                {
+                  "name": "name-value",
+                  "tier": "read-only"
+                }
+              ],
+              "source": "builtin",
+              "version": "version-value"
+            }
+          ],
+          "sync": {
+            "preparing": 2,
+            "ready": 2,
+            "stuck": 2,
+            "syncing": 2
+          }
+        },
+        "error": {
+          "code": "code-value",
+          "message": "message-value"
+        },
+        "freshness": "fresh",
+        "sourceUpdatedAt": "2026-10-01T00:00:00Z",
+        "status": "ready"
+      },
+      "project": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "release": {
+        "data": {
+          "older": 2,
+          "reported": [
+            {
+              "createdAt": "2026-10-01T00:00:00Z",
+              "deployments": 2,
+              "latest": true,
+              "releaseId": "releaseId-value",
+              "version": "version-value"
+            }
+          ],
+          "rollout": [
+            {
+              "failed": 2,
+              "releaseId": "releaseId-value",
+              "unknown": 2,
+              "upToDate": 2,
+              "version": "version-value",
+              "waiting": 2
+            }
+          ],
+          "unknown": 2
+        },
+        "error": {
+          "code": "code-value",
+          "message": "message-value"
+        },
+        "freshness": "fresh",
+        "sourceUpdatedAt": "2026-10-01T00:00:00Z",
+        "status": "ready"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

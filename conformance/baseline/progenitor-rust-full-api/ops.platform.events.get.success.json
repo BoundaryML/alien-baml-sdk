@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "data": {
+        "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+        "type": "DeploymentCheckRequested"
+      },
+      "debugSessionId": "dbg_HOXmkmT9UPYlsnxqSNlEGoXLdbgH",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "id": "event_MtSA24M3pWuAkQYxgZxuRIeventM",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "releaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "state": {
+        "failed": {}
+      },
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

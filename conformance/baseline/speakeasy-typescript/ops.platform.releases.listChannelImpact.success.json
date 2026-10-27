@@ -1,0 +1,63 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "channel": "channel-value",
+          "currentRelease": {
+            "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+            "version": "version-value",
+            "createdAt": "2026-10-01T00:00:00.000Z"
+          },
+          "runsThisRelease": true,
+          "rollbackRelease": {
+            "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+            "version": "version-value",
+            "createdAt": "2026-10-01T00:00:00.000Z"
+          },
+          "deploymentCount": 2,
+          "rolloutEffects": {
+            "updates": 2,
+            "unconfirmed": 2,
+            "retries": 2,
+            "alreadyOn": 2,
+            "pinned": 2,
+            "customerApplies": 2,
+            "waitsForApproval": 2,
+            "waitsForOwner": 2,
+            "waitsForInputs": 2,
+            "notAffected": 2
+          },
+          "effects": {
+            "updates": 2,
+            "unconfirmed": 2,
+            "retries": 2,
+            "alreadyOn": 2,
+            "pinned": 2,
+            "customerApplies": 2,
+            "waitsForApproval": 2,
+            "waitsForOwner": 2,
+            "waitsForInputs": 2,
+            "notAffected": 2
+          }
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.items[0].currentRelease.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].rollbackRelease.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

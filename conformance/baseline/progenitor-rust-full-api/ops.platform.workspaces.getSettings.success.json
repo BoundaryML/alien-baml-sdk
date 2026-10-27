@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "enabled": true,
+      "updatedAt": "2026-10-01T00:00:00Z",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

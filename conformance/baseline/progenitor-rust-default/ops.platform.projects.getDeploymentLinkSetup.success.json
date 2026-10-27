@@ -1,0 +1,27 @@
+{
+  "outcome": {
+    "ok": {
+      "activeRelease": {
+        "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+        "stack": {},
+        "version": "version-value"
+      },
+      "setupItems": [
+        "deployment"
+      ],
+      "setupPackagesStatus": "preparing",
+      "supportedPlatforms": [
+        "aws"
+      ],
+      "visiblePackageTypes": [
+        "cli"
+      ],
+      "visibleSetupMethods": [
+        "cloudformation"
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

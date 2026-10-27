@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ResponseValidationError)",
+      "http_status": 200,
+      "message": "Response validation failed",
+      "detail": "✖ Invalid input: expected string, received number → at managerUrl ✖ Invalid input: expected string, received undefined → at expiresAt"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MALFORMED_RESPONSE",
+      "got": "(ResponseValidationError)"
+    }
+  ]
+}

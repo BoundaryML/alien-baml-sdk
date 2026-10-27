@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "cursorRestarted": true,
+      "errorCount": 1.5,
+      "logs": [
+        {
+          "level": "level-value",
+          "message": "message-value",
+          "replicaId": "replicaId-value",
+          "timestamp": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value",
+      "numHits": 1.5,
+      "partial": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&sinceMinutes=2&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&limit=2&sinceMinutes=2&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

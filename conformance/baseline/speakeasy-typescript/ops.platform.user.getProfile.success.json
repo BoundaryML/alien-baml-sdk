@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "id-value",
+      "email": "email-value",
+      "name": "name-value",
+      "image": "image-value",
+      "githubUsername": "githubUsername-value",
+      "cliConnected": true,
+      "company": "company-value",
+      "acquisitionSource": "github",
+      "acquisitionSourceDetail": "acquisitionSourceDetail-value",
+      "accessStatus": "pending",
+      "useCaseTags": [
+        "byoc"
+      ],
+      "useCases": "useCases-value",
+      "profileSetupCompletedAt": "2026-10-01T00:00:00.000Z",
+      "profileSetupVersion": 2
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.profileSetupCompletedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

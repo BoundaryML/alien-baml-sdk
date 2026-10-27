@@ -1,0 +1,25 @@
+{
+  "id": "setup.cloudformationLaunchUrl.region_unsupported",
+  "phase": 1,
+  "call": {
+    "fn": "setup.cloudformationLaunchUrl",
+    "args": {
+      "input": {
+        "templateUrl": "https://example.com/t.yaml",
+        "region": "cn-north-1",
+        "stackName": "S",
+        "parameters": {}
+      }
+    }
+  },
+  "exchanges": [],
+  "expect_result": null,
+  "expect_error": {
+    "code": "SETUP_REGION_UNSUPPORTED",
+    "retryable": false,
+    "http_status": null
+  },
+  "assert": [
+    "no_requests"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "createdAt-value",
+      "deploymentCount": 2,
+      "id": "id-value",
+      "maxDeployments": 2,
+      "name": "name-value",
+      "projectId": "projectId-value",
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

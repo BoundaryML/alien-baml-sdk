@@ -1,0 +1,30 @@
+{
+  "id": "setup.cloudformationLaunchUrl.shared_fixture",
+  "phase": 1,
+  "notes": "conformance/fixtures/setup_launch_url.json. Every language must produce this string byte for byte.",
+  "call": {
+    "fn": "setup.cloudformationLaunchUrl",
+    "args": {
+      "input": {
+        "templateUrl": "https://alien-setup-fixture.s3.us-east-1.amazonaws.com/stacks/example-setup.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEFIXTURECREDENTIAL%2F20261014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261014T000000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0f1x2t3u4r5e6s7i8g9n0a1t2u3r4e5n6o7t8a9r0e1a2l3s4i5g6n7a8t9u0r1e",
+        "region": "eu-west-1",
+        "stackName": "Example-Setup-01",
+        "parameters": {
+          "Zeta": "last",
+          "Alpha": "a&b=c",
+          "Mid": "1+1 = 2",
+          "Pct": "100%",
+          "Name": "Café Zürich 東京",
+          "Empty": ""
+        }
+      }
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/create/review?templateURL=https%3A%2F%2Falien-setup-fixture.s3.us-east-1.amazonaws.com%2Fstacks%2Fexample-setup.yaml%3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3DEXAMPLEFIXTURECREDENTIAL%252F20261014%252Fus-east-1%252Fs3%252Faws4_request%26X-Amz-Date%3D20261014T000000Z%26X-Amz-Expires%3D3600%26X-Amz-SignedHeaders%3Dhost%26X-Amz-Signature%3D0f1x2t3u4r5e6s7i8g9n0a1t2u3r4e5n6o7t8a9r0e1a2l3s4i5g6n7a8t9u0r1e&stackName=Example-Setup-01&param_Alpha=a%26b%3Dc&param_Empty=&param_Mid=1%2B1%20%3D%202&param_Name=Caf%C3%A9%20Z%C3%BCrich%20%E6%9D%B1%E4%BA%AC&param_Pct=100%25&param_Zeta=last"
+  },
+  "expect_error": null,
+  "assert": [],
+  "capture_raw": true
+}

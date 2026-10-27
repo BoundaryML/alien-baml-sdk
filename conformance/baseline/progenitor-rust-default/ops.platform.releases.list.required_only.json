@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "commitUrl": "https://example.com/commitUrl",
+          "createdAt": "2026-10-01T00:00:00Z",
+          "currentChannels": [
+            "c"
+          ],
+          "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+          "projectId": "projectId-value",
+          "setupFingerprints": {
+            "setupFingerprints-key": {
+              "fingerprint": "fingerprint-value",
+              "target": "target-value",
+              "version": 2
+            }
+          },
+          "version": "version-value",
+          "workspaceId": "workspaceId-value"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

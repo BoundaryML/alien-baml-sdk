@@ -1,0 +1,39 @@
+{
+  "outcome": {
+    "ok": {
+      "planId": "starter",
+      "planStatus": "active",
+      "features": {
+        "customDomains": true,
+        "privateManagers": true,
+        "operationsCustomPlugins": true,
+        "ssoSaml": true,
+        "auditLogs": true,
+        "airgapped": true
+      },
+      "limits": {
+        "maxDeployments": 1.5,
+        "maxProjects": 1.5,
+        "maxSeats": 1.5,
+        "maxCustomDomains": 1.5,
+        "creditUsd": 1.5,
+        "seatsIncluded": 1.5
+      },
+      "syncedAt": "2026-10-01T00:00:00.000Z",
+      "stale": true,
+      "billableQuantities": {
+        "billableQuantities-key": 1.5
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.syncedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "outcome": {
+    "ok": {
+      "status": "status-value",
+      "telemetryAccepted": 2,
+      "telemetryThrough": 2
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

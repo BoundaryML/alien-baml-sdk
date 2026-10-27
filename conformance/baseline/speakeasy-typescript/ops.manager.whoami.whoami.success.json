@@ -1,0 +1,17 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "id-value",
+      "kind": "kind-value",
+      "role": "role-value",
+      "scope": {
+        "type": "type-value"
+      },
+      "workspaceId": "workspaceId-value",
+      "workspaceName": "workspaceName-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

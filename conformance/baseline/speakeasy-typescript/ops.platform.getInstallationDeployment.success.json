@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

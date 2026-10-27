@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "acknowledged": true,
+      "timestamp": "timestamp-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

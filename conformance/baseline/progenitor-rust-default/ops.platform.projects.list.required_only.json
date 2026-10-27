@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "2026-10-01T00:00:00Z",
+          "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "name": "my-app",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

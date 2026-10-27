@@ -1,0 +1,34 @@
+{
+  "open_enums": "all",
+  "open_unions": true,
+  "coverage": "docs/importer-coverage.md",
+  "services": [
+    {
+      "name": "platform",
+      "spec": "specs/platform/openapi.json",
+      "overlays": [
+        "specs/platform/sdk-compatibility-overlay.json"
+      ],
+      "operations": "all",
+      "out": "baml/baml_src/ns_platform",
+      "client": "platform",
+      "naming": "speakeasy-group",
+      "workspace_global": true,
+      "method_renames": [
+        {
+          "method": "POST",
+          "path": "/v1/deployment-groups/{id}/tokens",
+          "name": "createToken"
+        }
+      ]
+    },
+    {
+      "name": "manager",
+      "spec": "specs/manager/openapi.json",
+      "operations": "all",
+      "out": "baml/baml_src/ns_manager",
+      "client": "manager",
+      "naming": "first-tag"
+    }
+  ]
+}

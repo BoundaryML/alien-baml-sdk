@@ -1,0 +1,43 @@
+{
+  "outcome": {
+    "ok": {
+      "generatedAt": "2026-10-01T00:00:00Z",
+      "routes": [
+        {
+          "appliedRevision": 2,
+          "credentials": [
+            {
+              "expiresAt": "2026-10-01T00:00:00Z",
+              "id": "crcred_oz1xjr82f37j17g4gtmyucrcredo",
+              "repositorySubset": [
+                "repositorySubset-item-value"
+              ],
+              "revokedAt": "2026-10-01T00:00:00Z",
+              "scope": "pull",
+              "secretDigest": "eceeaeeceeaeeceeaeeceeaeeceeaeeceeaeeceeaeeceeaeeceeaeeceeaeecee",
+              "secretPrefix": "secretPrefix-value"
+            }
+          ],
+          "deploymentId": "deploymentId-value",
+          "desiredRevision": 2,
+          "id": "crroute_c9t4xoy7fmiq7equtu20crroutec",
+          "repositories": [
+            {
+              "desiredState": "present",
+              "id": "crrepo_625temdq3bnu25jw9rcuxcrrepo6",
+              "logicalName": "logicalName-value",
+              "remoteResourceRevision": "remoteResourceRevision-value",
+              "routableUpstreamName": "routableUpstreamName-value"
+            }
+          ],
+          "resourceId": "resourceId-value",
+          "resourceRevision": "resourceRevision-value",
+          "status": "resolving"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

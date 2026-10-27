@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "defaultBranch": "defaultBranch-value",
+          "name": "name-value",
+          "private": true
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

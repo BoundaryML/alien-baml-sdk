@@ -1,0 +1,19 @@
+# A second, unrelated BAML project: what an Alien customer that already uses
+# BAML would have in the same application.
+[package]
+name = "other"
+
+[generator.typescript]
+output_type = "typescript/node"
+naming_convention = "preserve-case"
+output_dir = "../typescript"
+
+[generator.python]
+output_type = "python/pydantic"
+naming_convention = "preserve-case"
+output_dir = "../python"
+
+# Without this the generated SDK reads no level variable and always records at
+# `medium` (docs/gaps.md#b1); naming it lets run.sh turn telemetry off.
+[bridge.env_var_names]
+BAML_TELEMETRY = "BAML_TELEMETRY"

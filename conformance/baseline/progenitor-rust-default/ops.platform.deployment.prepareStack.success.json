@@ -1,0 +1,39 @@
+{
+  "outcome": {
+    "ok": {
+      "platform": "aws",
+      "setup": {
+        "fingerprint": "fingerprint-value",
+        "target": "target-value",
+        "version": 2
+      },
+      "stack": {
+        "id": "id-value",
+        "resources": {
+          "resources-key": {
+            "config": {
+              "id": "id-value",
+              "type": "type-value",
+              "additionalProperties": {
+                "extra-property": {
+                  "key": "value"
+                }
+              }
+            },
+            "dependencies": [
+              {
+                "id": "id-value",
+                "type": "type-value"
+              }
+            ],
+            "lifecycle": "frozen"
+          }
+        }
+      },
+      "updateOperationId": "updateOperationId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,21 @@
+{
+  "outcome": {
+    "ok": {
+      "commandId": "commandId-value",
+      "params": {
+        "inlineBase64": "inlineBase64-value",
+        "mode": "inline"
+      },
+      "response": {
+        "response": {
+          "inlineBase64": "inlineBase64-value",
+          "mode": "inline"
+        },
+        "status": "success"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

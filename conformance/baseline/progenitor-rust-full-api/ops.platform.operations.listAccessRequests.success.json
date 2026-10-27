@@ -1,0 +1,62 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "agentSessionId": "agentSessionId-value",
+          "approvedBy": {
+            "actorId": "actorId-value",
+            "at": "at-value",
+            "method": "method-value"
+          },
+          "approvedUntil": "approvedUntil-value",
+          "commands": [
+            {
+              "command": "kubernetes/get-pods",
+              "summary": "List pods in the ingestion namespace"
+            }
+          ],
+          "createdAt": "createdAt-value",
+          "debugGrant": {
+            "tool": "kubectl"
+          },
+          "deniedBy": {
+            "actorId": "actorId-value",
+            "at": "at-value"
+          },
+          "deploymentId": "deploymentId-value",
+          "id": "id-value",
+          "maxRisk": "read-only",
+          "operationPattern": "operationPattern-value",
+          "queuedAt": "queuedAt-value",
+          "queuedBy": "queuedBy-value",
+          "reason": "reason-value",
+          "remediationPlanId": "remediationPlanId-value",
+          "requestedExpiresAt": "requestedExpiresAt-value",
+          "requesterId": "requesterId-value",
+          "requesterKind": "user",
+          "revokedBy": {
+            "actorId": "actorId-value",
+            "actorKind": "user",
+            "at": "at-value",
+            "reason": "reason-value"
+          },
+          "status": "pending-approval",
+          "title": "title-value"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&status=pending-approval&status=queued&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&agentSessionId=agentSessionId value&limit=2&cursor=cursor value",
+      "got": "agentSessionId=agentSessionId value&cursor=cursor value&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&limit=2&project=project value&status=pending-approval&status=queued&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

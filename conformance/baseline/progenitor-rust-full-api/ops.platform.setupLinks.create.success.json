@@ -1,0 +1,28 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentGroup": {
+        "createdAt": "2026-10-01T00:00:00Z",
+        "externalId": "ext_example_01",
+        "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+        "maxDeployments": 100,
+        "name": "prod-us-east-1",
+        "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+        "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+      },
+      "deploymentLink": "deploymentLink-value",
+      "expiresAt": "2026-10-01T00:00:00Z",
+      "token": "token-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.deploymentGroup.maxDeployments",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": 100
+    }
+  ]
+}

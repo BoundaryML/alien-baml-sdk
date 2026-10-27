@@ -1,0 +1,26 @@
+{
+  "name": "other-baml-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The generated SDK of the second BAML project (examples/coexistence/other/baml)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/baml_sdk/index.d.ts",
+      "default": "./dist/baml_sdk/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@boundaryml/baml-bridge": "0.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "deliveryMode": "push",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "got": "deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

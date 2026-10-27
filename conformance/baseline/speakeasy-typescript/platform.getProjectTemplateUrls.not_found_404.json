@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "error": {
+      "code": "NOT_FOUND",
+      "retryable": false,
+      "http_status": 404,
+      "message": "Project not found.",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

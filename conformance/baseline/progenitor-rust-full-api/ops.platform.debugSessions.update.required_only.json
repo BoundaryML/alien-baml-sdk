@@ -1,0 +1,43 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "error": {
+        "key": "value"
+      },
+      "expiresAt": "2026-10-01T00:00:00Z",
+      "id": "dbg_HOXmkmT9UPYlsnxqSNlEGoXLdbgH",
+      "mode": "push",
+      "owner": "owner-value",
+      "presignedUrls": {
+        "presignedUrls-key": {
+          "readUrl": "https://example.com/readUrl",
+          "writeUrl": "https://example.com/writeUrl"
+        }
+      },
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "provider": "aws",
+      "state": "pending",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "different",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "body",
+      "kind": "different",
+      "want": "(empty)",
+      "got": "{}",
+      "exchange": 1
+    }
+  ]
+}

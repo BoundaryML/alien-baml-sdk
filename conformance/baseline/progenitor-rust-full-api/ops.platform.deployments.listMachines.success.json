@@ -1,0 +1,44 @@
+{
+  "outcome": {
+    "ok": {
+      "machines": [
+        {
+          "capacityGroup": "capacityGroup-value",
+          "clusterResourceId": "clusterResourceId-value",
+          "cpu": {
+            "allocated": 1.5,
+            "systemReserve": 1.5,
+            "total": 1.5
+          },
+          "drainBlockers": [
+            {
+              "reason": "reason-value"
+            }
+          ],
+          "drainForce": true,
+          "lastHeartbeat": "lastHeartbeat-value",
+          "localOverrides": [
+            {
+              "baseAssignmentHash": "baseAssignmentHash-value",
+              "lifecycle": "lifecycle-value",
+              "replicaId": "replicaId-value",
+              "workloadName": "workloadName-value"
+            }
+          ],
+          "machineId": "machineId-value",
+          "memory": {
+            "allocated": 1.5,
+            "systemReserve": 1.5,
+            "total": 1.5
+          },
+          "replicaCount": 2,
+          "status": "status-value",
+          "zone": "zone-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

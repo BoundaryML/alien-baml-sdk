@@ -1,0 +1,21 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "description": "description-value",
+      "disabled": true,
+      "filterTypes": [
+        "deployment.created"
+      ],
+      "id": "id-value",
+      "projectId": "projectId-value",
+      "projectIds": [
+        "projectIds-item-value"
+      ],
+      "url": "https://example.com/url"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

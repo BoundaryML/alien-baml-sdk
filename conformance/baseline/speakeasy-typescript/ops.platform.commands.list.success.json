@@ -1,0 +1,74 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "cmd_2sxjXxvOYct7IohT3ukliAzfcmd2",
+          "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+          "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+          "name": "name-value",
+          "state": "PENDING_UPLOAD",
+          "deploymentModel": "push",
+          "target": {
+            "resourceId": "resourceId-value",
+            "resourceType": "worker"
+          },
+          "attempt": 1.5,
+          "deadline": "2026-10-01T00:00:00.000Z",
+          "requestSizeBytes": 1.5,
+          "responseSizeBytes": 1.5,
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "dispatchedAt": "2026-10-01T00:00:00.000Z",
+          "completedAt": "2026-10-01T00:00:00.000Z",
+          "error": {
+            "error-key": {
+              "key": "value"
+            }
+          },
+          "accessRequestId": "accessRequestId-value",
+          "verification": {
+            "state": "not-required",
+            "reason": "reason-value"
+          }
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&state=PENDING_UPLOAD&name=name value&search=search value&createdAfter=2026-10-01T00:00:00Z&createdBefore=2026-10-01T00:00:00Z&include=deployment&include=project&limit=2&cursor=cursor value",
+      "got": "createdAfter=2026-10-01T00:00:00.000Z&createdBefore=2026-10-01T00:00:00.000Z&cursor=cursor value&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&include=deployment&include=project&limit=2&name=name value&project=project value&search=search value&state=PENDING_UPLOAD&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].deadline",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].dispatchedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].completedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

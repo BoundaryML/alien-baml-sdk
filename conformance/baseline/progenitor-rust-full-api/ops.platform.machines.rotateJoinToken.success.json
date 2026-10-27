@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "cliCommandName": "cliCommandName-value",
+      "cliInstallScriptUrl": "https://example.com/cliInstallScriptUrl",
+      "clusterId": "clusterId-value",
+      "controlPlaneUrl": "https://example.com/controlPlaneUrl",
+      "joinToken": "joinToken-value",
+      "token": {
+        "createdAt": "createdAt-value",
+        "createdBy": "createdBy-value",
+        "id": "id-value",
+        "joinCount": 2
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

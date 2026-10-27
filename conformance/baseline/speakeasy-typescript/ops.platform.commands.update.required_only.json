@@ -1,0 +1,73 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "cmd_2sxjXxvOYct7IohT3ukliAzfcmd2",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "name": "name-value",
+      "state": "PENDING_UPLOAD",
+      "deploymentModel": "push",
+      "target": {
+        "resourceId": "resourceId-value",
+        "resourceType": "worker"
+      },
+      "attempt": 1.5,
+      "deadline": "2026-10-01T00:00:00.000Z",
+      "requestSizeBytes": 1.5,
+      "responseSizeBytes": 1.5,
+      "createdAt": "2026-10-01T00:00:00.000Z",
+      "dispatchedAt": "2026-10-01T00:00:00.000Z",
+      "completedAt": "2026-10-01T00:00:00.000Z",
+      "error": {
+        "error-key": {
+          "key": "value"
+        }
+      },
+      "accessRequestId": "accessRequestId-value",
+      "verification": {
+        "state": "not-required",
+        "reason": "reason-value"
+      },
+      "result": {
+        "key": "value"
+      },
+      "resultAvailability": "available"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "result.deadline",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.dispatchedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.completedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "outcome": {
+    "ok": {
+      "jobId": "jobId-value",
+      "status": "status-value",
+      "canceled": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "name": "my-app",
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&search=search value&include=deploymentCount&include=latestRelease&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&include=deploymentCount&include=latestRelease&limit=2&search=search value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

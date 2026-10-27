@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "createdByUserId": "createdByUserId-value",
+      "gitMetadata": {},
+      "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "projectId": "projectId-value",
+      "rootDirectory": "rootDirectory-value",
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "fingerprint": "fingerprint-value",
+          "target": "target-value",
+          "version": 2
+        }
+      },
+      "stack": {},
+      "title": "title-value",
+      "version": "version-value",
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

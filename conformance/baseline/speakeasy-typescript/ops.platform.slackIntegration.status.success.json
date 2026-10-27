@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "connected": true,
+      "slackTeamId": "slackTeamId-value",
+      "slackTeamName": "slackTeamName-value",
+      "installedByUserId": "installedByUserId-value",
+      "installedAt": "installedAt-value",
+      "notificationChannelId": "notificationChannelId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

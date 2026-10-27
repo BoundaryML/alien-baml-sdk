@@ -1,0 +1,24 @@
+{
+  "outcome": {
+    "ok": {
+      "packages": [
+        {
+          "status": "pending",
+          "type": "cloudformation"
+        }
+      ],
+      "projectCapabilities": {
+        "capabilities": {},
+        "schemaVersion": 1
+      },
+      "source": {
+        "definitionId": "customer-ai",
+        "definitionVersion": "definitionVersion-value",
+        "releaseId": "releaseId-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

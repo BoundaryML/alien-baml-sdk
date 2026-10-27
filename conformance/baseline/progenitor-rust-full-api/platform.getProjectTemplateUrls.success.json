@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "aws": {
+        "launchStackUrl": "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Falien-templates.s3.us-east-1.amazonaws.com%2Fprojects%2Fmy-project%2Fsetup.yaml&stackName=alien-setup",
+        "templateUrl": "https://alien-templates.s3.us-east-1.amazonaws.com/projects/my-project/setup.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=${secrets.presignedSignature}"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": {
+      "endpoint": "endpoint-value",
+      "enabled": true,
+      "headersConfigured": true,
+      "revision": "revision-value",
+      "lastSuccessAt": "2026-10-01T00:00:00.000Z",
+      "lastErrorAt": "2026-10-01T00:00:00.000Z",
+      "lastError": "lastError-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "header content-type",
+      "kind": "equivalent:content-type sent without a body",
+      "want": "(absent)",
+      "got": "application/json",
+      "exchange": 1
+    },
+    {
+      "path": "result.lastSuccessAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.lastErrorAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

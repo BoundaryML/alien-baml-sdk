@@ -1,0 +1,82 @@
+{
+  "id": "platform.createSetupLink.optional_fields",
+  "phase": 1,
+  "call": {
+    "fn": "platform.createSetupLink",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "request": {
+        "externalId": "customer-0002",
+        "name": "customer-0002",
+        "project": "my-project",
+        "maxDeployments": 5,
+        "expiresAt": "2026-11-01T00:00:00Z",
+        "entryPoint": {
+          "item": "deployment"
+        }
+      }
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "POST",
+        "path": "/v1/deployment-groups/setup-links?workspace=my-workspace",
+        "headers": {
+          "authorization": "Bearer ${secrets.apiKey}",
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "json": {
+          "externalId": "customer-0002",
+          "name": "customer-0002",
+          "project": "my-project",
+          "maxDeployments": 5,
+          "expiresAt": "2026-11-01T00:00:00Z",
+          "entryPoint": {
+            "item": "deployment"
+          }
+        }
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "token": "${secrets.setupLinkToken}",
+          "deploymentLink": "https://portal.example.com/setup/${secrets.setupLinkToken}",
+          "deploymentGroup": {
+            "id": "dg_r27ict8c7vcgsumpj90ackf7baaa",
+            "name": "customer-0001",
+            "externalId": "customer-0001",
+            "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtraaaa",
+            "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+            "maxDeployments": 100,
+            "createdAt": "2026-10-14T00:00:00.000Z"
+          },
+          "expiresAt": null
+        }
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {
+      "token": "${secrets.setupLinkToken}",
+      "deploymentLink": "https://portal.example.com/setup/${secrets.setupLinkToken}",
+      "deploymentGroup": {
+        "id": "dg_r27ict8c7vcgsumpj90ackf7baaa",
+        "name": "customer-0001",
+        "externalId": "customer-0001",
+        "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtraaaa",
+        "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+        "maxDeployments": 100,
+        "createdAt": "2026-10-14T00:00:00.000Z"
+      },
+      "expiresAt": null
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

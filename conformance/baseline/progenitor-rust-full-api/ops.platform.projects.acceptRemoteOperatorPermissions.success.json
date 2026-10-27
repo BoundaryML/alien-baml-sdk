@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "recordedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

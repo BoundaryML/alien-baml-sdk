@@ -1,0 +1,16 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@alien-baml/sdk':
+        specifier: link:../../../sdk/typescript
+        version: link:../../../sdk/typescript
+      other-baml-sdk:
+        specifier: link:../other/typescript
+        version: link:../other/typescript

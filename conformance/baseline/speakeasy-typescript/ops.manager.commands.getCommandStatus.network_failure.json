@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ConnectionError)",
+      "http_status": null,
+      "message": "Unable to make request: TypeError: fetch failed"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "COMMUNICATION_ERROR",
+      "got": "(ConnectionError)"
+    }
+  ]
+}

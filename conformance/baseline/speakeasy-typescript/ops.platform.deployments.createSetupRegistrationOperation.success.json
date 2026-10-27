@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "setupop_y41lqnfosxuwqkzmiax7setupopy",
+      "action": "create",
+      "sourceKind": "cloudformation",
+      "status": "pending",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "physicalResourceId": "physicalResourceId-value",
+      "result": {
+        "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+        "deploymentToken": "deploymentToken-value",
+        "helmValues": "helmValues-value"
+      },
+      "error": {
+        "message": "message-value",
+        "retryable": true
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "body.cloudFormation.serviceTimeoutSeconds",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": 3300,
+      "exchange": 1
+    }
+  ]
+}

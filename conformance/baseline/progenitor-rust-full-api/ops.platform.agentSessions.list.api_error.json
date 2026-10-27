@@ -1,0 +1,33 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(UnexpectedResponse)",
+      "retryable": null,
+      "http_status": 404,
+      "message": "Unexpected response: 404 Not Found",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "RESOURCE_NOT_FOUND",
+      "got": "(UnexpectedResponse)"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienManagerDefaultError)",
+      "http_status": 401,
+      "message": "API error occurred: Status 401"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "deploymentGroupId=deploymentGroupId value&name=name value&include=include-a&include=include-b",
+      "got": "deploymentGroupId=deploymentGroupId value&include=include-a&include=include-b&name=name value",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "NOT_FOUND",
+      "got": "(AlienManagerDefaultError)"
+    }
+  ]
+}

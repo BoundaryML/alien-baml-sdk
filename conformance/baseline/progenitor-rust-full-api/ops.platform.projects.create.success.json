@@ -1,0 +1,43 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "defaultManagers": {},
+      "deploymentPortalAppearance": {},
+      "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+      "gitRepository": {
+        "repo": "alien/my-agent",
+        "type": "github"
+      },
+      "gitRepositoryWarning": {
+        "code": "code-value",
+        "internal": true,
+        "message": "message-value",
+        "retryable": false
+      },
+      "githubSetup": {
+        "pullRequestUrl": "https://example.com/pullRequestUrl",
+        "workflowUrl": "https://example.com/workflowUrl"
+      },
+      "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "name": "my-app",
+      "packagesConfig": {},
+      "projectCapabilities": {
+        "capabilities": {},
+        "schemaVersion": 1
+      },
+      "rootDirectory": "rootDirectory-value",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.gitRepositoryWarning.retryable",
+      "kind": "equivalent:spec default filled in",
+      "want": null,
+      "got": false
+    }
+  ]
+}

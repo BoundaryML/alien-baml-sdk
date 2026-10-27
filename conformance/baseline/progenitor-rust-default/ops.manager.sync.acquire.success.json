@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "deployments": [
+        {
+          "deployment": {
+            "key": "value"
+          }
+        }
+      ],
+      "notAcquired": [
+        {
+          "deploymentId": "deploymentId-value",
+          "reason": "contended"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,57 @@
+{
+  "outcome": {
+    "ok": {
+      "binding": {
+        "id": "id-value",
+        "provider": "anthropic",
+        "providerEndpoint": "providerEndpoint-value",
+        "providerClientId": "providerClientId-value",
+        "keyFingerprint": "keyFingerprint-value",
+        "credentialRevision": 2,
+        "credentialStatus": "pending",
+        "credentialCheckedAt": "2026-10-01T00:00:00.000Z",
+        "catalogProviderModelIds": [
+          "catalogProviderModelIds-item-value"
+        ],
+        "catalogObservedAt": "2026-10-01T00:00:00.000Z",
+        "requiredModelCoverage": [
+          {
+            "publicModelId": "publicModelId-value",
+            "available": true,
+            "accessStatus": "verified",
+            "accessObservedAt": "2026-10-01T00:00:00.000Z"
+          }
+        ],
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.binding.credentialCheckedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.binding.catalogObservedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.binding.requiredModelCoverage[0].accessObservedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.binding.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {}
+  },
+  "request_parity": false,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "path",
+      "kind": "different",
+      "want": "/v1/projects/my project/ü/template-urls",
+      "got": "///v1/projects/my project/ü/template-urls",
+      "exchange": 1
+    }
+  ]
+}

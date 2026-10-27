@@ -1,0 +1,41 @@
+{
+  "outcome": {
+    "ok": {
+      "inputs": [
+        {
+          "description": "description-value",
+          "id": "id-value",
+          "kind": "string",
+          "label": "label-value",
+          "providedBy": [
+            "developer"
+          ],
+          "required": true
+        }
+      ],
+      "operation": {
+        "changedKeys": [
+          "changedKeys-item-value"
+        ],
+        "id": "duop_0vtxpb1sw4sbcdwg2xo37q6duop0",
+        "reasons": [
+          "configuration"
+        ],
+        "requestedAt": "2026-10-01T00:00:00Z",
+        "status": "blocked",
+        "targetReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW"
+      },
+      "outcome": "accepted",
+      "providedInputIds": [
+        "providedInputIds-item-value"
+      ],
+      "runtimeUpdateRequested": true,
+      "values": {
+        "values-key": "values-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

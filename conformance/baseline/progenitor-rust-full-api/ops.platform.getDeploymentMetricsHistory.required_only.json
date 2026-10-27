@@ -1,0 +1,53 @@
+{
+  "outcome": {
+    "ok": {
+      "bucketSeconds": 1.5,
+      "replicas": [
+        "replicas-item-value"
+      ],
+      "requiresFilter": true,
+      "series": [
+        {
+          "points": [
+            {
+              "sample": {
+                "metrics": {
+                  "cpuPercent": 1.5,
+                  "inFlightRequests": 1.5,
+                  "latencyP95Ms": 1.5,
+                  "latencyP99Ms": 1.5,
+                  "memoryBytes": 1.5,
+                  "memoryPercent": 1.5,
+                  "requestsPerSecond": 1.5,
+                  "status2xxPerSecond": 1.5,
+                  "status4xxPerSecond": 1.5,
+                  "status5xxPerSecond": 1.5
+                },
+                "observedAt": "observedAt-value",
+                "payload": "payload-value",
+                "sourceAt": "sourceAt-value"
+              },
+              "timestamp": "timestamp-value"
+            }
+          ],
+          "replicaId": "replicaId-value",
+          "resourceId": "resourceId-value"
+        }
+      ],
+      "services": [
+        "services-item-value"
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&from=2026-10-01T00:00:00Z&to=2026-10-01T00:00:00Z",
+      "got": "from=2026-10-01T00:00:00Z&to=2026-10-01T00:00:00Z&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "id-value",
+          "messageId": "messageId-value",
+          "eventType": "eventType-value",
+          "status": "status-value",
+          "responseStatusCode": 1.5,
+          "timestamp": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&projectId=projectId value&cursor=cursor value",
+      "got": "cursor=cursor value&projectId=projectId value&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].timestamp",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

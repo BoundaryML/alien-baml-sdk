@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "channel": "channel-value",
+      "deploymentId": "deploymentId-value",
+      "pinnedReleaseId": "pinnedReleaseId-value",
+      "releaseId": "releaseId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

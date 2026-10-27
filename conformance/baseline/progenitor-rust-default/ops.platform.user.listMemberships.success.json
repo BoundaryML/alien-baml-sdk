@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "createdAt": "2026-10-01T00:00:00Z",
+          "id": "ws_It13CUaGEhLLAB87simX0wsI",
+          "logoUrl": "https://example.com/logoUrl",
+          "name": "name-value",
+          "role": "role-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

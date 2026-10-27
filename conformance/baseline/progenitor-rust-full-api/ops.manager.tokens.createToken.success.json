@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "createdAt-value",
+      "deploymentGroupId": "deploymentGroupId-value",
+      "deploymentId": "deploymentId-value",
+      "id": "id-value",
+      "keyPrefix": "keyPrefix-value",
+      "token": "token-value",
+      "tokenType": "tokenType-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

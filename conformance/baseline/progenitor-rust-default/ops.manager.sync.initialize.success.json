@@ -1,0 +1,12 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentId": "deploymentId-value",
+      "deploymentModel": "push",
+      "token": "token-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

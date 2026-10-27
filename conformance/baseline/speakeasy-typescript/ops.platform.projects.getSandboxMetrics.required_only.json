@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "status": "unavailable",
+      "reason": "not-configured"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "range=24h",
+      "exchange": 1
+    }
+  ]
+}

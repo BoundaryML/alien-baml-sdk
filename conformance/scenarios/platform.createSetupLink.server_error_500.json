@@ -1,0 +1,39 @@
+{
+  "id": "platform.createSetupLink.server_error_500",
+  "phase": 1,
+  "notes": "A non-API error body maps to PLATFORM_HTTP_ERROR, retryable on 5xx.",
+  "call": {
+    "fn": "platform.createSetupLink",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "request": {
+        "externalId": "customer-0001",
+        "name": "customer-0001",
+        "project": "my-project"
+      }
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "POST",
+        "path": "/v1/deployment-groups/setup-links?workspace=my-workspace"
+      },
+      "respond": {
+        "status": 500,
+        "text": "Internal Server Error"
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": true,
+    "http_status": 500
+  },
+  "assert": []
+}

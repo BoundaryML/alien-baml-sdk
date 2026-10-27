@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ResponseValidationError)",
+      "http_status": 200,
+      "message": "Response validation failed",
+      "detail": "✖ Invalid input → at stackSettings.externalBindings.docs"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&include=release&include=deploymentGroup",
+      "got": "include=release&include=deploymentGroup&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "outcome",
+      "kind": "different",
+      "want": "success",
+      "got": {
+        "code": "(ResponseValidationError)",
+        "http_status": 200,
+        "message": "Response validation failed",
+        "detail": "✖ Invalid input → at stackSettings.externalBindings.docs"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "compat.event_state.started_roundtrip",
+  "phase": 1,
+  "rule": "event_state.rs",
+  "call": {
+    "fn": "compat.roundtripEvent",
+    "args": {
+      "json": "{\"id\":\"e\",\"state\":\"started\",\"createdAt\":\"t\"}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "{\"id\":\"e\",\"state\":\"started\",\"createdAt\":\"t\"}"
+  },
+  "expect_error": null,
+  "assert": []
+}

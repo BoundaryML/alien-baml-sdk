@@ -1,0 +1,6 @@
+# Standalone package. Neither install script below is needed: esbuild ships
+# per-platform binaries as optional dependencies, and protobufjs's script only
+# prints a notice.
+allowBuilds:
+  esbuild: false
+  protobufjs: false

@@ -1,0 +1,17 @@
+{
+  "id": "compat.stack_by_platform.roundtrip",
+  "phase": 1,
+  "rule": "stack_by_platform.rs",
+  "call": {
+    "fn": "compat.roundtripStackByPlatform",
+    "args": {
+      "json": "{\"aws\":{\"id\":\"example\",\"resources\":[]},\"test\":{\"id\":\"t\"}}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "{\"aws\":{\"id\":\"example\",\"resources\":[]},\"test\":{\"id\":\"t\"}}"
+  },
+  "expect_error": null,
+  "assert": []
+}

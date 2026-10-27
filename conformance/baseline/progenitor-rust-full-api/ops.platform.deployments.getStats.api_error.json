@@ -1,0 +1,33 @@
+{
+  "outcome": {
+    "error": {
+      "code": "UNEXPECTED_RESPONSE",
+      "retryable": false,
+      "http_status": 404,
+      "message": "Unexpected response: 404 Not Found",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentGroup=deploymentGroup value&managerId=managerId value&purpose=application&environment=aws&environment=gcp&status=pending&status=preflights-failed&search=search value",
+      "got": "deploymentGroup=deploymentGroup value&environment=aws&environment=gcp&managerId=managerId value&project=project value&purpose=application&search=search value&status=pending&status=preflights-failed&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "RESOURCE_NOT_FOUND",
+      "got": "UNEXPECTED_RESPONSE"
+    }
+  ]
+}

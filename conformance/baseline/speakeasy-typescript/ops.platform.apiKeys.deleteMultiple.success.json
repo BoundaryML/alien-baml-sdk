@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "deletedCount": 1.5
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

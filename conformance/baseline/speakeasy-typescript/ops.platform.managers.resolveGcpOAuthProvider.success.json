@@ -1,0 +1,10 @@
+{
+  "outcome": {
+    "ok": {
+      "mode": "alien-managed"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

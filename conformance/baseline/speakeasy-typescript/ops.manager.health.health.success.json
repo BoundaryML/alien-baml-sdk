@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "maxSetupImportFormatVersion": 2,
+      "minSetupImportFormatVersion": 2,
+      "operationResultContract": true,
+      "status": "status-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

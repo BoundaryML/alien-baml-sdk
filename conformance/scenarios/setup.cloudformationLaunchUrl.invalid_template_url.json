@@ -1,0 +1,25 @@
+{
+  "id": "setup.cloudformationLaunchUrl.invalid_template_url",
+  "phase": 1,
+  "call": {
+    "fn": "setup.cloudformationLaunchUrl",
+    "args": {
+      "input": {
+        "templateUrl": "http://example.com/t.yaml",
+        "region": "us-east-1",
+        "stackName": "S",
+        "parameters": {}
+      }
+    }
+  },
+  "exchanges": [],
+  "expect_result": null,
+  "expect_error": {
+    "code": "SETUP_INVALID_TEMPLATE_URL",
+    "retryable": false,
+    "http_status": null
+  },
+  "assert": [
+    "no_requests"
+  ]
+}

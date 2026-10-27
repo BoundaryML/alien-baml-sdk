@@ -1,0 +1,27 @@
+{
+  "outcome": {
+    "ok": {
+      "inputs": [
+        {
+          "description": "description-value",
+          "id": "id-value",
+          "kind": "string",
+          "label": "label-value",
+          "providedBy": [
+            "developer"
+          ],
+          "required": true
+        }
+      ],
+      "providedInputIds": [
+        "providedInputIds-item-value"
+      ],
+      "values": {
+        "values-key": "values-value"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

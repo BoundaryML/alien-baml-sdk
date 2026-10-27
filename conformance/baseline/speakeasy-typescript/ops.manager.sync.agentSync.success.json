@@ -1,0 +1,68 @@
+{
+  "outcome": {
+    "ok": {
+      "commandsUrl": "commandsUrl-value",
+      "currentState": {
+        "key": "value"
+      },
+      "executionClaim": {
+        "attemptId": "attemptId-value",
+        "operationId": "operationId-value"
+      },
+      "target": {
+        "key": "value"
+      },
+      "targetDynamicContainers": [
+        {
+          "cpu": "cpu-value",
+          "deleted": true,
+          "generation": 2,
+          "image": "image-value",
+          "memory": "memory-value",
+          "name": "name-value",
+          "ports": [
+            2
+          ],
+          "replicas": 2
+        }
+      ],
+      "targetOperationsBundleSet": {
+        "hash": "hash-value"
+      },
+      "targetOperatorImage": "targetOperatorImage-value",
+      "tunnelUrl": "tunnelUrl-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "body.observedInventoryBatches[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.resourceHeartbeats[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.resourceHeartbeats[0].raw[0].collectedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.application.observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    }
+  ]
+}

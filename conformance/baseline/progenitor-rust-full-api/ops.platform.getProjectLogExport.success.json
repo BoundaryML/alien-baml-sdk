@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "enabled": true,
+      "endpoint": "endpoint-value",
+      "headersConfigured": true,
+      "lastError": "lastError-value",
+      "lastErrorAt": "2026-10-01T00:00:00Z",
+      "lastSuccessAt": "2026-10-01T00:00:00Z",
+      "revision": "revision-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

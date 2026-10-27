@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "installation": {
+        "method": "cloudformation"
+      },
+      "managementExternalId": "managementExternalId-value",
+      "runtimeEncryptionKey": "runtimeEncryptionKey-value",
+      "token": "token-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

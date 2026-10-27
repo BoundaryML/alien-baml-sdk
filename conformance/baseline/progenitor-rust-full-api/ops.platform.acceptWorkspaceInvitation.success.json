@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "outcome": "joined",
+      "role": "workspace.member",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI",
+      "workspaceName": "w-o-r"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

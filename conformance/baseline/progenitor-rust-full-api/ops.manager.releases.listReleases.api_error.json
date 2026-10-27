@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "NOT_FOUND",
+      "retryable": false,
+      "http_status": 401,
+      "message": "No such resource.",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

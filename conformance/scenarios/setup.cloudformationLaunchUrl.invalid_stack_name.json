@@ -1,0 +1,25 @@
+{
+  "id": "setup.cloudformationLaunchUrl.invalid_stack_name",
+  "phase": 1,
+  "call": {
+    "fn": "setup.cloudformationLaunchUrl",
+    "args": {
+      "input": {
+        "templateUrl": "https://example.com/t.yaml",
+        "region": "us-east-1",
+        "stackName": "1-stack",
+        "parameters": {}
+      }
+    }
+  },
+  "exchanges": [],
+  "expect_result": null,
+  "expect_error": {
+    "code": "SETUP_INVALID_STACK_NAME",
+    "retryable": false,
+    "http_status": null
+  },
+  "assert": [
+    "no_requests"
+  ]
+}

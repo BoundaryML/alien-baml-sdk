@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "registryHost": "registryHost-value",
+      "repository": "repository-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

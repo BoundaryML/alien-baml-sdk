@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "currentReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "deploymentId": "deploymentId-value",
+      "desiredReleaseId": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "environmentInfo": {
+        "key": "value"
+      },
+      "error": {
+        "key": "value"
+      },
+      "platform": "platform-value",
+      "resources": {
+        "resources-key": {
+          "status": "status-value",
+          "type": "type-value"
+        }
+      },
+      "status": "pending"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

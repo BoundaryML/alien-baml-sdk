@@ -1,0 +1,27 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+          "name": "name-value",
+          "deploymentCount": 1.5,
+          "runningCount": 1.5,
+          "failedCount": 1.5,
+          "inProgressCount": 1.5
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&search=search value&limit=2",
+      "got": "limit=2&project=project value&search=search value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

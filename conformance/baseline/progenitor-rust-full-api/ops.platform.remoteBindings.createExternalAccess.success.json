@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "accessToken": "accessToken-value",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "expiresIn": 1.5,
+      "managerUrl": "https://example.com/managerUrl",
+      "resourceId": "resourceId-value",
+      "tokenType": "Bearer"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

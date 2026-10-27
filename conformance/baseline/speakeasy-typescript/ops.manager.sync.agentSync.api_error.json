@@ -1,0 +1,47 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienManagerDefaultError)",
+      "http_status": 404,
+      "message": "API error occurred: Status 404"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "body.observedInventoryBatches[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.resourceHeartbeats[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.resourceHeartbeats[0].raw[0].collectedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.application.observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "NOT_FOUND",
+      "got": "(AlienManagerDefaultError)"
+    }
+  ]
+}

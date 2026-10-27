@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "installer": {
+        "name": "name-value",
+        "platform": "aws",
+        "method": "cli",
+        "configuration": "configuration-value",
+        "command": "command-value"
+      },
+      "token": "token-value",
+      "encryptionKey": "encryptionKey-value",
+      "reference": "123e4567-e89b-42d3-a456-426614174000",
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

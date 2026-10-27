@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "commandId": "commandId-value",
+      "decision": "auto",
+      "operation": "operation-value",
+      "plugin": "plugin-value",
+      "status": "dispatched",
+      "tier": "read-only"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

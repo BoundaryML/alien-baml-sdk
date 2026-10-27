@@ -1,0 +1,34 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": 1.5,
+          "name": "name-value",
+          "slug": "slug-value",
+          "installationId": 1.5,
+          "type": "team",
+          "provider": "github",
+          "createdAt": "2026-10-01T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "provider=github",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

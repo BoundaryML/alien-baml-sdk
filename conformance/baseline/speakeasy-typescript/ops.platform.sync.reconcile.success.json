@@ -1,0 +1,107 @@
+{
+  "outcome": {
+    "ok": {
+      "success": true,
+      "current": {
+        "platform": "aws",
+        "protocolVersion": 2,
+        "status": "pending"
+      },
+      "target": {
+        "config": {
+          "environmentVariables": {
+            "createdAt": "createdAt-value",
+            "hash": "hash-value",
+            "variables": [
+              {
+                "name": "name-value",
+                "type": "plain",
+                "value": "value-value"
+              }
+            ]
+          }
+        },
+        "releaseInfo": {
+          "stack": {
+            "id": "id-value",
+            "resources": {
+              "resources-key": {
+                "config": {
+                  "id": "id-value",
+                  "type": "type-value",
+                  "additionalProperties": {
+                    "extra-property": {
+                      "key": "value"
+                    }
+                  }
+                },
+                "dependencies": [
+                  {
+                    "id": "id-value",
+                    "type": "type-value"
+                  }
+                ],
+                "lifecycle": "frozen"
+              }
+            }
+          }
+        }
+      },
+      "targetOperationsBundleSet": {
+        "hash": "hash-value",
+        "bundles": [
+          {
+            "plugin": "plugin-value",
+            "pluginVersion": "pluginVersion-value",
+            "url": "https://example.com/url"
+          }
+        ]
+      },
+      "targetDynamicContainers": [
+        {
+          "name": "name-value",
+          "generation": 2,
+          "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+          "cpu": "0.1",
+          "memory": "1Mi",
+          "replicas": 2,
+          "ports": [
+            2
+          ],
+          "deleted": true,
+          "env": {
+            "env-key": "env-value"
+          },
+          "secretEnv": {
+            "secretEnv-key": "secretEnv-value"
+          }
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "body.resourceHeartbeats[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.resourceHeartbeats[0].raw[0].collectedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    },
+    {
+      "path": "body.observedInventoryBatches[0].observedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z",
+      "exchange": 1
+    }
+  ]
+}

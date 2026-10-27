@@ -1,0 +1,69 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "id-value",
+          "requesterKind": "user",
+          "requesterId": "requesterId-value",
+          "requestedExpiresAt": "requestedExpiresAt-value",
+          "deploymentId": "deploymentId-value",
+          "remediationPlanId": "remediationPlanId-value",
+          "agentSessionId": "agentSessionId-value",
+          "title": "title-value",
+          "reason": "reason-value",
+          "commands": [
+            {
+              "command": "kubernetes/get-pods",
+              "summary": "List pods in the ingestion namespace"
+            }
+          ],
+          "operationPattern": "operationPattern-value",
+          "maxRisk": "read-only",
+          "debugGrant": {
+            "tool": "kubectl"
+          },
+          "status": "pending-approval",
+          "approvedUntil": "approvedUntil-value",
+          "createdAt": "createdAt-value",
+          "queuedBy": "queuedBy-value",
+          "queuedAt": "queuedAt-value",
+          "approvedBy": {
+            "method": "method-value",
+            "actorId": "actorId-value",
+            "at": "at-value"
+          },
+          "deniedBy": {
+            "actorId": "actorId-value",
+            "at": "at-value"
+          },
+          "revokedBy": {
+            "actorKind": "user",
+            "actorId": "actorId-value",
+            "at": "at-value",
+            "reason": "reason-value"
+          }
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "limit=20",
+      "exchange": 1
+    },
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

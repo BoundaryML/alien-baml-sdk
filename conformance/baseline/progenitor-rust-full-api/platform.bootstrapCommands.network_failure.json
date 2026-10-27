@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "COMMUNICATION_ERROR",
+      "retryable": true,
+      "http_status": null,
+      "message": "HTTP request ${stub.base}/v1/commands/bootstrap failed: error sending request for url (${stub.base}/v1/commands/bootstrap)",
+      "variant": "CommunicationError",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "commandId": "commandId-value",
+      "created": true,
+      "inlineAllowedUpTo": 2,
+      "next": "next-value",
+      "state": "PENDING_UPLOAD",
+      "storageUpload": {
+        "expiresAt": "2026-10-01T00:00:00Z",
+        "putRequest": {
+          "backend": {
+            "headers": {
+              "headers-key": "headers-value"
+            },
+            "method": "method-value",
+            "type": "http",
+            "url": "url-value"
+          },
+          "expiration": "2026-10-01T00:00:00Z",
+          "operation": "put",
+          "path": "path-value"
+        }
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

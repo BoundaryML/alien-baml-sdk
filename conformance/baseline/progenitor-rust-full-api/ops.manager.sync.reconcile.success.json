@@ -1,0 +1,14 @@
+{
+  "outcome": {
+    "ok": {
+      "current": {
+        "key": "value"
+      },
+      "nativeImageHost": "nativeImageHost-value",
+      "success": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

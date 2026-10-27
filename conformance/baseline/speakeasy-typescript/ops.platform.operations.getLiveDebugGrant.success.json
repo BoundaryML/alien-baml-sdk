@@ -1,0 +1,64 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "id-value",
+      "requesterKind": "user",
+      "requesterId": "requesterId-value",
+      "requestedExpiresAt": "requestedExpiresAt-value",
+      "deploymentId": "deploymentId-value",
+      "deployment": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "remediationPlanId": "remediationPlanId-value",
+      "agentSessionId": "agentSessionId-value",
+      "title": "title-value",
+      "reason": "reason-value",
+      "commands": [
+        {
+          "command": "kubernetes/get-pods",
+          "summary": "List pods in the ingestion namespace"
+        }
+      ],
+      "operationPattern": "operationPattern-value",
+      "maxRisk": "read-only",
+      "debugGrant": {
+        "tool": "kubectl"
+      },
+      "status": "pending-approval",
+      "approvedUntil": "approvedUntil-value",
+      "createdAt": "createdAt-value",
+      "queuedBy": "queuedBy-value",
+      "queuedAt": "queuedAt-value",
+      "approvedBy": {
+        "method": "method-value",
+        "actorId": "actorId-value",
+        "at": "at-value"
+      },
+      "deniedBy": {
+        "actorId": "actorId-value",
+        "at": "at-value"
+      },
+      "revokedBy": {
+        "actorKind": "user",
+        "actorId": "actorId-value",
+        "at": "at-value",
+        "reason": "reason-value"
+      },
+      "approvalChannels": [
+        "kubectl"
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&debugTool=kubectl&debugNamespace=debugNamespace value&debugCloudScope=debugCloudScope value",
+      "got": "debugCloudScope=debugCloudScope value&debugNamespace=debugNamespace value&debugTool=kubectl&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

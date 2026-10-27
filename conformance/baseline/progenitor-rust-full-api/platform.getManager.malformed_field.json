@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "error": {
+      "code": "INVALID_RESPONSE_PAYLOAD",
+      "retryable": false,
+      "http_status": null,
+      "message": "Failed to parse response: unknown variant `future-cloud`, expected one of `aws`, `gcp`, `azure`, `kubernetes`, `machines`, `local`, `test` at line 1 column 89",
+      "variant": "InvalidResponsePayload",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MALFORMED_RESPONSE",
+      "got": "INVALID_RESPONSE_PAYLOAD"
+    },
+    {
+      "path": "error.http_status",
+      "kind": "different",
+      "want": 200,
+      "got": null
+    }
+  ]
+}

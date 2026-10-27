@@ -1,0 +1,19 @@
+[package]
+name = "alien_sdk"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91.1"
+publish = false
+description = "Alien SDK for Rust, generated from one BAML project (reference implementation)"
+
+[workspace]
+# The generated crate declares its own [workspace]; keep it out of ours.
+exclude = ["baml_sdk"]
+
+[dependencies]
+baml_sdk = { path = "baml_sdk" }
+baml_bridge = "=0.23.0"
+
+[dev-dependencies]
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

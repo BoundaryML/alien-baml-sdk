@@ -1,0 +1,27 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(ResponseValidationError)",
+      "http_status": 200,
+      "message": "Response validation failed",
+      "detail": "✖ Invalid input: expected string, received undefined → at id ✖ Invalid input: expected string, received undefined → at projectId ✖ Invalid input: expected string, received undefined → at version ✖ Invalid input: expected string, received undefined → at createdAt ✖ Invalid input: expected record, rec"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&include=project&include=rollout",
+      "got": "include=project&include=rollout&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MALFORMED_RESPONSE",
+      "got": "(ResponseValidationError)"
+    }
+  ]
+}

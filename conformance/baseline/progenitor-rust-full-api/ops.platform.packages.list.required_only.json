@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "config": {
+            "displayName": "displayName-value",
+            "name": "name-value",
+            "type": "cli"
+          },
+          "createdAt": "2026-10-01T00:00:00Z",
+          "id": "pkg_jebo2o5jmm7raefl2m1pe3czpkgj",
+          "packageBuildInputHash": "packageBuildInputHash-value",
+          "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+          "retries": 2,
+          "setupFingerprints": {
+            "setupFingerprints-key": {
+              "fingerprint": "fingerprint-value",
+              "target": "target-value",
+              "version": 2
+            }
+          },
+          "status": "pending",
+          "type": "cli",
+          "updatedAt": "2026-10-01T00:00:00Z",
+          "version": "version-value",
+          "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

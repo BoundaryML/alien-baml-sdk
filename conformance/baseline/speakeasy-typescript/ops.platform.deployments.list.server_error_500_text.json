@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienDefaultError)",
+      "http_status": 500,
+      "message": "API error occurred: Status 500 Content-Type text/plain. Body: upstream failed"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentGroup=deploymentGroup value&name=name value&managerId=managerId value&purpose=application&search=search value&status=pending&status=preflights-failed&environment=aws&environment=gcp&include=release&include=deploymentGroup&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&deploymentGroup=deploymentGroup value&environment=aws&environment=gcp&include=release&include=deploymentGroup&limit=2&managerId=managerId value&name=name value&project=project value&purpose=application&search=search value&status=pending&status=preflights-failed&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "PLATFORM_HTTP_ERROR",
+      "got": "(AlienDefaultError)"
+    }
+  ]
+}

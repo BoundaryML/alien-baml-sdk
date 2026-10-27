@@ -1,0 +1,52 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "vrst_rs1j4dytswpy7wbc819jdcxvrstr",
+          "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+          "resourceId": "resourceId-value",
+          "ordinal": 2,
+          "snapshotId": "snapshotId-value",
+          "status": "pending",
+          "createdBy": {
+            "id": "id-value",
+            "kind": "user"
+          },
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "updatedAt": "2026-10-01T00:00:00.000Z",
+          "completedAt": "2026-10-01T00:00:00.000Z",
+          "cancelledAt": "2026-10-01T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].completedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].cancelledAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

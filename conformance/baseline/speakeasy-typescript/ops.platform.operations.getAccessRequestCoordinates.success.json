@@ -1,0 +1,14 @@
+{
+  "outcome": {
+    "ok": {
+      "status": "pending-approval",
+      "approvalChannels": [
+        "kubectl"
+      ],
+      "kubectlApprove": "kubectlApprove-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

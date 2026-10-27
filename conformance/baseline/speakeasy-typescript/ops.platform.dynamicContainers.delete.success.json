@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "name": "name-value",
+      "deleted": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "publicKey": "publicKey-value",
+      "signature": "signature-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

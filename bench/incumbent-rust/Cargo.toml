@@ -1,0 +1,20 @@
+# Benchmark for Alien's current Rust SDK (alien-platform-api, Progenitor),
+# built by bench/build.sh against the copy of the Alien repository it extracts
+# into .cache/incumbents/alien. Default features: only the operations Alien calls.
+[package]
+name = "incumbent_bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+# Every Platform operation. Only bench/run.py's build timing uses it; the
+# benchmark program is built with the default features.
+full-api = ["alien-platform-api/full-api"]
+
+[dependencies]
+alien-platform-api = { path = "../../.cache/incumbents/alien/client-sdks/platform/rust" }
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "macros"] }

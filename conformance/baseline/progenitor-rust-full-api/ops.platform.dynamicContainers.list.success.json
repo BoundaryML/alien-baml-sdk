@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": [
+      {
+        "appliedGeneration": 2,
+        "createdAt": "2026-10-01T00:00:00Z",
+        "deleted": true,
+        "generation": 2,
+        "internalServices": [
+          {
+            "internalDns": "internalDns-value",
+            "port": 2
+          }
+        ],
+        "name": "name-value",
+        "spec": {
+          "image": "i@sha256:aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae",
+          "ports": [
+            2
+          ],
+          "replicas": 2,
+          "resources": {
+            "cpu": "0.1",
+            "memory": "1Mi"
+          }
+        },
+        "status": "pending",
+        "statusMessage": "statusMessage-value",
+        "updatedAt": "2026-10-01T00:00:00Z"
+      }
+    ]
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

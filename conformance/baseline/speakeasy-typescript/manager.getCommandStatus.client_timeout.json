@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(RequestTimeoutError)",
+      "http_status": null,
+      "message": "Request timed out: TimeoutError: The operation was aborted due to timeout"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "COMMUNICATION_ERROR",
+      "got": "(RequestTimeoutError)"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "platform.getProjectTemplateUrls.success",
+  "phase": 1,
+  "notes": "The template URL is a presigned S3 URL; the telemetry check T3 searches recordings for its signature.",
+  "call": {
+    "fn": "platform.getProjectTemplateUrls",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "idOrName": "my-project"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/my-project/template-urls?workspace=my-workspace",
+        "headers": {
+          "authorization": "Bearer ${secrets.apiKey}",
+          "accept": "application/json"
+        },
+        "body_empty": true
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "aws": {
+            "templateUrl": "https://alien-templates.s3.us-east-1.amazonaws.com/projects/my-project/setup.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=${secrets.presignedSignature}",
+            "launchStackUrl": "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Falien-templates.s3.us-east-1.amazonaws.com%2Fprojects%2Fmy-project%2Fsetup.yaml&stackName=alien-setup"
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {
+      "aws": {
+        "templateUrl": "https://alien-templates.s3.us-east-1.amazonaws.com/projects/my-project/setup.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=${secrets.presignedSignature}",
+        "launchStackUrl": "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Falien-templates.s3.us-east-1.amazonaws.com%2Fprojects%2Fmy-project%2Fsetup.yaml&stackName=alien-setup"
+      }
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

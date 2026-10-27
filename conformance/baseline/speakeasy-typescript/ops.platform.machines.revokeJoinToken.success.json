@@ -1,0 +1,11 @@
+{
+  "outcome": {
+    "ok": {
+      "tokenId": "tokenId-value",
+      "revoked": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

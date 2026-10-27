@@ -1,0 +1,42 @@
+{
+  "outcome": {
+    "ok": {
+      "id": "mgr_idvalueidvalueidvalueidvalue",
+      "name": "name-value",
+      "targets": [
+        "aws"
+      ],
+      "cloud": "aws",
+      "region": "region-value",
+      "setupStatus": "pending",
+      "url": "https://example.com/url",
+      "managementConfigs": {},
+      "isSystem": true,
+      "workspaceId": "workspaceId-value",
+      "status": "healthy",
+      "version": "version-value",
+      "metrics": {},
+      "lastHeartbeatAt": "2026-10-01T00:00:00.000Z",
+      "logsDatabaseId": "logsDatabaseId-value",
+      "managedDeploymentCount": 2,
+      "defaultProjectCount": 2,
+      "createdAt": "2026-10-01T00:00:00.000Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.lastHeartbeatAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

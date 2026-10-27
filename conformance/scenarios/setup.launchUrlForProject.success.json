@@ -1,0 +1,47 @@
+{
+  "id": "setup.launchUrlForProject.success",
+  "phase": 1,
+  "call": {
+    "fn": "setup.launchUrlForProject",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "project": "my-project",
+      "region": "us-west-2",
+      "stackName": "alien-setup",
+      "parameters": {
+        "Mode": "full access",
+        "ExternalId": "customer-0001"
+      }
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/my-project/template-urls?workspace=my-workspace",
+        "headers": {
+          "authorization": "Bearer ${secrets.apiKey}",
+          "accept": "application/json"
+        }
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "aws": {
+            "templateUrl": "https://example-templates.s3.us-east-1.amazonaws.com/setup.yaml?X-Amz-Signature=abc",
+            "launchStackUrl": "https://example.com/launch"
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": "https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https%3A%2F%2Fexample-templates.s3.us-east-1.amazonaws.com%2Fsetup.yaml%3FX-Amz-Signature%3Dabc&stackName=alien-setup&param_ExternalId=customer-0001&param_Mode=full%20access"
+  },
+  "expect_error": null,
+  "assert": []
+}

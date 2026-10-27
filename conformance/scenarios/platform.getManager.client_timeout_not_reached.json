@@ -1,0 +1,61 @@
+{
+  "id": "platform.getManager.client_timeout_not_reached",
+  "phase": 1,
+  "notes": "A response that arrives within the client's timeout (5 s; 200 ms late) succeeds: the timeout reaches BAML in milliseconds.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null,
+        "timeout_ms": 5000
+      },
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+          "name": "primary",
+          "targets": [
+            "aws"
+          ],
+          "managementConfigs": {},
+          "isSystem": false,
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "status": "healthy",
+          "managedDeploymentCount": 0,
+          "defaultProjectCount": 0,
+          "createdAt": "2026-10-01T00:00:00Z"
+        },
+        "delay_ms": 200
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {
+      "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+      "name": "primary",
+      "targets": [
+        "aws"
+      ],
+      "managementConfigs": {},
+      "isSystem": false,
+      "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+      "status": "healthy",
+      "managedDeploymentCount": 0,
+      "defaultProjectCount": 0,
+      "createdAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

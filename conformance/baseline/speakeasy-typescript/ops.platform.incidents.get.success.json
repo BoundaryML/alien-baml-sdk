@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": {
+      "incident": {
+        "id": "id-value",
+        "number": 2,
+        "reference": "reference-value",
+        "title": "title-value",
+        "scopeLabel": "scopeLabel-value",
+        "agentSessionId": "agentSessionId-value",
+        "sessionStatus": "queued",
+        "projectId": "projectId-value",
+        "deploymentId": "deploymentId-value",
+        "releaseId": "releaseId-value",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.incident.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.incident.updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

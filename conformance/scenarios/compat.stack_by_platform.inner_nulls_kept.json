@@ -1,0 +1,18 @@
+{
+  "id": "compat.stack_by_platform.inner_nulls_kept",
+  "phase": 1,
+  "notes": "Unset platforms are omitted; nulls inside a stack are kept. `test` is a BAML reserved word (gaps B14).",
+  "rule": "stack_by_platform.rs",
+  "call": {
+    "fn": "compat.roundtripStackByPlatform",
+    "args": {
+      "json": "{\"gcp\":null,\"test\":{\"id\":\"t\",\"note\":null,\"resources\":[null]}}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": "{\"test\":{\"id\":\"t\",\"note\":null,\"resources\":[null]}}"
+  },
+  "expect_error": null,
+  "assert": []
+}

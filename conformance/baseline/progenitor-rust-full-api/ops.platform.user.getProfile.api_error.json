@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "RESOURCE_NOT_FOUND",
+      "retryable": false,
+      "http_status": 401,
+      "message": "No such resource.",
+      "variant": "ErrorResponse",
+      "context": {
+        "requestId": "req_fixture_1",
+        "hint": "Check the ID.",
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

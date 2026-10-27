@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "ok": {
+      "createdAt": "2026-10-01T00:00:00Z",
+      "defaultManagers": {},
+      "deploymentPortalAppearance": {},
+      "domainId": "dom_469m0agk8luj4s16sakmmpdddom4",
+      "gitRepository": {
+        "repo": "alien/my-agent",
+        "type": "github"
+      },
+      "id": "prj_mcytp6z3j91f7tn5ryqsfwtrprjm",
+      "name": "my-app",
+      "packagesConfig": {},
+      "projectCapabilities": {
+        "capabilities": {},
+        "schemaVersion": 1
+      },
+      "rootDirectory": "rootDirectory-value",
+      "workspaceId": "ws_It13CUaGEhLLAB87simX0wsI"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

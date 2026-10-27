@@ -1,0 +1,13 @@
+{
+  "outcome": {
+    "ok": {
+      "currentReleaseId": "currentReleaseId-value",
+      "deployments": 2,
+      "name": "name-value",
+      "updatedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

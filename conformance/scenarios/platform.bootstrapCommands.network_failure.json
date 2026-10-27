@@ -1,0 +1,37 @@
+{
+  "id": "platform.bootstrapCommands.network_failure",
+  "phase": 1,
+  "notes": "The stub closes the connection without answering.",
+  "call": {
+    "fn": "platform.bootstrapCommands",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": "my-workspace"
+      },
+      "request": {
+        "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+        "role": "sender"
+      }
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "POST",
+        "path": "/v1/commands/bootstrap"
+      },
+      "respond": {
+        "drop": true
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMUNICATION_ERROR",
+    "retryable": true,
+    "http_status": null
+  },
+  "assert": []
+}

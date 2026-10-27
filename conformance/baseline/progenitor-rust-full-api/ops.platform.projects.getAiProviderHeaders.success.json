@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "ok": {
+      "providers": [
+        {
+          "headers": [
+            {
+              "name": "name-value",
+              "value": "value-value"
+            }
+          ],
+          "provider": "aws-bedrock"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

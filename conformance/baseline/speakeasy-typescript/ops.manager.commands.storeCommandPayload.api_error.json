@@ -1,0 +1,16 @@
+{
+  "outcome": {
+    "error": {
+      "code": "NOT_FOUND",
+      "retryable": false,
+      "http_status": 400,
+      "message": "No such resource.",
+      "context": {
+        "details": "unknown id"
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

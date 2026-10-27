@@ -1,0 +1,34 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "agentSessionId": "agentSessionId-value",
+          "createdAt": "2026-10-01T00:00:00Z",
+          "deploymentId": "deploymentId-value",
+          "id": "id-value",
+          "number": 2,
+          "projectId": "projectId-value",
+          "reference": "reference-value",
+          "releaseId": "releaseId-value",
+          "scopeLabel": "scopeLabel-value",
+          "sessionStatus": "queued",
+          "title": "title-value",
+          "updatedAt": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&projectId=projectId value&status=queued&search=search value&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&limit=2&projectId=projectId value&search=search value&status=queued&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

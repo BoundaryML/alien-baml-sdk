@@ -1,0 +1,47 @@
+{
+  "id": "manager.getCommandStatus.client_timeout",
+  "phase": 1,
+  "notes": "The Manager client takes the same timeout: a response 3 s late fails after 300 ms with COMMUNICATION_ERROR.",
+  "call": {
+    "fn": "manager.getCommandStatus",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "token": "${secrets.managerToken}",
+        "timeout_ms": 300
+      },
+      "command_id": "cmd_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_1",
+        "headers": {
+          "authorization": "Bearer ${secrets.managerToken}"
+        }
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "commandId": "cmd_1",
+          "state": "PENDING",
+          "attempt": 1
+        },
+        "delay_ms": 3000
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMUNICATION_ERROR",
+    "retryable": true,
+    "http_status": null,
+    "context": {
+      "method": "GET",
+      "path": "/v1/commands/cmd_1"
+    }
+  },
+  "assert": []
+}

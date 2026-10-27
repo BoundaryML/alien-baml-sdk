@@ -1,0 +1,39 @@
+{
+  "outcome": {
+    "error": {
+      "code": "INVALID_RESPONSE_PAYLOAD",
+      "retryable": false,
+      "http_status": null,
+      "message": "Failed to parse response: data did not match any variant of untagged enum ExternalBinding at line 1 column 588",
+      "variant": "InvalidResponsePayload",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&include=release&include=deploymentGroup",
+      "got": "include=release&include=deploymentGroup&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "MALFORMED_RESPONSE",
+      "got": "INVALID_RESPONSE_PAYLOAD"
+    },
+    {
+      "path": "error.http_status",
+      "kind": "different",
+      "want": 200,
+      "got": null
+    }
+  ]
+}

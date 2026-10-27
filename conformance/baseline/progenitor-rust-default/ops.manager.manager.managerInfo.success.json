@@ -1,0 +1,18 @@
+{
+  "outcome": {
+    "ok": {
+      "bundleSigningKey": "bundleSigningKey-value",
+      "capabilities": {
+        "charts": true,
+        "tunnels": true
+      },
+      "operatorImage": "operatorImage-value",
+      "registryHost": "registryHost-value",
+      "url": "url-value",
+      "version": "version-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

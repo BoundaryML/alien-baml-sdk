@@ -1,0 +1,46 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "id": "id-value",
+          "number": 2,
+          "reference": "reference-value",
+          "title": "title-value",
+          "scopeLabel": "scopeLabel-value",
+          "agentSessionId": "agentSessionId-value",
+          "sessionStatus": "queued",
+          "projectId": "projectId-value",
+          "deploymentId": "deploymentId-value",
+          "releaseId": "releaseId-value",
+          "createdAt": "2026-10-01T00:00:00.000Z",
+          "updatedAt": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "nextCursor": "nextCursor-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&projectId=projectId value&status=queued&search=search value&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&limit=2&projectId=projectId value&search=search value&status=queued&workspace=my-workspace",
+      "exchange": 1
+    },
+    {
+      "path": "result.items[0].createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "path": "result.items[0].updatedAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

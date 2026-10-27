@@ -1,0 +1,26 @@
+{
+  "outcome": {
+    "error": {
+      "code": "RESOURCE_NOT_FOUND",
+      "retryable": false,
+      "http_status": 400,
+      "message": "No such resource.",
+      "context": {
+        "requestId": "req_fixture_1",
+        "hint": "Check the ID.",
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&state=pending&mode=push&provider=aws&limit=2&cursor=cursor value",
+      "got": "cursor=cursor value&deploymentId=dep_0c29fq4a2yjb7kx3smwdgxlcdep0&limit=2&mode=push&project=project value&provider=aws&state=pending&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

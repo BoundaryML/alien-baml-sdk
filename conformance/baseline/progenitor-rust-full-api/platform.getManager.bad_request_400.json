@@ -1,0 +1,32 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(rejected by the client's types)",
+      "http_status": null,
+      "message": "id: doesn't match pattern \"mgr_[0-9a-z]{28}$\""
+    }
+  },
+  "request_parity": false,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "request",
+      "kind": "different",
+      "want": "GET /v1/managers/not-a-manager-id",
+      "got": "no request",
+      "exchange": 1
+    },
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "PLATFORM_HTTP_ERROR",
+      "got": "(rejected by the client's types)"
+    },
+    {
+      "path": "error.http_status",
+      "kind": "different",
+      "want": 400,
+      "got": null
+    }
+  ]
+}

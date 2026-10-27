@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "ok": {
+      "events": [
+        {
+          "seq": 1.5,
+          "createdAt": "createdAt-value",
+          "type": "status",
+          "payload": {
+            "status": "status-value"
+          }
+        }
+      ],
+      "latestSeq": 1.5,
+      "hasMore": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&after=2&limit=2",
+      "got": "after=2&limit=2&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

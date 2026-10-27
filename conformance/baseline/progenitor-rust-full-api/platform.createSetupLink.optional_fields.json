@@ -1,0 +1,28 @@
+{
+  "outcome": {
+    "ok": {
+      "deploymentGroup": {
+        "createdAt": "2026-10-14T00:00:00Z",
+        "externalId": "customer-0001",
+        "id": "dg_r27ict8c7vcgsumpj90ackf7baaa",
+        "maxDeployments": 100,
+        "name": "customer-0001",
+        "projectId": "prj_mcytp6z3j91f7tn5ryqsfwtraaaa",
+        "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "deploymentLink": "https://portal.example.com/setup/${secrets.setupLinkToken}",
+      "expiresAt": null,
+      "token": "${secrets.setupLinkToken}"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.deploymentGroup.createdAt",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-14T00:00:00.000Z",
+      "got": "2026-10-14T00:00:00Z"
+    }
+  ]
+}

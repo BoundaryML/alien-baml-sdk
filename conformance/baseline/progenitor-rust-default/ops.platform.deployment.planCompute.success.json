@@ -1,0 +1,63 @@
+{
+  "outcome": {
+    "ok": {
+      "containers": [
+        {
+          "choices": {},
+          "containerId": "containerId-value",
+          "cpu": {
+            "desired": "desired-value",
+            "min": "min-value"
+          },
+          "memory": {
+            "desired": "desired-value",
+            "min": "min-value"
+          }
+        }
+      ],
+      "pools": [
+        {
+          "machines": [
+            {
+              "machine": "machine-value",
+              "profile": {
+                "cpu": "cpu-value",
+                "ephemeralStorageBytes": 2,
+                "memoryBytes": 2
+              },
+              "recommended": true
+            }
+          ],
+          "poolId": "poolId-value",
+          "recommended": {
+            "machines": 2,
+            "mode": "fixed"
+          },
+          "requirements": {
+            "cpu": "cpu-value",
+            "ephemeralStorageBytes": 2,
+            "memoryBytes": 2
+          },
+          "scale": {
+            "machines": {
+              "default": 2,
+              "max": 2,
+              "min": 2
+            },
+            "type": "fixed"
+          },
+          "selected": {
+            "machines": 2,
+            "mode": "fixed"
+          },
+          "workloads": [
+            "workloads-item-value"
+          ]
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

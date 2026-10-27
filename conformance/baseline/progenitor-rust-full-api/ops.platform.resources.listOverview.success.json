@@ -1,0 +1,39 @@
+{
+  "outcome": {
+    "ok": {
+      "resources": [
+        {
+          "attentionCount": 2,
+          "backend": "backend-value",
+          "controllerPlatform": "controllerPlatform-value",
+          "currentCount": 2,
+          "deploymentCount": 2,
+          "desiredCount": 2,
+          "health": "health-value",
+          "lastObservedAt": "2026-10-01T00:00:00Z",
+          "lifecycle": "lifecycle-value",
+          "message": "message-value",
+          "name": "name-value",
+          "partial": true,
+          "platformStale": true,
+          "providerStale": true,
+          "readyCount": 2,
+          "resourceId": "resourceId-value",
+          "resourceType": "resourceType-value",
+          "updatedCount": 2
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value&deploymentGroupId=deploymentGroupId value&deploymentId=deploymentId value",
+      "got": "deploymentGroupId=deploymentGroupId value&deploymentId=deploymentId value&project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

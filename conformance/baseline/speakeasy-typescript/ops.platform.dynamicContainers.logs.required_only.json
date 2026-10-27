@@ -1,0 +1,36 @@
+{
+  "outcome": {
+    "ok": {
+      "logs": [
+        {
+          "timestamp": "2026-10-01T00:00:00.000Z",
+          "level": "level-value",
+          "message": "message-value",
+          "replicaId": "replicaId-value"
+        }
+      ],
+      "numHits": 1.5,
+      "nextCursor": "nextCursor-value",
+      "partial": true,
+      "errorCount": 1.5,
+      "cursorRestarted": true
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:spec default filled in (query)",
+      "want": null,
+      "got": "limit=100&sinceMinutes=60",
+      "exchange": 1
+    },
+    {
+      "path": "result.logs[0].timestamp",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

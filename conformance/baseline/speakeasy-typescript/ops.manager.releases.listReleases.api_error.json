@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "(AlienManagerDefaultError)",
+      "http_status": 401,
+      "message": "API error occurred: Status 401"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": false,
+  "differences": [
+    {
+      "path": "error.code",
+      "kind": "different",
+      "want": "NOT_FOUND",
+      "got": "(AlienManagerDefaultError)"
+    }
+  ]
+}

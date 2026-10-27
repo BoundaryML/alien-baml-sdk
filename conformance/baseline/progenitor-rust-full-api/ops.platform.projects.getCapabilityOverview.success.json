@@ -1,0 +1,162 @@
+{
+  "outcome": {
+    "ok": {
+      "configurationStatus": "valid",
+      "generatedAt": "2026-10-01T00:00:00Z",
+      "groups": [
+        {
+          "capabilities": {
+            "buckets": {
+              "capability": "models",
+              "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+              "enabled": true,
+              "observation": {
+                "account": "account-value",
+                "health": "unknown",
+                "lifecycle": "lifecycle-value",
+                "location": "location-value",
+                "message": "message-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "partial": true,
+                "platform": "aws",
+                "provider": "provider-value",
+                "resourceId": "resourceId-value",
+                "stale": true
+              },
+              "state": "not-connected"
+            },
+            "keys": {
+              "capability": "models",
+              "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+              "enabled": true,
+              "observation": {
+                "account": "account-value",
+                "health": "unknown",
+                "lifecycle": "lifecycle-value",
+                "location": "location-value",
+                "message": "message-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "partial": true,
+                "platform": "aws",
+                "provider": "provider-value",
+                "resourceId": "resourceId-value",
+                "stale": true
+              },
+              "state": "not-connected"
+            },
+            "models": {
+              "capability": "models",
+              "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+              "enabled": true,
+              "observation": {
+                "account": "account-value",
+                "health": "unknown",
+                "lifecycle": "lifecycle-value",
+                "location": "location-value",
+                "message": "message-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "partial": true,
+                "platform": "aws",
+                "provider": "provider-value",
+                "resourceId": "resourceId-value",
+                "stale": true
+              },
+              "state": "not-connected"
+            },
+            "registry": {
+              "capability": "models",
+              "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+              "enabled": true,
+              "observation": {
+                "account": "account-value",
+                "health": "unknown",
+                "lifecycle": "lifecycle-value",
+                "location": "location-value",
+                "message": "message-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "partial": true,
+                "platform": "aws",
+                "provider": "provider-value",
+                "resourceId": "resourceId-value",
+                "stale": true
+              },
+              "state": "not-connected"
+            },
+            "remoteSandbox": {
+              "capability": "models",
+              "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+              "enabled": true,
+              "observation": {
+                "account": "account-value",
+                "health": "unknown",
+                "lifecycle": "lifecycle-value",
+                "location": "location-value",
+                "message": "message-value",
+                "observedAt": "2026-10-01T00:00:00Z",
+                "partial": true,
+                "platform": "aws",
+                "provider": "provider-value",
+                "resourceId": "resourceId-value",
+                "stale": true
+              },
+              "state": "not-connected"
+            }
+          },
+          "createdAt": "2026-10-01T00:00:00Z",
+          "deploymentGroupId": "dg_r27ict8c7vcgsumpj90ackf7bdgr",
+          "externalId": "externalId-value",
+          "name": "name-value"
+        }
+      ],
+      "hasAppRemoteSandbox": true,
+      "summary": {
+        "capabilities": {
+          "buckets": {
+            "connected": 2,
+            "enabled": true,
+            "needsAttention": 2,
+            "notConnected": 2,
+            "revoked": 2,
+            "settingUp": 2
+          },
+          "keys": {
+            "connected": 2,
+            "enabled": true,
+            "needsAttention": 2,
+            "notConnected": 2,
+            "revoked": 2,
+            "settingUp": 2
+          },
+          "models": {
+            "connected": 2,
+            "enabled": true,
+            "needsAttention": 2,
+            "notConnected": 2,
+            "revoked": 2,
+            "settingUp": 2
+          },
+          "registry": {
+            "connected": 2,
+            "enabled": true,
+            "needsAttention": 2,
+            "notConnected": 2,
+            "revoked": 2,
+            "settingUp": 2
+          },
+          "remoteSandbox": {
+            "connected": 2,
+            "enabled": true,
+            "needsAttention": 2,
+            "notConnected": 2,
+            "revoked": 2,
+            "settingUp": 2
+          }
+        },
+        "groups": 2
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

@@ -1,0 +1,30 @@
+{
+  "outcome": {
+    "ok": {
+      "arn": "arn-value",
+      "configuration": {
+        "action": "create",
+        "connectedKeyDeploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+        "deletionWindowDays": 7,
+        "requestId": "123e4567-e89b-42d3-a456-426614174000",
+        "setupRoleArn": "arn:aws:iam::000000000000:role/t",
+        "target": {
+          "awsAccountId": "000000000000",
+          "awsRegion": "aw-s-0",
+          "deploymentName": "deploymentName-value",
+          "operationId": "123e4567-e89b-42d3-a456-426614174000",
+          "resourceId": "resourceId-value",
+          "resourcePrefix": "resourcePrefix-value"
+        }
+      },
+      "erasureStarted": true,
+      "error": "error-value",
+      "operationId": "operationId-value",
+      "setupId": "setupId-value",
+      "status": "pending"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

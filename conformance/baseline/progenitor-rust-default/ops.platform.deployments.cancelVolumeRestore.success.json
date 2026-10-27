@@ -1,0 +1,23 @@
+{
+  "outcome": {
+    "ok": {
+      "cancelledAt": "2026-10-01T00:00:00Z",
+      "completedAt": "2026-10-01T00:00:00Z",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "createdBy": {
+        "id": "id-value",
+        "kind": "user"
+      },
+      "deploymentId": "dep_0c29fq4a2yjb7kx3smwdgxlcdep0",
+      "id": "vrst_rs1j4dytswpy7wbc819jdcxvrstr",
+      "ordinal": 2,
+      "resourceId": "resourceId-value",
+      "snapshotId": "snapshotId-value",
+      "status": "pending",
+      "updatedAt": "2026-10-01T00:00:00Z"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

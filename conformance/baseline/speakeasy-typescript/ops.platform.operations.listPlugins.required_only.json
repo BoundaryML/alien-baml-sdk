@@ -1,0 +1,100 @@
+{
+  "outcome": {
+    "ok": {
+      "plugins": [
+        {
+          "name": "name-value",
+          "version": "version-value",
+          "tier": "read-only",
+          "builtin": true,
+          "operations": [
+            {
+              "name": "name-value",
+              "tier": "read-only",
+              "description": "description-value",
+              "inputSchema": {
+                "inputSchema-key": {
+                  "key": "value"
+                }
+              },
+              "outputSchema": {
+                "outputSchema-key": {
+                  "key": "value"
+                }
+              },
+              "timeoutSeconds": 2,
+              "retries": {
+                "maxAttempts": 2,
+                "intervalSeconds": 2
+              },
+              "verification": {
+                "changes": "changes-value",
+                "pollOperation": "pollOperation-value",
+                "pollParamsFromResult": {
+                  "pollParamsFromResult-key": "pollParamsFromResult-value"
+                },
+                "successField": "successField-value",
+                "successValue": "successValue-value",
+                "timeoutSeconds": 2
+              },
+              "sensitiveOutput": {
+                "kind": "none"
+              },
+              "requiredPermissions": [
+                "requiredPermissions-item-value"
+              ],
+              "permissions": {
+                "azure": [
+                  "azure-item-value"
+                ],
+                "aws": [
+                  {
+                    "effect": "Allow",
+                    "actions": [
+                      "actions-item-value"
+                    ],
+                    "resources": [
+                      "resources-item-value"
+                    ],
+                    "condition": {
+                      "condition-key": {
+                        "condition-key": "condition-value"
+                      }
+                    },
+                    "reason": "reason-value"
+                  }
+                ],
+                "gcp": [
+                  {
+                    "permissions": [
+                      "permissions-item-value"
+                    ],
+                    "scope": "projects/${projectName}",
+                    "reason": "reason-value"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "installations": {
+        "total": 2,
+        "ready": 2,
+        "syncing": 2,
+        "stuck": 2
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&project=project value",
+      "got": "project=project value&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}

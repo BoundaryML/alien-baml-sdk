@@ -1,0 +1,39 @@
+{
+  "id": "platform.getProjectTemplateUrls.no_aws",
+  "phase": 1,
+  "notes": "No workspace on the client: no workspace query parameter.",
+  "call": {
+    "fn": "platform.getProjectTemplateUrls",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "idOrName": "prj_mcytp6z3j91f7tn5ryqsfwtraaaa"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/projects/prj_mcytp6z3j91f7tn5ryqsfwtraaaa/template-urls",
+        "headers": {
+          "authorization": "Bearer ${secrets.apiKey}",
+          "accept": "application/json"
+        }
+      },
+      "respond": {
+        "status": 200,
+        "json": {
+          "aws": null
+        }
+      }
+    }
+  ],
+  "expect_result": {
+    "ok": {}
+  },
+  "expect_error": null,
+  "assert": []
+}

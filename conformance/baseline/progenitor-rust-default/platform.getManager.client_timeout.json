@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "error": {
+      "code": "COMMUNICATION_ERROR",
+      "retryable": true,
+      "http_status": null,
+      "message": "HTTP request ${stub.base}/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr failed: error sending request for url (${stub.base}/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr)",
+      "variant": "CommunicationError",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

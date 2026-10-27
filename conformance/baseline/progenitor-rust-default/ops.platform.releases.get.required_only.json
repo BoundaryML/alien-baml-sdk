@@ -1,0 +1,45 @@
+{
+  "outcome": {
+    "ok": {
+      "commitUrl": "https://example.com/commitUrl",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "createdBy": {
+        "email": "email-value",
+        "id": "id-value",
+        "image": "image-value",
+        "name": "name-value"
+      },
+      "createdByUserId": "createdByUserId-value",
+      "currentChannels": [
+        "c"
+      ],
+      "gitMetadata": {},
+      "id": "rel_WbhQgksrawSKIpEN0NAssHX9relW",
+      "project": {
+        "id": "id-value",
+        "name": "name-value"
+      },
+      "projectId": "projectId-value",
+      "rollout": {
+        "avgDurationMs": 1.5,
+        "pendingCount": 2,
+        "updatedCount": 2
+      },
+      "rootDirectory": "rootDirectory-value",
+      "setupFingerprints": {
+        "setupFingerprints-key": {
+          "fingerprint": "fingerprint-value",
+          "target": "target-value",
+          "version": 2
+        }
+      },
+      "stack": {},
+      "title": "title-value",
+      "version": "version-value",
+      "workspaceId": "workspaceId-value"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

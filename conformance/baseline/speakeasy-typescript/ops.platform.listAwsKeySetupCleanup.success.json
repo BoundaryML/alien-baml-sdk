@@ -1,0 +1,22 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "stackId": "stackId-value",
+          "deletionDate": "2026-10-01T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "result.items[0].deletionDate",
+      "kind": "equivalent:date-time written differently",
+      "want": "2026-10-01T00:00:00Z",
+      "got": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}

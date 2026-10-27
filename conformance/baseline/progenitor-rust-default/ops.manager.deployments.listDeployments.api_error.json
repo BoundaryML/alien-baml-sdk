@@ -1,0 +1,27 @@
+{
+  "outcome": {
+    "error": {
+      "code": "NOT_FOUND",
+      "retryable": false,
+      "http_status": 401,
+      "message": "No such resource.",
+      "variant": "UnexpectedResponse",
+      "context": {
+        "requestId": null,
+        "hint": null,
+        "details": null
+      }
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "deploymentGroupId=deploymentGroupId value&name=name value&include=include-a&include=include-b",
+      "got": "deploymentGroupId=deploymentGroupId value&include=include-a&include=include-b&name=name value",
+      "exchange": 1
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[package]
+name = "openapi2baml"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+publish = false
+description = "Imports OpenAPI 3.0/3.1 specifications into BAML classes and functions"
+
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.10"

@@ -1,0 +1,15 @@
+{
+  "outcome": {
+    "ok": {
+      "items": [
+        {
+          "deletionDate": "2026-10-01T00:00:00Z",
+          "stackId": "stackId-value"
+        }
+      ]
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": []
+}

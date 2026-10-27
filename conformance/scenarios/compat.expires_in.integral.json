@@ -1,0 +1,19 @@
+{
+  "id": "compat.expires_in.integral",
+  "phase": 1,
+  "rule": "probe: expiresIn is float?",
+  "call": {
+    "fn": "compat.decodeRemoteAccess",
+    "args": {
+      "json": "{\"expiresIn\":300}"
+    }
+  },
+  "exchanges": [],
+  "expect_result": {
+    "ok": {
+      "expiresIn": 300
+    }
+  },
+  "expect_error": null,
+  "assert": []
+}

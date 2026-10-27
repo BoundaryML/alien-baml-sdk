@@ -1,0 +1,19 @@
+{
+  "outcome": {
+    "ok": {
+      "managingRoleArn": "managingRoleArn-value",
+      "platform": "aws"
+    }
+  },
+  "request_parity": true,
+  "outcome_parity": true,
+  "differences": [
+    {
+      "path": "query",
+      "kind": "equivalent:query parameters in another order",
+      "want": "workspace=my-workspace&platform=aws",
+      "got": "platform=aws&workspace=my-workspace",
+      "exchange": 1
+    }
+  ]
+}
