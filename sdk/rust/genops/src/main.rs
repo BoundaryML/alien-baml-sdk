@@ -36,10 +36,10 @@ const OUTPUT: &str = "src/operations.rs";
 const TABLE: &str = "tests/support/operations.rs";
 
 /// The suffix of the generated function each `send()` calls: the async
-/// binding that takes per-call options (`list` → `list_async_with_options`).
-/// The only place genops names a generated binding: when BAML makes the plain
-/// name async (and `<name>_sync` blocking), this becomes `"_with_options"`.
-const ASYNC_WITH_OPTIONS: &str = "_async_with_options";
+/// binding that takes per-call options (`list` → `list_with_options`; the
+/// blocking twin is `list_sync_with_options`). The only place genops names a
+/// generated binding.
+const ASYNC_WITH_OPTIONS: &str = "_with_options";
 
 /// One of the two generated APIs.
 struct Api {
@@ -100,7 +100,7 @@ struct Operation {
     group: Option<Ident>,
     /// The operation's generated name: `list`.
     method: Ident,
-    /// The generated function `send()` calls: `list_async_with_options`.
+    /// The generated function `send()` calls: `list_with_options`.
     function: Ident,
     /// The BAML path without `user.`: `platform.deployments.list`.
     key: String,

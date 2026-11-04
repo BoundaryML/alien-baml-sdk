@@ -72,15 +72,15 @@ CALLS: dict[str, Callable[[dict], Any]] = {
     "manager.getCommandStatus": lambda a: _alien_manager(a["client"]).commands.get_command_status(a["command_id"]),
     "setup.cloudformationLaunchUrl": lambda a: alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(**a["input"])),
     "setup.launchUrlForProject": lambda a: _alien(a["client"]).setup.launch_url_for_project(a["project"], a["region"], a["stackName"], a["parameters"]),
-    "compat.acceptKeySetup": lambda a: _converting(compat.accept_key_setup, _platform_client(a["client"]), compat.KeySetupAction(**a["request"])),
-    "compat.decodeProjectPage": lambda a: _converting(compat.decode_project_page, a["json"]),
-    "compat.decodeMaterialization": lambda a: _converting(compat.decode_materialization, a["json"]),
-    "compat.storedSecretPresence": lambda a: _converting(compat.stored_secret_presence, a["json"]),
-    "compat.reencodeConfig": lambda a: _converting(compat.reencode_config, a["json"]),
-    "compat.roundtripStackByPlatform": lambda a: _converting(compat.roundtrip_stack_by_platform, a["json"]),
-    "compat.roundtripEvent": lambda a: _converting(compat.roundtrip_event, a["json"]),
-    "compat.roleScope": lambda a: _converting(compat.role_scope, a["json"]),
-    "compat.decodeRemoteAccess": lambda a: _converting(compat.decode_remote_access, a["json"]),
+    "compat.acceptKeySetup": lambda a: _converting(compat.accept_key_setup_sync, _platform_client(a["client"]), compat.KeySetupAction(**a["request"])),
+    "compat.decodeProjectPage": lambda a: _converting(compat.decode_project_page_sync, a["json"]),
+    "compat.decodeMaterialization": lambda a: _converting(compat.decode_materialization_sync, a["json"]),
+    "compat.storedSecretPresence": lambda a: _converting(compat.stored_secret_presence_sync, a["json"]),
+    "compat.reencodeConfig": lambda a: _converting(compat.reencode_config_sync, a["json"]),
+    "compat.roundtripStackByPlatform": lambda a: _converting(compat.roundtrip_stack_by_platform_sync, a["json"]),
+    "compat.roundtripEvent": lambda a: _converting(compat.roundtrip_event_sync, a["json"]),
+    "compat.roleScope": lambda a: _converting(compat.role_scope_sync, a["json"]),
+    "compat.decodeRemoteAccess": lambda a: _converting(compat.decode_remote_access_sync, a["json"]),
 }
 
 
@@ -117,7 +117,7 @@ def _adapter(service: str, baml_type: str) -> pydantic.TypeAdapter:
 
 
 _DEFINITION = re.compile(
-    r'^(\w+)\s*= _define_function\("user\.([\w.]+)", "sync",\s*(\[[^\]]*\])(?:, (\[[^\]]*\]))?(?:, param_aliases=(\{[^}]*\}))?',
+    r'^(\w+)\s*= _define_function\("user\.([\w.]+)", "async",\s*(\[[^\]]*\])(?:, (\[[^\]]*\]))?(?:, param_aliases=(\{[^}]*\}))?',
     re.M,
 )
 
@@ -182,7 +182,7 @@ def test_every_operation_is_bound() -> None:
         generated: Any = getattr(baml_sdk, service)
         for group in groups:
             target, generated = getattr(target, group), getattr(generated, group)
-        assert getattr(target, name).__wrapped__ is getattr(generated, name), op
+        assert getattr(target, name).__wrapped__ is getattr(generated, name + "_sync"), op
 
 
 def _to_json(value: Any) -> Any:

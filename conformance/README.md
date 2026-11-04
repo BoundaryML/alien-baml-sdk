@@ -110,10 +110,10 @@ call the facade's generated methods and builders). A `required_only` scenario pa
 
 | Language | Dispatch | Arguments | Result |
 |---|---|---|---|
-| TypeScript | `sdk.<service>.<group>.<name>_async`, found by path | plain JSON | `JSON.stringify` |
+| TypeScript | `sdk.<service>.<group>.<name>` (the async function), found by path | plain JSON | `JSON.stringify` |
 | Python | the bound method (`Alien(…).deployment_groups.create_token`), found by path in the generated modules' `_define_function` records | pydantic, from `params[].type` | `model_dump(by_alias=True)` (the BAML names) |
 | Go | the operation's method (`c.Deployments.List(ctx, …)`), from the `operations` table `internal/genops` writes into `sdk/go/alien/operations_table_test.go` (gitignored) | decoded by the SDK (`InternalDecodeBody`) | struct fields by `json` tag, a union as its arm |
-| Rust | the operation's builder (`alien.deployments().list().project(…).send()`), from the `operation` table `sdk/rust/genops` writes into `sdk/rust/tests/support/operations.rs` (gitignored) | decoded by the SDK (`internal::decode_body_async`) | the wire value's fields |
+| Rust | the operation's builder (`alien.deployments().list().project(…).send()`), from the `operation` table `sdk/rust/genops` writes into `sdk/rust/tests/support/operations.rs` (gitignored) | decoded by the SDK (`internal::decode_body`) | the wire value's fields |
 
 Go and Rust need one table row per operation (they cannot look a function up
 by name). Both tables are generated, so they hold no hand-written

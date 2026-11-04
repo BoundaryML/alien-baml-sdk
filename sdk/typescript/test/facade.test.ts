@@ -372,8 +372,8 @@ describe("types (checked by tsc -p test)", () => {
     expectTypeOf<AlienError["statusCode"]>().toEqualTypeOf<number | null>()
     // @ts-expect-error: groups are on the client, without a `.platform` level
     expect(alien.platform).toBeUndefined()
-    // @ts-expect-error: only the async functions are bound, under their plain names
-    expect(alien.deployments.list_async).toBeUndefined()
+    // @ts-expect-error: only the async functions are bound, not their `_sync` twins
+    expect(alien.deployments.list_sync).toBeUndefined()
     // @ts-expect-error: the option is `serverURL`, as in Alien's SDK
     expect(() => new Alien({ apiKey: KEY, baseUrl: serverURL })).not.toThrow()
     // @ts-expect-error: the Manager's option is `token`, as in @alienplatform/commands

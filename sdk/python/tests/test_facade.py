@@ -242,7 +242,7 @@ def _operations(module: types.ModuleType) -> set[str]:
     return {
         name for name, value in vars(module).items()
         if isinstance(value, types.FunctionType) and value.__module__ == module.__name__
-        and not name.startswith("_") and not name.endswith("_async")
+        and not name.startswith("_") and isinstance(vars(module).get(name + "_sync"), types.FunctionType)
     }
 
 
@@ -259,7 +259,7 @@ def test_every_generated_operation_is_bound(secrets, module: types.ModuleType) -
         bound = getattr(client, group)
         assert set(dir(bound)) == _operations(generated), group
         for op in _operations(generated):
-            assert getattr(bound, op).__wrapped__ is getattr(generated, op)
+            assert getattr(bound, op).__wrapped__ is getattr(generated, f"{op}_sync")
 
 
 @pytest.mark.parametrize("module", [platform, manager], ids=lambda m: m.__name__)
@@ -275,7 +275,7 @@ def test_async_clients_bind_the_async_functions(secrets, module: types.ModuleTyp
         for op in _operations(generated):
             function = getattr(bound, op)
             assert inspect.iscoroutinefunction(function)
-            assert function.__wrapped__ is getattr(generated, f"{op}_async")
+            assert function.__wrapped__ is getattr(generated, op)
 
 
 def test_async_manager_sends_its_token(stub, secrets) -> None:
@@ -291,11 +291,17 @@ def test_async_manager_sends_its_token(stub, secrets) -> None:
     requests(stub)
 
 
+# Words that stay whole in snake_case (BAML #5524): ``getGcpOAuthProvider`` → ``get_gcp_oauth_provider``.
+_KNOWN_WORDS = {"OAuth": "Oauth", "GraphQL": "Graphql", "GitHub": "Github"}
+
+
 def _snake(name: str) -> str:
     """The snake_case Alien asked for: ``createToken`` → ``create_token``,
     ``revokeAPIKey`` → ``revoke_api_key``, ``getGcpOAuthProvider`` →
-    ``get_gcp_o_auth_provider``. BAML's ``language`` naming spells the
+    ``get_gcp_oauth_provider``. BAML's ``language`` naming spells the
     generated names; this test checks that they read this way."""
+    for word, whole in _KNOWN_WORDS.items():
+        name = name.replace(word, whole)
     return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", name).lower()
 
 
@@ -319,13 +325,13 @@ def test_every_operation_of_alien_typescript_sdks_is_bound(secrets, service: str
 
 def test_bound_names() -> None:
     alien = Alien("key", server_url="http://127.0.0.1:1")
-    assert alien.deployment_groups.create_token.__wrapped__ is importlib.import_module("baml_sdk.platform.deployment_groups").create_token
-    assert AlienManager("http://127.0.0.1:1").commands.create_command.__wrapped__ is importlib.import_module("baml_sdk.manager.commands").create_command
-    assert callable(alien.api_keys.revoke) and callable(alien.projects.get_gcp_o_auth_provider)
+    assert alien.deployment_groups.create_token.__wrapped__ is importlib.import_module("baml_sdk.platform.deployment_groups").create_token_sync
+    assert AlienManager("http://127.0.0.1:1").commands.create_command.__wrapped__ is importlib.import_module("baml_sdk.manager.commands").create_command_sync
+    assert callable(alien.api_keys.revoke) and callable(alien.projects.get_gcp_oauth_provider)
     with pytest.raises(AttributeError, match="createToken"):
         alien.deployment_groups.createToken  # noqa: B018  (only the generated snake_case names are bound)
-    with pytest.raises(AttributeError, match="create_token_async"):
-        alien.deployment_groups.create_token_async  # noqa: B018  (AsyncAlien binds those)
+    with pytest.raises(AttributeError, match="create_token_sync"):
+        alien.deployment_groups.create_token_sync  # noqa: B018  (bound as create_token)
 
 
 def test_shutdown(tmp_path) -> None:

@@ -173,14 +173,14 @@ export class ProjectSetup {
     parameters: Record<string, string> = {},
   ): Promise<string> {
     return call(async () =>
-      sdk.setup.launch_url_for_project_async(await this.#client(), project, region, stackName, parameters),
+      sdk.setup.launch_url_for_project(await this.#client(), project, region, stackName, parameters),
     )
   }
 }
 
 /** Builds an AWS CloudFormation quick-create link from a template URL. */
 export function cloudFormationLaunchUrl(input: CloudFormationLaunch): string {
-  return callSync(() => sdk.setup.cloudformation_launch_url(input))
+  return callSync(() => sdk.setup.cloudformation_launch_url_sync(input))
 }
 
 /**

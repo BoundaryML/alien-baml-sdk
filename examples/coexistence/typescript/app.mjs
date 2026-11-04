@@ -20,4 +20,4 @@ function attempt(name, fn) {
 }
 
 attempt("alien.cloudFormationLaunchUrl", () => alien.cloudFormationLaunchUrl(input))
-attempt("other.greet", () => other.greet("Alien"))
+attempt("other.greet", () => other.greet_sync("Alien"))

@@ -95,26 +95,26 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
             )
             .await),
         "compat.acceptKeySetup" => {
-            call(compat::accept_key_setup_async(
+            call(compat::accept_key_setup(
                 &platform_client(&a["client"]),
                 key_setup_action(&a["request"]),
             ))
             .await
         }
-        "compat.decodeProjectPage" => call(compat::decode_project_page_async(json_arg())).await,
+        "compat.decodeProjectPage" => call(compat::decode_project_page(json_arg())).await,
         "compat.decodeMaterialization" => {
-            call(compat::decode_materialization_async(json_arg())).await
+            call(compat::decode_materialization(json_arg())).await
         }
         "compat.storedSecretPresence" => {
-            call(compat::stored_secret_presence_async(json_arg())).await
+            call(compat::stored_secret_presence(json_arg())).await
         }
-        "compat.reencodeConfig" => call(compat::reencode_config_async(json_arg())).await,
+        "compat.reencodeConfig" => call(compat::reencode_config(json_arg())).await,
         "compat.roundtripStackByPlatform" => {
-            call(compat::roundtrip_stack_by_platform_async(json_arg())).await
+            call(compat::roundtrip_stack_by_platform(json_arg())).await
         }
-        "compat.roundtripEvent" => call(compat::roundtrip_event_async(json_arg())).await,
-        "compat.roleScope" => call(compat::role_scope_async(json_arg())).await,
-        "compat.decodeRemoteAccess" => call(compat::decode_remote_access_async(json_arg())).await,
+        "compat.roundtripEvent" => call(compat::roundtrip_event(json_arg())).await,
+        "compat.roleScope" => call(compat::role_scope(json_arg())).await,
+        "compat.decodeRemoteAccess" => call(compat::decode_remote_access(json_arg())).await,
         other => panic!("no Rust binding for scenario fn {other}"),
     }
 }
@@ -139,7 +139,7 @@ async fn arg<T: BamlValue>(a: &Value, name: &str) -> Result<T, Error> {
     let value = a
         .get(name)
         .ok_or_else(|| harness(format!("scenario args have no {name:?}")))?;
-    baml_sdk::internal::decode_body_async::<T>(
+    baml_sdk::internal::decode_body::<T>(
         value.to_string(),
         200,
         format!("scenario argument {name}"),

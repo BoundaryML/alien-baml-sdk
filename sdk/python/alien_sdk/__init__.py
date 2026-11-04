@@ -172,7 +172,7 @@ class ProjectSetup:
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
         with _converted():
-            return _setup.launch_url_for_project(self._client, project, region, stack_name, dict(parameters or {}))
+            return _setup.launch_url_for_project_sync(self._client, project, region, stack_name, dict(parameters or {}))
 
 
 class AsyncProjectSetup:
@@ -190,13 +190,13 @@ class AsyncProjectSetup:
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
         with _converted():
-            return await _setup.launch_url_for_project_async(self._client, project, region, stack_name, dict(parameters or {}))
+            return await _setup.launch_url_for_project(self._client, project, region, stack_name, dict(parameters or {}))
 
 
 def cloudformation_launch_url(input: CloudFormationLaunch) -> str:
     """Builds an AWS CloudFormation quick-create link from a template URL."""
     with _converted():
-        return _setup.cloudformation_launch_url(input)
+        return _setup.cloudformation_launch_url_sync(input)
 
 
 def shutdown() -> None:

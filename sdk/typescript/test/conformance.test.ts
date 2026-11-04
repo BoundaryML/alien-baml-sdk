@@ -39,14 +39,14 @@ function managerClient(client: Args): sdk.manager.ManagerClient {
 
 /**
  * A generated operation (`call.op`, conformance/README.md): `platform.managers.list`
- * is `sdk.platform.managers.list_async`, called with its required arguments in
+ * is `sdk.platform.managers.list` (async), called with its required arguments in
  * order and the optional ones that are set in an options object.
  */
 function operation(loaded: OperationCall): Promise<unknown> {
   const [service, ...path] = loaded.op.split(".")
   let target: any = sdk
   for (const part of [service, ...path.slice(0, -1)]) target = target?.[part]
-  const fn = target?.[`${path.at(-1)}_async`]
+  const fn = target?.[path.at(-1)!]
   if (typeof fn !== "function") throw new Error(`no generated TypeScript function for ${loaded.op}`)
   const client = service === "manager" ? managerClient(loaded.args.client) : platformClient(loaded.args.client)
   const required = loaded.params.filter((p) => !p.optional).map((p) => loaded.args[p.name])
@@ -68,15 +68,15 @@ const calls: Record<string, (a: Args) => Promise<unknown>> = {
   "setup.cloudformationLaunchUrl": async (a) => cloudFormationLaunchUrl(a.input),
   "setup.launchUrlForProject": (a) =>
     alien(a.client).setup.launchUrlForProject(a.project, a.region, a.stackName, a.parameters),
-  "compat.acceptKeySetup": (a) => call(() => sdk.compat.accept_key_setup_async(platformClient(a.client), a.request)),
-  "compat.decodeProjectPage": compatJson(sdk.compat.decode_project_page_async),
-  "compat.decodeMaterialization": compatJson(sdk.compat.decode_materialization_async),
-  "compat.storedSecretPresence": compatJson(sdk.compat.stored_secret_presence_async),
-  "compat.reencodeConfig": compatJson(sdk.compat.reencode_config_async),
-  "compat.roundtripStackByPlatform": compatJson(sdk.compat.roundtrip_stack_by_platform_async),
-  "compat.roundtripEvent": compatJson(sdk.compat.roundtrip_event_async),
-  "compat.roleScope": compatJson(sdk.compat.role_scope_async),
-  "compat.decodeRemoteAccess": compatJson(sdk.compat.decode_remote_access_async),
+  "compat.acceptKeySetup": (a) => call(() => sdk.compat.accept_key_setup(platformClient(a.client), a.request)),
+  "compat.decodeProjectPage": compatJson(sdk.compat.decode_project_page),
+  "compat.decodeMaterialization": compatJson(sdk.compat.decode_materialization),
+  "compat.storedSecretPresence": compatJson(sdk.compat.stored_secret_presence),
+  "compat.reencodeConfig": compatJson(sdk.compat.reencode_config),
+  "compat.roundtripStackByPlatform": compatJson(sdk.compat.roundtrip_stack_by_platform),
+  "compat.roundtripEvent": compatJson(sdk.compat.roundtrip_event),
+  "compat.roleScope": compatJson(sdk.compat.role_scope),
+  "compat.decodeRemoteAccess": compatJson(sdk.compat.decode_remote_access),
 }
 
 async function outcomeOf(loaded: Call): Promise<{ ok?: unknown; error?: unknown; raw?: unknown }> {

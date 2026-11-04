@@ -161,10 +161,10 @@ let cmd = AlienManager::new(manager_url, Some(token)).commands().create_command(
 ```
 
 Before, the same `deployments.list` call took every optional argument
-positionally:
+positionally, as the generated function still does:
 
 ```rust
-let page = platform::deployments::list_async(alien.platform(), Some("my-project".into()),
+let page = platform::deployments::list(alien.platform(), Some("my-project".into()),
     None, None, None, None, None, None, None, None, Some(10), None).await?;
 ```
 
@@ -175,7 +175,8 @@ let page = platform::deployments::list_async(alien.platform(), Some("my-project"
 | Topic | Rule |
 |---|---|
 | Groups and methods | As in Alien's TypeScript SDK: `x-speakeasy-group`, else camelCase of the first tag; `x-speakeasy-name-override`, else camelCase of the operation ID. An operation with neither group nor tag (39 Platform operations) is a method of the client itself, as in that SDK. One config rename (`POST /v1/deployment-groups/{id}/tokens` → `createToken`). Checked against names extracted from the SDK's sources: 279 of 279 Platform and 53 of 53 Manager operations match (`tests/naming_oracle.rs`), and the TypeScript, Python and Rust facade tests call each of them by that name (Rust: `every_operation_has_a_builder` in `tests/conformance.rs`). Operations marked `x-speakeasy-ignore` are left out, as Speakeasy does (3: `listPendingAccessRequests`, `reportMaterializedAccessRequests`, `reportAccessApprovals`) |
-| Python and Rust names | BAML's `language` naming (BAML #5481): groups, methods, arguments and fields in snake_case (`deploymentGroups.createToken` → `deployment_groups.create_token`, `nextCursor` → `next_cursor`), types and enum variants in PascalCase. An acronym is one word (`revokeAPIKey` → `revoke_api_key`); `OAuth` is two (`getGcpOAuthProvider` → `get_gcp_o_auth_provider`). A Python keyword gets a trailing underscore (`deployments.import` → `deployments.import_`), a Rust keyword is a raw identifier (`deployments().r#move(id)`). The facades take these names from the generated code and add no casing rules. Wire names do not change |
+| Generated async and blocking functions | BAML #5519: in TypeScript, Python and Rust the plain generated name is async (`platform.deployments.list`, `platform::deployments::list`) and its blocking twin is `<name>_sync`; Rust's per-call-options variants are `<name>_with_options` and `<name>_sync_with_options`. Go has one blocking function per operation, taking a `context.Context`. The facades pick one per client: TypeScript and Rust bind the async functions, Python's `Alien` and `AlienManager` the `_sync` twins and `AsyncAlien` and `AsyncAlienManager` the async ones, all under the plain name (`alien.deployments.list`), so the facades' public API does not depend on the suffix |
+| Python and Rust names | BAML's `language` naming (BAML #5481): groups, methods, arguments and fields in snake_case (`deploymentGroups.createToken` → `deployment_groups.create_token`, `nextCursor` → `next_cursor`), types and enum variants in PascalCase. An acronym is one word (`revokeAPIKey` → `revoke_api_key`), and so is a known word such as `OAuth`, `GraphQL` or `GitHub` (BAML #5524: `getGcpOAuthProvider` → `get_gcp_oauth_provider`). A Python keyword gets a trailing underscore (`deployments.import` → `deployments.import_`), a Rust keyword is a raw identifier (`deployments().r#move(id)`). The facades take these names from the generated code and add no casing rules. Wire names do not change |
 | Operations newer than the SDK | None at the vendored commit: Alien's TypeScript SDK has every Platform and Manager operation of the spec. One that is newer would be named by the same rule |
 | Arguments | Required arguments are positional: path parameters, then other required parameters, then a required body. Optional parameters and an optional body come after them as optional arguments. An operation can be called with no arguments exactly when Alien's SDK makes its request optional (all 332 operations checked) |
 | Workspace | The `workspace` query parameter is a client setting, sent on every operation that accepts it |
@@ -315,7 +316,9 @@ The choices behind the shape above, with the alternative where there was one.
    `BamlAbortError`, Python `baml_bridge.BamlCancelledError`, Go
    `context.DeadlineExceeded`, Rust `Error::Runtime`.
 10. **Python async.** Decided: `AsyncAlien` and `AsyncAlienManager` bind the
-    generated `_async` functions (`await AsyncAlien().managers.get(id)`), with
+    generated async functions, under their plain names
+    (`await AsyncAlien().managers.get(id)`), and `Alien` and `AlienManager`
+    their blocking `_sync` twins, with
     the same groups, methods, options and errors as `Alien` and
     `AlienManager`. They run through the same Platform scenarios as `Alien`.
 11. **Field names with separators.** Decided: fields use the names of Alien's
