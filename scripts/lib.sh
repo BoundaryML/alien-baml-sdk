@@ -3,16 +3,22 @@
 # BAML state never touches the developer's ~/.baml: the CLI gets a repo-local
 # BAML_HOME, and every SDK run gets its own (see run_isolated).
 #
-# The toolchain and every runtime package are the published BAML $BAML_PIN:
+# While BAML_COMMIT_PIN is set (below), the toolchain and every runtime
+# package come from a local build of that BAML commit (scripts/build_baml.sh;
+# README "Building BAML"). Without it, they are the published BAML $BAML_PIN:
 # the CLI is installed into .baml_home/cli, the runtime packages come from
-# npm, PyPI, the Go proxy and crates.io. BAML_LOCAL_BUILD=1 takes all of them
-# from a local build of a BAML checkout instead, to test BAML fixes that are
-# not released yet (README "Testing an unreleased BAML build").
+# npm, PyPI, the Go proxy and crates.io, and BAML_LOCAL_BUILD=1 takes all of
+# them from a local build instead, to test BAML fixes that are not released yet.
 #
 # Knobs:
-#   BAML_LOCAL_BUILD 1: use the local build in BAML_SOURCE. Default 0.
+#   BAML_LOCAL_BUILD 1: use the local build in BAML_SOURCE. Default 1 while
+#                    BAML_COMMIT_PIN is set (0 is then an error), otherwise 0.
 #   BAML_SOURCE      local build only: the BAML checkout, built at its HEAD
-#                    with no uncommitted changes (required).
+#                    with no uncommitted changes (required). Its HEAD must be
+#                    BAML_COMMIT_PIN when that is set.
+#   BAML_UNPINNED    1: accept a BAML_SOURCE at another commit than
+#                    BAML_COMMIT_PIN, to try one (a BAML pull request, say).
+#                    The "==> BAML" line says so. Default 0.
 #   BAML_CLI         path to a baml-cli $BAML_PIN binary. Default: the local
 #                    build's, or the release installed into .baml_home/cli.
 #   BAML_BRIDGE_PATH local build: its libbridge_cffi for Go and Rust. Default:
@@ -28,13 +34,36 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # examples/coexistence/other/typescript/package.json, bench/go/go.mod), update
 # their lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
 BAML_PIN="0.23.0"     # what the toolchain reports and sdk/*/ pin
+# This repository needs BAML changes that are on canary but in no release yet
+# (`naming_convention = "language"`, BAML #5481, among others), so it builds
+# against this one BAML commit, built locally. Its baml-cli still reports
+# $BAML_PIN, so the manifests keep that pin. Moving to another commit: check
+# it out in BAML_SOURCE, run scripts/build_baml.sh "$BAML_SOURCE", then
+# BAML_UNPINNED=1 scripts/generate.sh, which records the new bridge's
+# dependencies in sdk/rust/Cargo.lock (with the pin, Cargo runs --locked; the
+# bench updates its own lockfile); then set the commit here and run
+# scripts/verify.sh. Back to a release: set it to "", follow the steps
+# above for BAML_PIN, and record crates.io's baml_bridge again in
+# sdk/rust/Cargo.lock and bench/rust/Cargo.lock (`cargo update -p baml_bridge`).
+BAML_COMMIT_PIN="aabd3533218619285a461ace5bf11dd6b482ead9"
+[[ -z "$BAML_COMMIT_PIN" || "$BAML_COMMIT_PIN" =~ ^[0-9a-f]{40}$ ]] \
+  || { echo "error: BAML_COMMIT_PIN must be a full 40-character commit hash, got \"$BAML_COMMIT_PIN\"" >&2; exit 1; }
 export DO_NOT_TRACK=1
 
 die() { echo "error: $*" >&2; exit 1; }
 note() { echo "==> $*" >&2; }
 
-BAML_LOCAL_BUILD="${BAML_LOCAL_BUILD:-0}"
+if [[ -n "$BAML_COMMIT_PIN" ]]; then
+  BAML_LOCAL_BUILD="${BAML_LOCAL_BUILD:-1}"
+else
+  BAML_LOCAL_BUILD="${BAML_LOCAL_BUILD:-0}"
+fi
+BAML_UNPINNED="${BAML_UNPINNED:-0}"
 [[ "$BAML_LOCAL_BUILD" =~ ^[01]$ ]] || die "BAML_LOCAL_BUILD must be 0 or 1, got \"$BAML_LOCAL_BUILD\""
+[[ "$BAML_UNPINNED" =~ ^[01]$ ]] || die "BAML_UNPINNED must be 0 or 1, got \"$BAML_UNPINNED\""
+if [[ -n "$BAML_COMMIT_PIN" ]] && (( ! BAML_LOCAL_BUILD )); then
+  die "BAML_LOCAL_BUILD=0 asks for the published BAML $BAML_PIN, which cannot build this repository: it needs BAML commit $BAML_COMMIT_PIN (BAML_COMMIT_PIN in scripts/lib.sh), built locally. Unset BAML_LOCAL_BUILD and set BAML_SOURCE (README \"Building BAML\")"
+fi
 if (( ! BAML_LOCAL_BUILD )) && [[ -n "${BAML_SOURCE:-}" ]]; then
   die "BAML_SOURCE is set, but the scripts use the published BAML $BAML_PIN unless BAML_LOCAL_BUILD=1: set BAML_LOCAL_BUILD=1 to use the local build, or unset BAML_SOURCE"
 fi
@@ -50,15 +79,28 @@ esac
 # --- Local BAML build ---------------------------------------------------------
 BAML_BUILD="$BAML_PIN (release)"
 if (( BAML_LOCAL_BUILD )); then
-  [[ -n "${BAML_SOURCE:-}" ]] || die "BAML_LOCAL_BUILD=1 needs BAML_SOURCE, the BAML checkout to use (README \"Testing an unreleased BAML build\")"
+  [[ -n "${BAML_SOURCE:-}" ]] || die "set BAML_SOURCE to a BAML checkout${BAML_COMMIT_PIN:+ at commit $BAML_COMMIT_PIN}, built with scripts/build_baml.sh (README \"Building BAML\")"
   BAML_COMMIT="$(git -C "$BAML_SOURCE" rev-parse HEAD)" || die "BAML_SOURCE=$BAML_SOURCE is not a BAML checkout"
+  if [[ -n "$BAML_COMMIT_PIN" && "$BAML_COMMIT" != "$BAML_COMMIT_PIN" ]] && (( ! BAML_UNPINNED )); then
+    die "BAML_SOURCE is at BAML commit $BAML_COMMIT, not at the pinned $BAML_COMMIT_PIN (BAML_COMMIT_PIN in scripts/lib.sh). Check that out and build it:
+  git -C $BAML_SOURCE fetch origin
+  git -C $BAML_SOURCE checkout $BAML_COMMIT_PIN
+  $REPO/scripts/build_baml.sh $BAML_SOURCE
+or set BAML_UNPINNED=1 to use $BAML_COMMIT."
+  fi
   # A build embeds its commit, not its working tree. The TypeScript bridge
   # build rewrites two things git tracks: dist/ and the generated protobuf code.
   git -C "$BAML_SOURCE" diff --quiet HEAD -- baml_language \
     ':!baml_language/sdks/typescript/bridge_typescript/dist' \
     ':!baml_language/sdks/typescript/bridge_typescript/typescript_src/proto' \
     || die "BAML_SOURCE=$BAML_SOURCE has uncommitted changes under baml_language/: commit or discard them, then rebuild"
-  BAML_BUILD="$BAML_PIN, local build of BAML commit $BAML_COMMIT"
+  if [[ -z "$BAML_COMMIT_PIN" ]]; then
+    BAML_BUILD="$BAML_PIN, local build of BAML commit $BAML_COMMIT"
+  elif [[ "$BAML_COMMIT" == "$BAML_COMMIT_PIN" ]]; then
+    BAML_BUILD="$BAML_PIN, local build of the pinned BAML commit $BAML_COMMIT"
+  else
+    BAML_BUILD="$BAML_PIN, local build of BAML commit $BAML_COMMIT, UNPINNED (BAML_UNPINNED=1; the pin is $BAML_COMMIT_PIN)"
+  fi
   BAML_LOCAL_SDKS="$BAML_SOURCE/baml_language/sdks"   # the runtime packages
   : "${BAML_CLI:=$BAML_SOURCE/baml_language/target/release/baml-cli}"
   : "${BAML_BRIDGE_PATH:=$BAML_SOURCE/baml_language/target/release/$BRIDGE_FILE}"
@@ -69,9 +111,9 @@ fi
 # the runtime refuses generated code from another commit. Fails early unless
 # <file> comes from the HEAD of BAML_SOURCE.
 built_from_baml_commit() {
-  [[ -f "$1" ]] || die "$1 does not exist: build it (README \"Testing an unreleased BAML build\")"
+  [[ -f "$1" ]] || die "$1 does not exist: build it (scripts/build_baml.sh)"
   LC_ALL=C grep -qaF "$BAML_COMMIT" "$1" \
-    || die "$1 was not built from BAML commit $BAML_COMMIT (HEAD of BAML_SOURCE): rebuild it"
+    || die "$1 was not built from BAML commit $BAML_COMMIT (HEAD of BAML_SOURCE): rebuild it (scripts/build_baml.sh)"
 }
 
 # --- BAML CLI ---------------------------------------------------------------
@@ -79,7 +121,6 @@ CLI_HOME="$REPO/.baml_home/cli"
 mkdir -p "$CLI_HOME"
 
 if [[ -n "${BAML_CLI:-}" ]]; then
-  [[ -x "$BAML_CLI" ]] || die "BAML_CLI=$BAML_CLI is not an executable"
   # The wrapper on PATH (0.2.x) reads BAML_VERSION; newer wrappers read BAML_TOOLCHAIN.
   CLI_SELECTOR="$BAML_CLI"
 else
@@ -107,7 +148,10 @@ ensure_baml_cli() {
   command -v baml >/dev/null || die "baml is not on PATH (brew install boundaryml/baml/baml)"
   if (( BAML_LOCAL_BUILD )); then
     built_from_baml_commit "${BAML_CLI:-}"
-  elif [[ -z "${BAML_CLI:-}" ]] && ! toolchain_is_pinned "$BAML_PIN"; then
+  fi
+  if [[ -n "${BAML_CLI:-}" ]]; then
+    [[ -x "$BAML_CLI" ]] || die "BAML_CLI=$BAML_CLI is not an executable"
+  elif ! toolchain_is_pinned "$BAML_PIN"; then
     note "installing BAML toolchain $BAML_PIN into $CLI_HOME"
     BAML_HOME="$CLI_HOME" baml toolchain install "$BAML_PIN" >&2
   fi

@@ -33,13 +33,15 @@ fi
 # gitignored sdk/go/go.work and sdk/rust/.cargo/config.toml. A release build
 # undoes that first: pnpm leaves an existing node_modules (and its link to the
 # local bridge) as it is, and uv keeps an installed bridge of the same version.
-# The local crate also replaces baml_bridge's entry in sdk/rust/Cargo.lock;
-# a release build needs the committed one back.
+# The local crate also replaces baml_bridge's entry in sdk/rust/Cargo.lock
+# (a path dependency: no source, no checksum, no local path). The committed
+# lockfile is the one the pinned build (BAML_COMMIT_PIN) leaves; a release
+# build needs crates.io's entry back.
 if (( ! BAML_LOCAL_BUILD )); then
   rm -rf "$REPO/sdk/typescript/node_modules"
   rm -f "$REPO/sdk/go/go.work" "$REPO/sdk/go/go.work.sum" "$REPO/sdk/rust/.cargo/config.toml"
   grep -A2 '^name = "baml_bridge"$' "$REPO/sdk/rust/Cargo.lock" | grep -q '^source = "registry+' \
-    || die "sdk/rust/Cargo.lock records a local baml_bridge, left by a local BAML build: restore it (git checkout sdk/rust/Cargo.lock)"
+    || die "sdk/rust/Cargo.lock records a local baml_bridge, as a local BAML build leaves it: record crates.io's (cd sdk/rust && cargo update -p baml_bridge), and commit it with BAML_COMMIT_PIN unset"
 fi
 
 note "typescript: pnpm install"
@@ -88,13 +90,16 @@ note "go: alien/operations.go"
 note "go: build + vet"
 (cd "$REPO/sdk/go" && CGO_ENABLED=1 go build ./... >&2 && CGO_ENABLED=1 go vet ./alien/... ./internal/... >&2)
 
-# Not --locked with a local build: Cargo.lock records the local crate instead of crates.io's.
+# Not --locked with a local build of another commit than BAML_COMMIT_PIN (or of
+# any commit, without a pin): Cargo.lock records the dependencies of the pinned
+# commit's bridge crate, or crates.io's.
 locked=(--locked)
-if (( BAML_LOCAL_BUILD )); then locked=(); fi
+if (( BAML_LOCAL_BUILD )) && [[ "$BAML_COMMIT" != "$BAML_COMMIT_PIN" ]]; then locked=(); fi
 
 note "rust: src/operations.rs"
 # The facade's builders (alien.deployments().list()), generated from baml_sdk/src.
-(cd "$REPO/sdk/rust" && cargo run --quiet ${locked[@]+"${locked[@]}"} -p genops >&2)
+(cd "$REPO/sdk/rust" && cargo run --quiet ${locked[@]+"${locked[@]}"} -p genops >&2) \
+  || die "rust: genops failed. If cargo says the lock file needs to be updated: a cargo run without sdk/rust/.cargo/config.toml (the local bridge) rewrote sdk/rust/Cargo.lock, so restore it (git checkout sdk/rust/Cargo.lock); or, when moving BAML_COMMIT_PIN, see scripts/lib.sh"
 
 note "rust: cargo build"
 (cd "$REPO/sdk/rust" && cargo build ${locked[@]+"${locked[@]}"} --all-targets >&2)

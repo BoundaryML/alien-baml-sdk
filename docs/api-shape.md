@@ -328,7 +328,7 @@ The choices behind the shape above, with the alternative where there was one.
    Speakeasy's `timeoutMs`, for the Platform and the Manager client. It is a
    `timeout_ms` field of the generated `PlatformClient` and `ManagerClient`,
    which `internal.send` applies to each HTTP request, from connecting to
-   reading the whole response; the facades only pass it through:
+   reading the whole response; the facades pass it through, or convert to it:
 
    | Language | Platform | Manager |
    |---|---|---|
@@ -356,11 +356,10 @@ The choices behind the shape above, with the alternative where there was one.
    `BamlAbortError`, Python `baml_bridge.BamlCancelledError`, Go
    `context.DeadlineExceeded`, Rust `Error::Runtime`.
 10. **Python async.** Decided: `AsyncAlien` and `AsyncAlienManager` bind the
-    generated async functions, under their plain names
-    (`await AsyncAlien().managers.get(id)`), and `Alien` and `AlienManager`
-    their blocking `_sync` twins, with
-    the same groups, methods, options and errors as `Alien` and
-    `AlienManager`. They run through the same Platform scenarios as `Alien`.
+    generated async functions (`await AsyncAlien().managers.get(id)`; `Alien`
+    binds their blocking `_sync` twins), with the same groups, methods,
+    options and errors as `Alien` and `AlienManager`. They run through the
+    same Platform scenarios as `Alien`.
 11. **Field names with separators.** Decided: fields use the names of Alien's
     TypeScript SDK, which camelCases wire names with separators (21 in the
     Platform API, 14 in the Manager API; `billing.getEntitlements`: `features.customDomains` for

@@ -139,13 +139,13 @@ Control endpoints:
 `scripts/verify.sh` runs every suite, each with its own empty `BAML_HOME`. To
 run them by hand after `scripts/verify.sh`, give each run a fresh
 `BAML_HOME`. Every suite refuses to start when `BAML_HOME` is unset or is
-`~/.baml`. Go and Rust take the runtime library that `verify.sh` fetched
-(with a [local BAML build](../README.md#testing-an-unreleased-baml-build):
-`$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib`, `.so` on Linux):
+`~/.baml`. Go and Rust take the runtime library of the
+[BAML build](../README.md#building-baml) (`.so` on Linux; with a BAML release,
+the one `verify.sh` fetched into `.cache/bridge-home/bridges/0.23.0/`):
 
 ```sh
 export BAML_HOME="$(mktemp -d)"   # never the developer's ~/.baml
-bridge=$(echo "$PWD"/.cache/bridge-home/bridges/0.23.0/*/libbridge_cffi.*)
+bridge=$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib
 pnpm -C sdk/typescript test
 uv run --frozen --directory sdk/python pytest
 (cd sdk/go && BAML_BRIDGE_PATH=$bridge CGO_ENABLED=1 go test ./...)

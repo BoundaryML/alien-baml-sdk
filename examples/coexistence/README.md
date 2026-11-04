@@ -10,8 +10,8 @@ examples/coexistence/run.sh
 
 `other/` has one function, `greet`, and one function whose fully qualified
 name (`setup.cloudformation_launch_url`) matches one of the Alien SDK's. With a
-[local BAML build](../../README.md#testing-an-unreleased-baml-build), every install uses that
-build's runtime packages instead of the published ones.
+local BAML build (the default: [Building BAML](../../README.md#building-baml)),
+every install uses that build's runtime packages instead of the published ones.
 
 Today the last SDK to start the BAML runtime owns the process: calls through
 the other SDK fail with `Function not found` or silently run the
