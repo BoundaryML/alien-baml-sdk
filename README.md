@@ -346,6 +346,14 @@ scripts/verify.sh --phase 2    # ==> BAML 0.23.0, local build of BAML commit <sh
   (`.so` on Linux). Set it per command, not with `export`: the TypeScript
   bridge reads the same variable as the path of its own addon.
 - Back to the release: unset both variables and run `scripts/generate.sh`.
+- The scripts need a `baml` launcher on `PATH` whose `--version` prints
+  `baml toolchain 0.23.0 …` or `baml toolchain baml-cli 0.23.0 …`
+  (`toolchain_is_pinned` in `scripts/lib.sh`). The launcher a BAML checkout
+  builds (`target/release/baml`, wrapper 0.2.5) prints `baml wrapper 0.2.5`
+  and `baml-cli 0.23.0` instead, so the check rejects it. Until `lib.sh`
+  accepts that output, put a small script named `baml` first on `PATH` that
+  runs `$BAML_TOOLCHAIN` and prints `baml toolchain $($BAML_TOOLCHAIN --version)`
+  for `--version`.
 
 ## Known gaps
 

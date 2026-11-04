@@ -29,6 +29,7 @@ changed and what remains. B13 is BAML's design, which the SDK works with.
 | [B23](#b23) | The Python bridge keeps each encoded call, API key included, in a local variable | None; the entry gives Sentry settings | Error reporters that record local variables (Sentry by default) store the API key |
 | [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None | In every crate of a Rust build that links the SDK, floats inside untagged, internally tagged or flattened serde types fail to deserialize, and `Value` objects keep their input order |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
+| [B26](#b26) | The Rust generator's `serde` impls ignore the SDK's JSON mapping (`baml.FromJson`/`baml.ToJson`) | The SDK leaves the `serde` feature off; `tests/serde.rs` pins what it does | Alien's Rust code cannot `serde_json::from_value` an SDK type, as it does with Progenitor's types |
 
 Not in the table: B8 (BAML has no OpenAPI importer) is filled by this
 repository's `tools/openapi2baml`. This SDK does not hit B10 (string-only
@@ -661,6 +662,54 @@ the generator to name a union after where it is used, not after its members.
 Such names would also stop changing when a member is added
 (the importer's [DESIGN.md](../tools/openapi2baml/DESIGN.md) says so for open
 unions).
+
+## B26
+
+**The generated Rust types' serde impls do not read or write the API's
+JSON.** BAML 0.23.0 (BAML #5375) gives the generated crate an opt-in `serde`
+feature that derives `Serialize` and `Deserialize`. Alien asked for it, to
+build a request from a form as with Progenitor's types:
+
+```rust
+let req: CreateSetupLinkRequest = serde_json::from_value(form)?;
+```
+
+The impls are structural, as the generated `Cargo.toml` says: keys are the BAML
+field names, an unset optional field is `null`, a union takes the first member
+that fits, and "a `baml.ToJson` override on one of your classes is not
+applied". `baml.FromJson` overrides are not applied either. The importer gives
+640 of the 1,574 Platform and Manager classes an override (571 `ToJson`, 116
+`FromJson`), because that is where the SDK's wire mapping lives (B13, B14 and
+the rules in [api-shape.md](api-shape.md#rules)). Measured with BAML canary
+`06e0854b7c` (`sdk/rust/tests/serde.rs`, every payload from the conformance
+scenarios):
+
+| | Wire JSON (what the SDK reads and writes) | serde |
+|---|---|---|
+| Renamed fields: 308 (292 Platform, 16 Manager; [importer-coverage.md](importer-coverage.md)) | `StackByPlatform` `{"test": {…}}`; `NetworkSettingsByoVpcAws` `{"vpc_id": "vpc-1", …}` | Reads and writes `"test_"` and `"vpcId"`. An optional field's wire key is dropped without an error (`{"test": {…}}` reads as `test_: None`); a required one fails (`missing field privateSubnetIds`) |
+| Unset optional fields (B13) | Left out of request bodies | Written as `null` in every unset field, nested ones included. For some fields `null` means "clear" ("Null clears the destination; omit to keep it unchanged", `returnUrl`) |
+| Tagged unions: 365 with an `Other` member (333 Platform, 32 Manager) | The member is picked by its tag; an unknown tag reads as `…Other { type: "UNKNOWN", raw }` | A tag is a plain `String` and unlisted keys are ignored, so the first member whose required fields are present wins. Every `manager::NetworkSettings`, `{"type": "byo-vpc-aws", "vpc_id": …}` and `{"type": "future-mode"}` included, reads as `NetworkSettingsUseDefault { type }`: the VPC is lost without an error. The `ExternalBinding` `{"type": "storage", "service": "minio", …}` reads as `ExternalBindingStorageS3`, not `ExternalBindingOther`. An `…Other` member would be written as `{"type": "UNKNOWN", "raw": {…}}`, not as `raw` |
+| Classes keeping unlisted keys: 34 (32 Platform, 2 Manager) | Unlisted keys go to `additionalProperties` | Expects an `"additionalProperties"` key, so wire JSON fails: a whole `platform::Deployment` response fails with `missing field additionalProperties` (on `stackState.resources.*.config`) |
+
+What does work: a class whose fields, nested ones included, have none of the
+above. A flat `CreateSetupLinkRequest` (`createSetupLink.optional_fields`)
+reads; `CreateSetupLinkResponse` round-trips exactly; open enums keep unknown
+values; a `string | T[]` union reads and writes either member. But the same
+request with `deploymentSetupConfig.policy.stackSettings.defaults.network`
+set loses the network setting, as above.
+
+**Impact on Alien.** `serde_json::from_value::<SdkType>(…)` and
+`serde_json::to_value(&sdk_value)` are not available. Code converting its own
+JSON into SDK types has to build the structs by hand.
+
+**Workaround.** None: `alien_sdk` leaves the feature off, so a type that would
+silently read the wrong value is not offered. `sdk/rust/Cargo.toml` turns it on
+for the tests only, and `tests/serde.rs` pins each row above (`pinned_*`); a
+generator that applies the overrides makes them fail, and the feature can be
+turned on then. A fix in BAML: have the derived impls follow `baml.FromJson`
+and `baml.ToJson` (or go through `baml.json`), or leave serde off any class
+that has an override, as the generator does today for classes it cannot
+derive.
 
 ---
 
