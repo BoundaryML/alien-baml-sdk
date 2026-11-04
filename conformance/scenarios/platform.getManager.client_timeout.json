@@ -1,7 +1,7 @@
 {
   "id": "platform.getManager.client_timeout",
   "phase": 1,
-  "notes": "The client's timeout (TypeScript timeoutMs, Python timeout_ms, Go Options.Timeout, Rust Options::timeout) limits each request: a response 3 s late fails after 300 ms with COMMUNICATION_ERROR.",
+  "notes": "The client's timeout (TypeScript timeoutMs, Python timeout, Go Options.Timeout, Rust Options::timeout) limits each request: a response 3 s late fails after 300 ms with COMMUNICATION_ERROR.",
   "call": {
     "fn": "platform.getManager",
     "args": {

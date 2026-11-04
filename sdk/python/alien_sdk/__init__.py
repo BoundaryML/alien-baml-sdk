@@ -19,6 +19,10 @@ Call operations through :class:`Alien` and :class:`AlienManager` (or
 
 from __future__ import annotations
 
+import datetime as _datetime
+import fractions as _fractions
+import math as _math
+import numbers as _numbers
 import os as _os
 import typing as _typing
 
@@ -36,6 +40,12 @@ CloudFormationLaunch = _setup.CloudFormationLaunch
 
 DEFAULT_SERVER_URL = "https://api.alien.dev"
 
+DEFAULT_TIMEOUT = 300.0
+"""The default ``timeout``, in seconds: BAML's default of 5 minutes."""
+
+# The largest BAML int: the generated clients hold the timeout as one.
+_MAX_TIMEOUT_MS = (1 << 62) - 1
+
 
 # The generated client classes are pydantic models, whose repr() shows every
 # field. These subclasses leave the credential out of repr(), vars() and
@@ -49,19 +59,43 @@ class _ManagerClient(_gen.manager.ManagerClient):
     token: _typing.Optional[str] = _pydantic.Field(default=None, repr=False)
 
 
-def _platform_client(api_key: str | None, server_url: str | None, workspace: str | None, timeout_ms: int | None) -> _PlatformClient:
+def _timeout_ms(timeout: float | None) -> int:
+    """A ``timeout`` in seconds as the generated clients take it: whole
+    milliseconds, rounded up so that a sub-millisecond timeout still limits;
+    0 (``None``) is no limit."""
+    if timeout is None:
+        return 0
+    if isinstance(timeout, bool) or not isinstance(timeout, _numbers.Real):
+        hint = "; pass .total_seconds()" if isinstance(timeout, _datetime.timedelta) else ""
+        raise TypeError(f"timeout must be a number of seconds or None, not {type(timeout).__name__}{hint}")
+    # A plain int or float from here on (numpy scalars, Fraction): a numpy
+    # int64 would wrap around when multiplied below.
+    timeout = int(timeout) if isinstance(timeout, _numbers.Integral) else float(timeout)
+    if not 0 < timeout < _math.inf:  # NaN fails too
+        raise ValueError(f"timeout must be a positive, finite number of seconds, not {timeout!r}; pass None for no limit")
+    if timeout >= _MAX_TIMEOUT_MS / 1000:  # before multiplying, which could overflow
+        return _MAX_TIMEOUT_MS
+    if isinstance(timeout, int):
+        return timeout * 1000
+    # Round up the decimal the float was written as (its repr, read exactly),
+    # not its binary value: 2.007 * 1000 is 2007.0000000000002 and the float
+    # 0.1 is a little over 0.1, but they are 2007 and 100 ms, not 2008 and 101.
+    return min(max(_math.ceil(_fractions.Fraction(repr(timeout)) * 1000), 1), _MAX_TIMEOUT_MS)
+
+
+def _platform_client(api_key: str | None, server_url: str | None, workspace: str | None, timeout: float | None) -> _PlatformClient:
     if api_key is None:
         api_key = _os.environ.get("ALIEN_API_KEY")
     if not api_key:
         raise AlienError("INVALID_REQUEST", "no API key: pass api_key or set ALIEN_API_KEY", False)
     if server_url is None:
         server_url = DEFAULT_SERVER_URL
-    return _PlatformClient(base_url=server_url, api_key=api_key, workspace=workspace, timeout_ms=timeout_ms)
+    return _PlatformClient(base_url=server_url, api_key=api_key, workspace=workspace, timeout_ms=_timeout_ms(timeout))
 
 
-def _manager_client(server_url: str, token: str | None, timeout_ms: int | None) -> _ManagerClient:
+def _manager_client(server_url: str, token: str | None, timeout: float | None) -> _ManagerClient:
     # An empty token sends no Authorization header.
-    return _ManagerClient(base_url=server_url, token=token or None, timeout_ms=timeout_ms)
+    return _ManagerClient(base_url=server_url, token=token or None, timeout_ms=_timeout_ms(timeout))
 
 
 class Alien(_operations.Platform):
@@ -71,11 +105,15 @@ class Alien(_operations.Platform):
     :data:`DEFAULT_SERVER_URL`, and ``workspace`` is optional for
     workspace-scoped API keys.
 
-    ``timeout_ms`` limits each HTTP request, from connecting to reading the
-    whole response (Alien's ``timeoutMs``). ``None``: BAML's default of 5
-    minutes; 0 or negative: no limit. A request that runs out raises
-    :class:`AlienError` ``COMMUNICATION_ERROR`` (retryable). A per-call
-    ``_baml`` timeout limits the whole call as well: the shorter one ends it.
+    ``timeout`` limits each HTTP request, from connecting to reading the
+    whole response (Alien's ``timeoutMs``), in seconds as in httpx:
+    :data:`DEFAULT_TIMEOUT` (5 minutes) unless set, ``None`` for no limit,
+    rounded up to whole milliseconds. Zero, negative or not finite raises
+    ``ValueError``; anything but a real number or ``None`` (a ``bool``, a
+    ``timedelta``) raises ``TypeError``. A request that runs out
+    raises :class:`AlienError` ``COMMUNICATION_ERROR`` (retryable). A per-call
+    ``_baml={"timeout_ms": ...}`` (BAML's own option, so in milliseconds)
+    limits the whole call as well: the shorter one ends it.
 
     ``alien.<group>.<method>(...)`` calls any Platform API operation::
 
@@ -102,9 +140,9 @@ class Alien(_operations.Platform):
         *,
         server_url: str | None = None,
         workspace: str | None = None,
-        timeout_ms: int | None = None,
+        timeout: float | None = DEFAULT_TIMEOUT,
     ) -> None:
-        client = _platform_client(api_key, server_url, workspace, timeout_ms)
+        client = _platform_client(api_key, server_url, workspace, timeout)
         super().__init__(client)
         self.setup = ProjectSetup(client)
 
@@ -125,9 +163,9 @@ class AsyncAlien(_operations.AsyncPlatform):
         *,
         server_url: str | None = None,
         workspace: str | None = None,
-        timeout_ms: int | None = None,
+        timeout: float | None = DEFAULT_TIMEOUT,
     ) -> None:
-        client = _platform_client(api_key, server_url, workspace, timeout_ms)
+        client = _platform_client(api_key, server_url, workspace, timeout)
         super().__init__(client)
         self.setup = AsyncProjectSetup(client)
 
@@ -139,13 +177,13 @@ class AlienManager(_operations.Manager):
     """A Manager API client, for example for the ``managerUrl`` and ``token`` from
     ``alien.commands.bootstrap``. ``AlienManager(server_url, token).commands.create_command(...)``
     calls any Manager API operation; the token is sent on every operation
-    when set (an empty token sends none). ``timeout_ms`` is :class:`Alien`'s.
+    when set (an empty token sends none). ``timeout`` is :class:`Alien`'s.
     Call :func:`shutdown` before the process ends without running ``atexit``
     handlers (a signal such as SIGTERM, ``os._exit()``).
     """
 
-    def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(_manager_client(server_url, token, timeout_ms))
+    def __init__(self, server_url: str, token: str | None = None, *, timeout: float | None = DEFAULT_TIMEOUT) -> None:
+        super().__init__(_manager_client(server_url, token, timeout))
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r})"
@@ -156,8 +194,8 @@ class AsyncAlienManager(_operations.AsyncManager):
     ``await AsyncAlienManager(server_url, token).commands.create_command(...)``.
     """
 
-    def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(_manager_client(server_url, token, timeout_ms))
+    def __init__(self, server_url: str, token: str | None = None, *, timeout: float | None = DEFAULT_TIMEOUT) -> None:
+        super().__init__(_manager_client(server_url, token, timeout))
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r})"
@@ -231,6 +269,7 @@ __all__ = [
     "AsyncProjectSetup",
     "CloudFormationLaunch",
     "DEFAULT_SERVER_URL",
+    "DEFAULT_TIMEOUT",
     "ProjectSetup",
     "cloudformation_launch_url",
     "manager",

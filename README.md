@@ -313,10 +313,10 @@ let page = alien.deployments().list().project("my-project").limit(10).send().awa
 ```
 
 Each client also takes a limit for each HTTP request, BAML's 5 minutes when
-unset: TypeScript `timeoutMs`, Python `timeout_ms=`, Go `Options.Timeout` (a
-`time.Duration`), Rust `Options::timeout` (a `Duration`); a request that runs
-out fails with `COMMUNICATION_ERROR` (decision 9 in
-[docs/api-shape.md](docs/api-shape.md#decisions)).
+unset: TypeScript `timeoutMs`, Python `timeout=` (seconds; `None` for no
+limit), Go `Options.Timeout` (a `time.Duration`), Rust `Options::timeout` (a
+`Duration`); a request that runs out fails with `COMMUNICATION_ERROR`
+(decision 9 in [docs/api-shape.md](docs/api-shape.md#decisions)).
 
 Every call fails with one error type, `AlienError` (`code`, `message`,
 `retryable`, HTTP status, context). See [docs/errors.md](docs/errors.md).

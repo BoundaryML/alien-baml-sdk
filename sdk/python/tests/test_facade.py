@@ -21,13 +21,14 @@ import sys
 import textwrap
 import traceback
 import types
+from datetime import timedelta
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, Callable
 
-import pydantic
 import pytest
 from baml_bridge import UNSET as BAML_UNSET
-from baml_bridge import BamlError
+from baml_bridge import BamlCancelledError, BamlError
 
 import alien_sdk
 from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, manager, platform
@@ -80,18 +81,82 @@ def test_missing_api_key_fails_at_construction(monkeypatch, client, api_key) -> 
     assert "ALIEN_API_KEY" in info.value.message
 
 
-@pytest.mark.parametrize("client", [Alien, AsyncAlien])
-def test_timeout_ms_reaches_the_client(secrets, client) -> None:
-    assert client(secrets["apiKey"])._client.timeout_ms is None
-    assert client(secrets["apiKey"], timeout_ms=300)._client.timeout_ms == 300
-    with pytest.raises(pydantic.ValidationError):
-        client(secrets["apiKey"], timeout_ms=1.5)
+CLIENTS = [Alien, AsyncAlien, AlienManager, AsyncAlienManager]
 
 
-@pytest.mark.parametrize("client", [AlienManager, AsyncAlienManager])
-def test_manager_timeout_ms_reaches_the_client(client) -> None:
-    assert client("http://127.0.0.1:9")._client.timeout_ms is None
-    assert client("http://127.0.0.1:9", timeout_ms=300)._client.timeout_ms == 300
+def new_client(cls: type, **options):
+    """A client of any of the four classes; nothing is called."""
+    if cls in (Alien, AsyncAlien):
+        return cls("key", **options)
+    return cls("http://127.0.0.1:9", **options)
+
+
+@pytest.mark.parametrize("cls", CLIENTS)
+@pytest.mark.parametrize(("timeout", "timeout_ms"), [
+    (30, 30_000),
+    (30.0, 30_000),
+    (1.5, 1_500),
+    (2.007, 2_007),  # 2.007 * 1000 is 2007.0000000000002
+    (0.1, 100),  # the float is a little over 0.1
+    (0.0015, 2),  # rounded up
+    (0.0010000001, 2),
+    (0.0001, 1),  # a sub-millisecond timeout still limits
+    (1e-12, 1),
+    (Fraction(3, 10), 300),  # any real number
+    (1e30, 2**62 - 1),  # the largest BAML int
+    (10**400, 2**62 - 1),  # too large for a float
+    (None, 0),  # no limit
+])
+def test_timeout_is_seconds(cls, timeout, timeout_ms) -> None:
+    assert new_client(cls, timeout=timeout)._client.timeout_ms == timeout_ms
+
+
+@pytest.mark.parametrize("cls", CLIENTS)
+def test_timeout_defaults_to_five_minutes(cls) -> None:
+    assert alien_sdk.DEFAULT_TIMEOUT == 300.0
+    assert new_client(cls)._client.timeout_ms == 300_000
+
+
+@pytest.mark.parametrize("cls", CLIENTS)
+@pytest.mark.parametrize(("timeout", "error", "message"), [
+    (0, ValueError, "not 0; pass None for no limit"),
+    (0.0, ValueError, "not 0.0; pass None for no limit"),
+    (-1, ValueError, "not -1; pass None for no limit"),
+    (float("nan"), ValueError, "not nan; pass None for no limit"),
+    (float("inf"), ValueError, "not inf; pass None for no limit"),
+    (True, TypeError, "not bool"),
+    ("30", TypeError, "not str"),
+    (timedelta(seconds=30), TypeError, "not timedelta; pass .total_seconds()"),
+])
+def test_invalid_timeout_fails_at_construction(cls, timeout, error, message) -> None:
+    with pytest.raises(error, match=re.escape(message)):
+        new_client(cls, timeout=timeout)
+
+
+@pytest.mark.parametrize("cls", CLIENTS)
+def test_timeout_ms_is_not_an_option(cls) -> None:
+    with pytest.raises(TypeError, match="unexpected keyword argument 'timeout_ms'"):
+        new_client(cls, timeout_ms=300)
+
+
+MANAGER = {"id": "mgr_1", "name": "primary", "targets": ["aws"], "managementConfigs": {}, "isSystem": False,
+           "workspaceId": "ws_1", "status": "healthy", "managedDeploymentCount": 0, "defaultProjectCount": 0,
+           "createdAt": "2026-10-01T00:00:00Z"}
+
+
+def test_no_timeout_waits(stub, secrets) -> None:
+    # None reaches BAML as 0 ms, which must mean no limit, not "time out at once".
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_1"}, "respond": {"json": MANAGER, "delay_ms": 1000}})
+    assert Alien(secrets["apiKey"], server_url=stub.base, timeout=None).managers.get("mgr_1").id == "mgr_1"
+    requests(stub)
+
+
+def test_per_call_timeout_is_milliseconds(stub, secrets) -> None:
+    # BAML's per-call option is in milliseconds, and the shorter limit ends the call.
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_1"}, "respond": {"json": MANAGER, "delay_ms": 3000}})
+    alien = Alien(secrets["apiKey"], server_url=stub.base, timeout=5.0)
+    with pytest.raises(BamlCancelledError):
+        alien.managers.get("mgr_1", _baml={"timeout_ms": 100})
 
 
 def test_default_server_url(secrets) -> None:

@@ -42,12 +42,21 @@ def load_scenarios() -> list[dict]:
 SCENARIOS = load_scenarios()
 
 
+def _timeout(client: dict) -> dict:
+    """The scenario client's ``timeout_ms`` as the facade's ``timeout`` (seconds):
+    unset keeps the default, zero or negative is no limit (``None``)."""
+    ms = client.get("timeout_ms")
+    if ms is None:
+        return {}
+    return {"timeout": ms / 1000 if ms > 0 else None}
+
+
 def _alien(client: dict, cls: type[Alien | AsyncAlien] = Alien) -> Alien | AsyncAlien:
-    return cls(client["api_key"], server_url=client["base_url"], workspace=client.get("workspace"), timeout_ms=client.get("timeout_ms"))
+    return cls(client["api_key"], server_url=client["base_url"], workspace=client.get("workspace"), **_timeout(client))
 
 
 def _alien_manager(client: dict, cls: type[AlienManager | AsyncAlienManager] = AlienManager) -> AlienManager | AsyncAlienManager:
-    return cls(client["base_url"], client.get("token"), timeout_ms=client.get("timeout_ms"))
+    return cls(client["base_url"], client.get("token"), **_timeout(client))
 
 
 def _platform_client(client: dict) -> _gen.platform.PlatformClient:
