@@ -8,6 +8,8 @@
 baml_sdk/
 /sdk/go/alien/operations.go
 /sdk/go/alien/operations_table_test.go
+/sdk/rust/src/operations.rs
+/sdk/rust/tests/support/operations.rs
 
 # Local BAML build overrides, written by scripts/generate.sh (they hold local paths)
 /sdk/go/go.work

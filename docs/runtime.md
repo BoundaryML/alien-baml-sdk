@@ -60,9 +60,8 @@ Calls:
   are `async`; only `cloudFormationLaunchUrl` is synchronous (it does no I/O).
 - Python: synchronous (`Alien`), or `async` (`AsyncAlien`).
 - Go: synchronous, with a `context.Context`.
-- Rust: each operation has an `async` function (`<name>_async`) and a
-  blocking one (`<name>`); the blocking one fails with `Error::Runtime` inside
-  a Tokio runtime. `alien_sdk::init()` and `alien_sdk::shutdown()` block.
+- Rust: `async` (each operation's builder has an `async fn send()`).
+  `alien_sdk::init()` and `alien_sdk::shutdown()` block.
 
 ## Shutting down
 

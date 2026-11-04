@@ -8,7 +8,7 @@ output_dir = "../sdk/typescript"
 
 [generator.python]
 output_type = "python/pydantic"
-naming_convention = "preserve-case"
+naming_convention = "language"
 output_dir = "../sdk/python"
 
 [generator.go]
@@ -19,7 +19,7 @@ output_dir = "../sdk/go"
 
 [generator.rust]
 output_type = "rust"
-naming_convention = "preserve-case"
+naming_convention = "language"
 output_dir = "../sdk/rust"
 
 [bridge]

@@ -115,8 +115,8 @@ console.log(cloudFormationLaunchUrl({
 import alien_sdk
 
 print(alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
-    templateUrl="https://example.com/setup.yaml", region="us-east-1",
-    stackName="alien-setup", parameters={"ExternalId": "customer-0001"})))
+    template_url="https://example.com/setup.yaml", region="us-east-1",
+    stack_name="alien-setup", parameters={"ExternalId": "customer-0001"})))
 ```
 
 **Go.** Save as `sdk/go/cmd/quickstart/main.go`, then run
@@ -169,8 +169,8 @@ numbers and orders JSON objects ([gaps B24](docs/gaps.md#b24)).
 #[tokio::main]
 async fn main() -> Result<(), alien_sdk::Error> {
     let url = alien_sdk::cloudformation_launch_url(alien_sdk::CloudFormationLaunch {
-        templateUrl: "https://example.com/setup.yaml".into(), region: "us-east-1".into(),
-        stackName: "alien-setup".into(),
+        template_url: "https://example.com/setup.yaml".into(), region: "us-east-1".into(),
+        stack_name: "alien-setup".into(),
         parameters: [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
     }).await?;
     println!("{url}");
@@ -216,7 +216,8 @@ const url = await alien.setup.launchUrlForProject("my-project", "us-east-1", "al
 ```python
 alien = alien_sdk.Alien(workspace="my-workspace")   # api_key defaults to ALIEN_API_KEY
 manager = alien.managers.get("mgr_...")
-page = alien.deployments.list(project="my-project", limit=10)
+page = alien.deployments.list(project="my-project", deployment_group="prod", limit=10)
+page.next_cursor   # groups, methods, keywords and fields are snake_case
 ```
 
 ```go
@@ -226,15 +227,14 @@ page, err := client.Deployments.List(ctx, &alien.ListDeploymentsParams{Project: 
 ```
 
 ```rust
-use alien_sdk::{Alien, Options, platform};
+use alien_sdk::{Alien, Options};
 
 // The API key comes from ALIEN_API_KEY unless `api_key: Some(..)` is set;
 // with neither, `new` fails with INVALID_REQUEST.
 let alien = Alien::new(Options { workspace: Some("my-workspace".into()), ..Default::default() })?;
-let manager = platform::managers::get_async(alien.platform(), "mgr_...".into()).await?;
-// Optional arguments are positional: deployments.list has 11 (project, …, limit, cursor).
-let page = platform::deployments::list_async(alien.platform(), Some("my-project".into()),
-    None, None, None, None, None, None, None, None, Some(10), None).await?;
+let manager = alien.managers().get("mgr_...").send().await?;
+// Required arguments go to the method, optional ones to the builder's setters.
+let page = alien.deployments().list().project("my-project").limit(10).send().await?;
 ```
 
 Each client also takes a limit for each HTTP request, BAML's 5 minutes when
@@ -248,13 +248,11 @@ Every call fails with one error type, `AlienError` (`code`, `message`,
 
 **Keep the generated clients out of logs.** The clients you create (`Alien`
 and `AlienManager`; in Go `*alien.Client` and `*alien.ManagerClient`) do not
-print the API key or the token. In Rust and Go, every call takes a generated
-client, which does:
+print the API key or the token. The generated clients they hold do:
 
-- Rust: `Debug` of `alien.platform()` or `AlienManager::client()` shows the
-  key or token. Do not `dbg!` them, do not hold one in a `#[derive(Debug)]`
-  struct that gets logged, and skip them in `#[tracing::instrument]`, which
-  records every argument with `Debug`: `#[tracing::instrument(skip(client))]`.
+- Rust: none is reachable. `Alien`, `AlienManager` and every group and builder
+  print without the key or token, so they are safe in `dbg!`, logs and
+  `#[tracing::instrument]` arguments.
 - Go: `%v`, `%+v` and `%#v` of `client.Platform` show the API key, so
   `log.Printf("%+v", client.Platform)` logs it. `json.Marshal` of a client or
   of its generated client writes the key or token.

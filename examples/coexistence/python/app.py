@@ -19,7 +19,7 @@ def alien_call():
     import alien_sdk
 
     return alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
-        templateUrl="https://example.com/setup.yaml", region="us-east-1", stackName="alien-setup", parameters={}))
+        template_url="https://example.com/setup.yaml", region="us-east-1", stack_name="alien-setup", parameters={}))
 
 
 def other_call():

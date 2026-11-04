@@ -1,10 +1,8 @@
-//! Client construction: the `ALIEN_API_KEY` default, the error when there is
-//! no API key, an empty Manager token, the timeout in milliseconds, and `Debug`
-//! output that never shows a secret. Its own test
+//! Client construction: the error when there is no API key, and `Debug`
+//! output of everything public that holds a client (the clients, groups,
+//! builders and the setup helper) that never shows a secret (docs/gaps.md#b22). Its own test
 //! binary with one test, because it writes the environment. Nothing here
 //! starts the BAML runtime.
-
-use std::time::Duration;
 
 use alien_sdk::{Alien, AlienManager, Error, Options};
 
@@ -38,24 +36,9 @@ fn api_key_default_and_redacted_debug() {
         api_key: Some(String::new()),
         ..Default::default()
     }));
-    assert_eq!(
-        Alien::new(Options::default())
-            .expect("key from ALIEN_API_KEY")
-            .platform()
-            .api_key,
-        KEY
-    );
-    let explicit = Options {
-        api_key: Some("explicit".into()),
-        ..Default::default()
-    };
-    assert_eq!(
-        Alien::new(explicit)
-            .expect("explicit key")
-            .platform()
-            .api_key,
-        "explicit"
-    );
+    // Which key the client holds, and the timeout in milliseconds: the unit
+    // tests in src/lib.rs (the generated client is private).
+    Alien::new(Options::default()).expect("key from ALIEN_API_KEY");
 
     let options = Options {
         api_key: Some(KEY.into()),
@@ -68,14 +51,26 @@ fn api_key_default_and_redacted_debug() {
         format!("https://manager.example?token={URL_TOKEN}"),
         Some(TOKEN.into()),
     );
-    for text in [
+    // Everything public that holds a client: the clients, their groups and
+    // builders (with and without arguments set), and the setup helper.
+    let texts = [
         format!("{options:?}"),
         format!("{options:#?}"),
         format!("{alien:?}"),
         format!("{alien:#?}"),
         format!("{manager:?}"),
         format!("{manager:#?}"),
-    ] {
+        format!("{:?}", alien.deployments()),
+        format!("{:#?}", alien.deployments().list().project("web").limit(10)),
+        format!("{:?}", alien.managers().get("mgr_1")),
+        format!("{:?}", alien.deployment_groups().create_token("dg_1")),
+        format!("{:?}", alien.auth().whoami()),
+        format!("{:?}", alien.accept_workspace_invitation(TOKEN)),
+        format!("{:?}", alien.setup()),
+        format!("{:?}", manager.commands()),
+        format!("{:#?}", manager.commands().get_command_status("cmd_1")),
+    ];
+    for text in &texts {
         for secret in [KEY, TOKEN, URL_TOKEN] {
             assert!(
                 !text.contains(secret),
@@ -83,6 +78,8 @@ fn api_key_default_and_redacted_debug() {
             );
         }
     }
+    assert_eq!(texts[6], "Deployments { .. }");
+    assert_eq!(texts[8], "ManagersGet { .. }");
     assert_eq!(
         format!("{options:?}"),
         r#"Options { api_key: Some("<redacted>"), server_url: Some("https://alien.example/v1?<redacted>"), workspace: Some("my-workspace"), timeout: None }"#
@@ -99,44 +96,4 @@ fn api_key_default_and_redacted_debug() {
         format!("{:?}", AlienManager::new("https://manager.example", None)),
         r#"AlienManager { server_url: "https://manager.example", token: None, timeout_ms: None }"#
     );
-    // An empty token sends no Authorization header, as in the other SDKs.
-    assert_eq!(
-        AlienManager::new("https://manager.example", Some(String::new()))
-            .client()
-            .token,
-        None
-    );
-
-    // The timeout reaches the generated clients in whole milliseconds, rounded up.
-    for (timeout, want) in [
-        (None, None),
-        (Some(Duration::from_millis(300)), Some(300)),
-        (Some(Duration::from_micros(1500)), Some(2)),
-        (Some(Duration::from_nanos(1)), Some(1)),
-        (Some(Duration::ZERO), Some(0)),
-        (Some(Duration::MAX), Some((1 << 62) - 1)),
-    ] {
-        let alien = Alien::new(Options {
-            api_key: Some(KEY.into()),
-            timeout,
-            ..Default::default()
-        })
-        .expect("client");
-        assert_eq!(
-            alien.platform().timeout_ms,
-            want,
-            "Options::timeout {timeout:?}"
-        );
-        if let Some(timeout) = timeout {
-            assert_eq!(
-                AlienManager::new("u", None)
-                    .with_timeout(timeout)
-                    .client()
-                    .timeout_ms,
-                want,
-                "with_timeout {timeout:?}"
-            );
-        }
-    }
-    assert_eq!(AlienManager::new("u", None).client().timeout_ms, None);
 }

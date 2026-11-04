@@ -10,7 +10,9 @@ output_dir = "../typescript"
 
 [generator.python]
 output_type = "python/pydantic"
-naming_convention = "preserve-case"
+# As the Alien SDK's: two SDKs generated with different conventions also
+# clash (an import fails), but this repro shows the same-convention case.
+naming_convention = "language"
 output_dir = "../python"
 
 # Without this the generated SDK reads no level variable and always records at

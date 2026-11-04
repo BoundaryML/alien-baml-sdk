@@ -14,7 +14,7 @@ changed and what remains. B13 is BAML's design, which the SDK works with.
 | [B4](#b4) | Two BAML-generated SDKs cannot share a process | None in this SDK; needs a change in BAML's runtime and generators | An application that also uses another BAML-generated SDK fails or runs the wrong function |
 | [B5](#b5) | Go has no typed error values | Facade decodes the dynamic value | — |
 | [B6](#b6) | No visibility: every function and type is exported | Helpers in `ns_internal`; facades re-export the public surface | — |
-| [B7](#b7) | Generated names follow BAML, not the host language | Facades bind operations under host-cased names (TypeScript, Python, Go); fields, argument names, Go type names and Rust names stay as generated | Python arguments and fields, and Rust modules and functions, are camelCase (`deploymentGroup=`, `createToken_async`); Go types are `Platform<Name>` and `Manager<Name>` |
+| [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>`; `OAuth` is snake_cased `o_auth` |
 | [B9](#b9) | A project cannot depend on another BAML package | One project, `ns_*` namespaces | — |
 | [B13](#b13) | An unset optional field and an explicit `null` are one value | Not changed in BAML; the SDK encodes request bodies by omission, so a request cannot send an explicit `null` | — |
 | [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` plus `baml.FromJson`/`baml.ToJson` mapping it to `"test"` | — |
@@ -25,7 +25,7 @@ changed and what remains. B13 is BAML's design, which the SDK works with.
 | [B19](#b19) | The Rust generator skips `json` and everything that reaches it | None: fixed in 0.23.0 (BAML #5287) | — |
 | [B20](#b20) | The Rust generator skips unions of string literals that are not identifiers | None needed: only internal `compat` types | — |
 | [B21](#b21) | A decode failure inside a `baml.FromJson` override loses its location | None: `json_path` is absent or starts at that object; `decode_error` still says what failed | Some malformed responses report what failed without its full location |
-| [B22](#b22) | The generated client classes print their credential (Rust `Debug`, Go `fmt` and `encoding/json`) | The facade types hide it; the docs say what to keep out of logs | Logging the generated client (`alien.platform()`, Go `c.Platform`) writes the API key or Manager token |
+| [B22](#b22) | The generated client classes print their credential (Rust `Debug`, Go `fmt` and `encoding/json`) | The facade types hide it. Rust keeps the generated clients private; Go documents what to keep out of logs | Logging Go's generated client (`c.Platform`) writes the API key or Manager token |
 | [B23](#b23) | The Python bridge keeps each encoded call, API key included, in a local variable | None; the entry gives Sentry settings | Error reporters that record local variables (Sentry by default) store the API key |
 | [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None | In every crate of a Rust build that links the SDK, floats inside untagged, internally tagged or flattened serde types fail to deserialize, and `Value` objects keep their input order |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
@@ -194,28 +194,30 @@ SDK.
 
 ## B7
 
-**Generated names follow BAML, not the host language.** `naming_convention` is
-fixed per language (`language` for Go, `preserve-case` elsewhere). Examples:
+**Generated names follow BAML, not the host language.** Fixed for Python and
+Rust by BAML #5481, which adds `naming_convention = "language"` to their
+generators (Go already had it; TypeScript supports only `preserve-case`).
+`baml/baml.toml` sets `language` for Python, Go and Rust:
 
 | BAML | TypeScript | Python | Go | Rust |
 |---|---|---|---|---|
-| `platform.managers.get` | `platform.managers.get` | `platform.managers.get` | `PlatformManagersGet` | `platform::managers::get_async` |
+| `platform.deploymentGroups.createToken` | `platform.deploymentGroups.createToken` | `platform.deployment_groups.create_token` | `PlatformDeploymentGroupsCreateToken` | `platform::deployment_groups::create_token_async` |
 | `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `SetupCloudformationLaunchUrl` | `setup::cloudformation_launch_url_async` |
 | `platform.PlatformClient` | `platform.PlatformClient` | `platform.PlatformClient` | `PlatformPlatformClient` | `platform::PlatformClient` |
-| field `templateUrl` | `templateUrl` | `templateUrl` | `TemplateUrl` | `templateUrl` |
+| field `templateUrl` | `templateUrl` | `template_url` (alias `templateUrl`) | `TemplateUrl` | `template_url` |
 
-**Workaround.** The TypeScript and Python facades bind every generated
-operation under host-cased names, without per-operation code
-(`alien.deploymentGroups.createToken`,
-`alien.deployment_groups.create_token`). Argument and field names use Alien's
-TypeScript names (`custom_domains` → `customDomains`, `command_id` →
-`commandId`, [api-shape.md](api-shape.md#rules)): Python keyword
-arguments and fields are camelCase (`deployments.list(deploymentGroup=…)`).
+**Workaround.** None left for Python and Rust: their facades use the
+generated names as they are (Python `alien.deployment_groups.create_token`,
+`page.next_cursor`, `deployments.list(deployment_group=…)`; Rust
+`alien.deployment_groups().create_token(id)`, written by `sdk/rust/genops`
+from the generated functions). The wire names do not change. One spelling
+differs from what the Python facade used to produce: BAML splits `OAuth`
+(`get_gcp_o_auth_provider`; the facade's own rule gave
+`get_gcp_oauth_provider`). The TypeScript facade binds every generated
+operation under its camelCase name (`alien.deploymentGroups.createToken`).
 The Go facade has a generated method per operation
-(`c.DeploymentGroups.CreateToken`), written by `sdk/go/internal/genops` from
-the generated functions; Go type names stay as generated. Rust calls the generated functions directly; the Rust generator
-requires `preserve-case`, so Rust modules and functions are camelCase
-(`platform::deploymentGroups::createToken_async`).
+(`c.DeploymentGroups.CreateToken`), written by `sdk/go/internal/genops`; Go
+type names stay as generated (`Platform<Name>`, `Manager<Name>`).
 
 ## B9
 
@@ -527,8 +529,9 @@ fields hold the credential.
 
 ```rust
 let alien = Alien::new(Options { api_key: Some("alien_example_key".into()), ..Default::default() })?;
-println!("{:?}", alien);            // Alien { server_url: "https://api.alien.dev", api_key: "<redacted>", workspace: None, timeout_ms: None }
-println!("{:?}", alien.platform()); // PlatformClient { base_url: "https://api.alien.dev", api_key: "alien_example_key", workspace: None, timeout_ms: None }
+println!("{:?}", alien);                       // Alien { server_url: "https://api.alien.dev", api_key: "<redacted>", workspace: None, timeout_ms: None }
+println!("{:?}", alien.deployments().list());  // DeploymentsList { .. }
+// The generated client inside (its Debug: PlatformClient { …, api_key: "alien_example_key", … }) is private.
 ```
 
 ```go
@@ -539,23 +542,24 @@ fmt.Printf("%+v\n", c.Platform) // {BaseUrl:https://api.alien.dev ApiKey:alien_e
 
 | Language | Shows the API key or token | Hides it |
 |---|---|---|
-| Rust | `Debug` of `alien.platform()` and `AlienManager::client()`: `{:?}`, `dbg!`, a `#[derive(Debug)]` struct holding one, a `#[tracing::instrument]` argument | `Debug` of `Alien` and `AlienManager` |
+| Rust | Nothing public: the generated clients are private to the facade | `Debug` of `Alien`, `AlienManager`, every group, every builder and `ProjectSetup` (`tests/client_options.rs` checks them) |
 | Go | `%v`, `%+v`, `%#v` of `c.Platform`; `json.Marshal` of `c`, `c.Platform`, `m` and `m.Generated`; `slog` with `c.Platform` (text and JSON handlers), or with `m` or `m.Generated` (JSON handler) | `fmt` and `slog` of `c`; `fmt` of `m` and `m.Generated` print the token's pointer |
 | Python | Tracebacks that record local variables ([B23](#b23)) | `repr()` of `Alien` and `AlienManager` |
 | TypeScript | Nothing found | `util.inspect`, `JSON.stringify` and `String()` of `Alien` and `AlienManager` |
 
-**Impact on Alien.** Every Rust call takes `alien.platform()` or
-`AlienManager::client()`, so the generated client is what application structs
-and function arguments hold. `#[tracing::instrument]` records each argument
-with `Debug`, a struct that holds the client included. A log line, a `dbg!`
-or a span then carries the API key or the Manager token.
+**Impact on Alien.** In Go, every call goes through `c`, but `c.Platform` and
+`m.Generated` are exported, so a log line with one carries the API key or the
+Manager token. Rust no longer has this problem: calls go through builders
+that hold the generated client privately, and nothing public returns it.
 
-**Workaround.** The facade types hide the credential, and the rustdoc of
-`Alien::platform` and `AlienManager::client` and the godoc of `alien.Client`
-say that the generated client shows it. Keep the generated clients out of
-logged values: `#[tracing::instrument(skip(client))]`, a hand-written `Debug`
-for a struct that holds one, and in Go log `c`, not `c.Platform`, and do not
-`json.Marshal` a client.
+**Workaround.** Rust: the facade keeps the generated clients private (it used
+to hand them out as `alien.platform()` and `AlienManager::client()`, which
+every call took); `alien_sdk::platform` and `alien_sdk::manager` re-export the
+generated types but not the clients, and every public type that holds one has
+a `Debug` that leaves it out. Go: the godoc of `alien.Client` says that the
+generated client shows the key; log `c`, not `c.Platform`, and do not
+`json.Marshal` a client. Both still need BAML to support secret fields for a
+complete fix.
 
 ## B23
 

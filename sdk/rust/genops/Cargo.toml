@@ -1,0 +1,13 @@
+[package]
+name = "genops"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.91.1"
+publish = false
+description = "Writes the Rust facade's operation builders from the generated baml_sdk (scripts/generate.sh runs it)"
+
+[dependencies]
+prettyplease = "0.2"
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full", "visit", "visit-mut", "extra-traits"] }

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import functools
 import json
-import keyword
 import os
+import re
 import typing
 from pathlib import Path
 from typing import Any, Callable
@@ -18,7 +19,7 @@ import alien_sdk
 import baml_sdk
 from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager
 from alien_sdk._errors import _converted
-from baml_sdk import compat, manager, platform
+from baml_sdk import compat, platform
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -49,10 +50,6 @@ def _platform_client(client: dict) -> platform.PlatformClient:
     return platform.PlatformClient(
         base_url=client["base_url"], api_key=client["api_key"], workspace=client.get("workspace"), timeout_ms=client.get("timeout_ms")
     )
-
-
-def _manager_client(client: dict) -> manager.ManagerClient:
-    return manager.ManagerClient(base_url=client["base_url"], token=client.get("token"), timeout_ms=client.get("timeout_ms"))
 
 
 def _converting(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -119,19 +116,44 @@ def _adapter(service: str, baml_type: str) -> pydantic.TypeAdapter:
     return pydantic.TypeAdapter(_host_type(service, baml_type))
 
 
+_DEFINITION = re.compile(
+    r'^(\w+)\s*= _define_function\("user\.([\w.]+)", "sync",\s*(\[[^\]]*\])(?:, (\[[^\]]*\]))?(?:, param_aliases=(\{[^}]*\}))?',
+    re.M,
+)
+
+
+@functools.cache
+def _bindings() -> dict[str, tuple[list[str], str, dict[str, str]]]:
+    """Every generated operation by its BAML path (``platform.deploymentGroups.createToken``):
+    its group module and function as the generator named them (``["deployment_groups"]``,
+    ``create_token``), and its keyword names by BAML name (``{"deploymentGroup":
+    "deployment_group"}``). Read from the generated modules, which record each
+    function's BAML path."""
+    root = Path(baml_sdk.__file__).parent
+    out = {}
+    for service in ("platform", "manager"):
+        for init in sorted((root / service).rglob("__init__.py")):
+            groups = list(init.parent.relative_to(root / service).parts)
+            for name, path, _required, optional, aliases in _DEFINITION.findall(init.read_text(encoding="utf-8")):
+                wire = ast.literal_eval(aliases) if aliases else {}
+                keywords = {wire.get(python, python): python for python in ast.literal_eval(optional or "[]")}
+                out[path] = (groups, name, keywords)
+    return out
+
+
 def _operation(call: dict) -> Any:
-    """A generated operation (``call.op``, conformance/README.md): ``platform.managers.list``
-    is ``baml_sdk.platform.managers.list``, called with its required arguments in
-    order and the optional ones that are set as keywords. Class arguments are
-    built as the generated pydantic types."""
-    service, *groups, name = call["op"].split(".")
-    target: Any = getattr(baml_sdk, service)
+    """A generated operation (``call.op``, conformance/README.md), called
+    through the facade: ``platform.deploymentGroups.createToken`` is
+    ``Alien(...).deployment_groups.create_token``, with its required arguments
+    in order and the optional ones that are set as keywords, under the
+    generated names. Class arguments are built as the generated pydantic types."""
+    service = call["op"].split(".")[0]
+    groups, name, keywords_by_wire = _bindings()[call["op"]]
+    args = call["args"]
+    target: Any = _alien_manager(args["client"]) if service == "manager" else _alien(args["client"])
     for group in groups:
         target = getattr(target, group)
-    # The generator appends `_` to a Python keyword (`deployments.import_`).
-    function = getattr(target, name + "_" if keyword.iskeyword(name) else name)
-    args = call["args"]
-    client = _manager_client(args["client"]) if service == "manager" else _platform_client(args["client"])
+    function = getattr(target, name)
     positional, keywords = [], {}
     for param in call["params"]:
         if param["name"] not in args:
@@ -141,15 +163,31 @@ def _operation(call: dict) -> Any:
         if param["type"] not in _PLAIN_TYPES:
             value = _adapter(service, param["type"]).validate_python(value)
         if param["optional"]:
-            keywords[param["name"]] = value
+            keywords[keywords_by_wire[param["name"]]] = value
         else:
             positional.append(value)
-    return _converting(function, client, *positional, **keywords)
+    return function(*positional, **keywords)
+
+
+def test_every_operation_is_bound() -> None:
+    """Every operation the scenarios call resolves through the facade: 279
+    Platform and 53 Manager operations, each the generated function itself."""
+    bindings = _bindings()
+    assert sum(op.startswith("platform.") for op in bindings) == 279
+    assert sum(op.startswith("manager.") for op in bindings) == 53
+    clients = {"platform": Alien("key", server_url="http://127.0.0.1:1"), "manager": AlienManager("http://127.0.0.1:1")}
+    for op, (groups, name, _) in bindings.items():
+        service = op.split(".")[0]
+        target: Any = clients[service]
+        generated: Any = getattr(baml_sdk, service)
+        for group in groups:
+            target, generated = getattr(target, group), getattr(generated, group)
+        assert getattr(target, name).__wrapped__ is getattr(generated, name), op
 
 
 def _to_json(value: Any) -> Any:
     if isinstance(value, pydantic.BaseModel):
-        return value.model_dump(mode="json")
+        return value.model_dump(mode="json", by_alias=True)  # the BAML names
     if isinstance(value, list):
         return [_to_json(v) for v in value]
     if isinstance(value, dict):

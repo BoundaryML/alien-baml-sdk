@@ -83,12 +83,15 @@ note "go: alien/operations.go"
 note "go: build + vet"
 (cd "$REPO/sdk/go" && CGO_ENABLED=1 go build ./... >&2 && CGO_ENABLED=1 go vet ./alien/... ./internal/... >&2)
 
+# Not --locked with a local build: Cargo.lock records the local crate instead of crates.io's.
+locked=(--locked)
+if (( BAML_LOCAL_BUILD )); then locked=(); fi
+
+note "rust: src/operations.rs"
+# The facade's builders (alien.deployments().list()), generated from baml_sdk/src.
+(cd "$REPO/sdk/rust" && cargo run --quiet ${locked[@]+"${locked[@]}"} -p genops >&2)
+
 note "rust: cargo build"
-if (( BAML_LOCAL_BUILD )); then
-  # Not --locked: Cargo.lock records the local crate instead of crates.io's.
-  (cd "$REPO/sdk/rust" && cargo build --all-targets >&2)
-else
-  (cd "$REPO/sdk/rust" && cargo build --locked --all-targets >&2)
-fi
+(cd "$REPO/sdk/rust" && cargo build ${locked[@]+"${locked[@]}"} --all-targets >&2)
 
 note "generated and built all four SDKs"

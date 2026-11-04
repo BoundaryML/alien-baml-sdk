@@ -5,9 +5,9 @@ use alien_sdk::{CloudFormationLaunch, Error};
 
 fn input() -> CloudFormationLaunch {
     CloudFormationLaunch {
-        templateUrl: "https://example.com/setup.yaml".into(),
+        template_url: "https://example.com/setup.yaml".into(),
         region: "us-east-1".into(),
-        stackName: "alien-setup".into(),
+        stack_name: "alien-setup".into(),
         parameters: Default::default(),
     }
 }

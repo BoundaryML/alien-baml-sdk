@@ -11,6 +11,7 @@ use std::{
 
 use baml_bridge::{
     BamlValue,
+    encode::Encoder,
     wire::{self, inbound_map_entry::Key, inbound_value::Value as In},
 };
 use baml_sdk::{compat, platform};
@@ -236,18 +237,18 @@ pub fn create_setup_link_request(v: &Value) -> platform::CreateSetupLinkRequest 
         ],
     );
     platform::CreateSetupLinkRequest {
-        externalId: s(&v["externalId"]),
+        external_id: s(&v["externalId"]),
         name: s(&v["name"]),
         project: s(&v["project"]),
-        maxDeployments: opt(&v["maxDeployments"], |n| {
+        max_deployments: opt(&v["maxDeployments"], |n| {
             n.as_i64()
                 .unwrap_or_else(|| panic!("maxDeployments must be an integer, got {n}"))
         }),
-        returnUrl: None,
-        refreshUrl: None,
+        return_url: None,
+        refresh_url: None,
         description: opt_s(&v["description"]),
-        expiresAt: opt_s(&v["expiresAt"]),
-        deploymentSetupConfig: opt(&v["deploymentSetupConfig"], |config| {
+        expires_at: opt_s(&v["expiresAt"]),
+        deployment_setup_config: opt(&v["deploymentSetupConfig"], |config| {
             only_keys(config, &["metadata"]);
             platform::DeploymentSetupConfigInput {
                 // A `json` map: serde_json values go to the request as they are.
@@ -259,35 +260,35 @@ pub fn create_setup_link_request(v: &Value) -> platform::CreateSetupLinkRequest 
                         .collect()
                 }),
                 policy: None,
-                environmentVariables: None,
-                validatedReleaseSelection: None,
-                publicSubdomain: None,
+                environment_variables: None,
+                validated_release_selection: None,
+                public_subdomain: None,
             }
         }),
-        setupItems: None,
-        entryPoint: opt(&v["entryPoint"], |entry| {
+        setup_items: None,
+        entry_point: opt(&v["entryPoint"], |entry| {
             only_keys(entry, &["item", "provider"]);
             platform::SetupLinkEntryPoint {
                 item: s(&entry["item"]),
                 provider: opt_s(&entry["provider"]),
             }
         }),
-        inputValues: None,
-        recoveryDeploymentGroupId: opt_s(&v["recoveryDeploymentGroupId"]),
+        input_values: None,
+        recovery_deployment_group_id: opt_s(&v["recoveryDeploymentGroupId"]),
     }
 }
 
 pub fn bootstrap_request(v: &Value) -> platform::CommandBootstrapRequest {
     if v["role"] == "receiver" {
         platform::CommandBootstrapRequestReceiver {
-            deploymentId: s(&v["deploymentId"]),
+            deployment_id: s(&v["deploymentId"]),
             role: s(&v["role"]),
             target: s(&v["target"]),
         }
         .into()
     } else {
         platform::CommandBootstrapRequestSender {
-            deploymentId: s(&v["deploymentId"]),
+            deployment_id: s(&v["deploymentId"]),
             role: s(&v["role"]),
         }
         .into()
@@ -296,9 +297,9 @@ pub fn bootstrap_request(v: &Value) -> platform::CommandBootstrapRequest {
 
 pub fn launch_input(v: &Value) -> baml_sdk::setup::CloudFormationLaunch {
     baml_sdk::setup::CloudFormationLaunch {
-        templateUrl: s(&v["templateUrl"]),
+        template_url: s(&v["templateUrl"]),
         region: s(&v["region"]),
-        stackName: s(&v["stackName"]),
+        stack_name: s(&v["stackName"]),
         parameters: string_map(&v["parameters"]),
     }
 }
@@ -315,7 +316,7 @@ pub fn key_setup_action(v: &Value) -> compat::KeySetupAction {
 // names, which are the wire names for every type the scenarios return.
 
 pub fn to_json<T: BamlValue>(value: &T) -> Value {
-    wire_json(&value.to_baml())
+    wire_json(&value.to_baml(&mut Encoder::default()).expect("encode a result"))
 }
 
 fn wire_json(value: &wire::InboundValue) -> Value {
