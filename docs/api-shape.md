@@ -228,6 +228,7 @@ follows the TypeScript SDK. The table lists where they differ from this SDK.
 | An error on a status the operation does not declare | `UNEXPECTED_RESPONSE`, body not read; retryable at 5xx only (Manager: also 408, 425 and 429) | The server's code; `PLATFORM_HTTP_ERROR` (retryable on 408, 429, 5xx) or `MANAGER_HTTP_ERROR` without an Alien error body |
 | A body that is not JSON, or a malformed 200 | `INVALID_RESPONSE_PAYLOAD`, without the HTTP status | `PLATFORM_HTTP_ERROR` or `MALFORMED_RESPONSE`, with the status |
 | Manager error bodies | Read when they are a whole Alien error (`code`, `message`, `retryable`, `internal`); a 5xx is retryable | Read when they have `code` and `message`; never retryable |
+| serde on the generated types | `Serialize` and `Deserialize` in the wire format: `serde_json::from_value::<CreateSetupLinkRequest>(form)` works | Not available: the generator's derived impls ignore the SDK's JSON mapping (renamed fields, omitted unset fields, tagged unions, unlisted keys), so `alien_sdk` leaves BAML's `serde` feature off ([B26](gaps.md#b26)) |
 
 ## Decisions
 
