@@ -4,7 +4,7 @@ import contextlib
 from collections.abc import Iterator, Mapping
 
 from baml_bridge import BamlError
-from baml_sdk import errors as _errors
+from ._gen import errors as _errors
 
 
 class AlienError(Exception):

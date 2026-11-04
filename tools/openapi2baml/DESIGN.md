@@ -263,7 +263,9 @@ overlays), so a call reads the same in every language:
 Go calls generated methods (`c.Managers.Get(ctx, id)`, written into
 `alien/operations.go` by `sdk/go/internal/genops`) and Rust generated builders
 (`alien.managers().get(id).send()`, written into `src/operations.rs` by
-`sdk/rust/genops`); see `docs/api-shape.md`.
+`sdk/rust/genops`), and Python generated methods (`alien.managers.get(id)`,
+written into `alien_sdk/_operations.py` by `sdk/python/genops.py`); see
+`docs/api-shape.md`.
 
 - Platform: group = `x-speakeasy-group`, else camelCase of the first tag (41
   operations, as Speakeasy does); method = `x-speakeasy-name-override`, else

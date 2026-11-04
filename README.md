@@ -60,7 +60,9 @@ metrics/                 size, startup, per-call, large-page and Rust build meas
 scripts/                 import.sh, generate.sh, verify.sh
 ```
 
-Generated `baml_sdk/` directories are not checked in. Never edit them, nor
+Generated `baml_sdk/` directories are not checked in, nor are the facades'
+generated methods (`sdk/python/alien_sdk/_operations.py`,
+`sdk/go/alien/operations.go`, `sdk/rust/src/operations.rs`). Never edit them, nor
 the imported `baml/baml_src/ns_platform/` and `ns_manager/`: change the
 importer or its config and run `scripts/import.sh`, or change the hand-written
 namespaces, then run `scripts/generate.sh`.
@@ -218,6 +220,9 @@ alien = alien_sdk.Alien(workspace="my-workspace")   # api_key defaults to ALIEN_
 manager = alien.managers.get("mgr_...")
 page = alien.deployments.list(project="my-project", deployment_group="prod", limit=10)
 page.next_cursor   # groups, methods, keywords and fields are snake_case
+# Methods are typed (mypy and editors see each signature); a wrong keyword raises TypeError.
+from alien_sdk.platform import CreateSetupLinkRequest   # request and response types, per API
+request = CreateSetupLinkRequest.model_validate(form)   # camelCase (wire) or snake_case keys
 ```
 
 ```go

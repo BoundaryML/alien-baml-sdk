@@ -343,7 +343,7 @@ impl ProjectSetup<'_> {
         stack_name: &str,
         parameters: impl IntoIterator<Item = (String, String)>,
     ) -> Result<String, Error> {
-        Ok(setup::launch_url_for_project_async(
+        Ok(setup::launch_url_for_project(
             self.client,
             project.to_string(),
             region.to_string(),
@@ -356,7 +356,7 @@ impl ProjectSetup<'_> {
 
 /// Builds an AWS CloudFormation quick-create link from a template URL.
 pub async fn cloudformation_launch_url(input: CloudFormationLaunch) -> Result<String, Error> {
-    Ok(setup::cloudformation_launch_url_async(input).await?)
+    Ok(setup::cloudformation_launch_url(input).await?)
 }
 
 #[cfg(test)]

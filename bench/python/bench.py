@@ -51,7 +51,7 @@ elif mode == "page":
             raise SystemExit("bad page")
     line = json.dumps(ms)
 elif mode in ("warm-helper", "warm-noop"):
-    call = (lambda: alien_sdk.cloudformation_launch_url(INPUT)) if mode == "warm-helper" else compat.newer_remote_sandbox
+    call = (lambda: alien_sdk.cloudformation_launch_url(INPUT)) if mode == "warm-helper" else compat.newer_remote_sandbox_sync
     line = json.dumps(batches(call, int(args[0]), int(args[1]), 1000))
 else:
     raise SystemExit(f"unknown mode {mode}")

@@ -1,5 +1,5 @@
 // Binds a generated BAML namespace to a client, without per-operation code:
-// every `<name>_async(client, ...args)` becomes `<name>(...args)`, every group
+// every async `<name>(client, ...args)` becomes `<name>(...args)`, every group
 // namespace is bound the same way, and BAML-thrown AlienErrors become
 // `AlienError`. Types follow the generated signatures.
 import { call } from "./errors.js"
@@ -7,8 +7,8 @@ import { call } from "./errors.js"
 type Fn = (...args: never[]) => unknown
 type Class = abstract new (...args: never[]) => unknown
 
-/** Operation names: each `<name>_async` has a synchronous twin `<name>` with the same docs. */
-type Operations<NS> = { [K in keyof NS]: K extends string ? (`${K}_async` extends keyof NS ? K : never) : never }[keyof NS]
+/** Operation names: each async `<name>` has a blocking twin `<name>_sync` with the same docs. */
+type Operations<NS> = { [K in keyof NS]: K extends string ? (`${K}_sync` extends keyof NS ? K : never) : never }[keyof NS]
 
 /** Group names: the nested namespaces (objects that are neither functions nor classes). */
 export type Groups<NS> = { [K in keyof NS]: NS[K] extends Fn | Class ? never : NS[K] extends object ? K : never }[keyof NS]
@@ -18,7 +18,7 @@ type WithoutClient<F> = F extends (client: never, ...args: infer A) => Promise<i
 // Mapping over `K extends keyof NS` keeps each key's declaration, so editors
 // show the docs of the generated `<name>` on the bound `<name>`.
 type PickOperations<NS, K extends keyof NS> = {
-  [P in K]: P extends string ? WithoutClient<NS[`${P}_async` & keyof NS]> : never
+  [P in K]: WithoutClient<NS[P]>
 }
 
 /** The operations of a generated namespace `NS`, bound to a client. */
@@ -36,11 +36,13 @@ function isNamespace(value: unknown): value is Record<string, unknown> {
 
 /** `client` is called before every call; it returns the client to call with. */
 export function bind<NS>(namespace: NS, client: () => unknown): Bound<NS> {
+  const ns = namespace as Record<string, unknown>
   const out: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(namespace as Record<string, unknown>)) {
-    if (key.endsWith("_async") && typeof value === "function") {
+  for (const [key, value] of Object.entries(ns)) {
+    // An operation: an (async) function with a blocking `<name>_sync` twin.
+    if (typeof value === "function" && typeof ns[`${key}_sync`] === "function") {
       const fn = value as (client: unknown, ...args: unknown[]) => Promise<unknown>
-      out[key.slice(0, -"_async".length)] = (...args: unknown[]) => call(async () => fn(await client(), ...args))
+      out[key] = (...args: unknown[]) => call(async () => fn(await client(), ...args))
     } else if (isNamespace(value)) {
       out[key] = bind(value, client)
     }

@@ -1,17 +1,20 @@
 """Alien SDK for Python.
 
-A thin facade over the generated BAML SDK (``baml_sdk``): it builds clients,
-renames, converts errors and picks the public surface. Every behavior lives in
-the BAML project (``baml/baml_src``).
+A thin facade over the generated BAML SDK (``alien_sdk._gen`` imports it):
+it builds clients, renames, converts errors and picks the public surface.
+Every behavior lives in the BAML project (``baml/baml_src``).
 
-``platform`` and ``manager`` are the generated modules, exported for their
-request and response types (``platform.CreateSetupLinkRequest``), which are
-also what ``isinstance`` checks need: a union member this SDK does not know
-is ``platform.EventDataOther`` and the like (docs/api-shape.md). Call
-operations through :class:`Alien` and :class:`AlienManager` (or
-:class:`AsyncAlien` and :class:`AsyncAlienManager`): the functions in those
-modules take the client as their first argument and raise
-``baml_bridge.BamlError`` instead of :class:`AlienError`.
+:mod:`alien_sdk.platform` and :mod:`alien_sdk.manager` hold the request and
+response types of each API (generated pydantic models, enums and type
+aliases), one namespace per API so their names never clash::
+
+    from alien_sdk.platform import CreateSetupLinkRequest
+    request = CreateSetupLinkRequest.model_validate(form)   # camelCase or snake_case keys
+
+They are also what ``isinstance`` checks need: a union member this SDK does
+not know is ``platform.EventDataOther`` and the like (docs/api-shape.md).
+Call operations through :class:`Alien` and :class:`AlienManager` (or
+:class:`AsyncAlien` and :class:`AsyncAlienManager`).
 """
 
 from __future__ import annotations
@@ -22,11 +25,11 @@ import typing as _typing
 import pydantic as _pydantic
 from baml_bridge import shutdown_runtime as _shutdown_runtime
 
-# Importing the generated SDK starts the runtime.
-from baml_sdk import manager, platform  # (generated types: request and response shapes)
-from baml_sdk import setup as _setup
+# Importing the generated SDK (through _gen, the one module that names it) starts the runtime.
+from . import _gen
+from ._gen import setup as _setup
 
-from ._bind import Bound as _Bound
+from . import _operations, manager, platform  # (platform, manager: the request and response types)
 from ._errors import AlienError, _converted
 
 CloudFormationLaunch = _setup.CloudFormationLaunch
@@ -38,11 +41,11 @@ DEFAULT_SERVER_URL = "https://api.alien.dev"
 # field. These subclasses leave the credential out of repr(), vars() and
 # debuggers. A traceback that captures locals (as error reporters do) still
 # holds it: baml_bridge keeps the encoded call in a local of its own frame.
-class _PlatformClient(platform.PlatformClient):
+class _PlatformClient(_gen.platform.PlatformClient):
     api_key: str = _pydantic.Field(repr=False)
 
 
-class _ManagerClient(manager.ManagerClient):
+class _ManagerClient(_gen.manager.ManagerClient):
     token: _typing.Optional[str] = _pydantic.Field(default=None, repr=False)
 
 
@@ -61,7 +64,7 @@ def _manager_client(server_url: str, token: str | None, timeout_ms: int | None) 
     return _ManagerClient(base_url=server_url, token=token or None, timeout_ms=timeout_ms)
 
 
-class Alien(_Bound):
+class Alien(_operations.Platform):
     """A Platform API client, configured like Alien's TypeScript SDK
     (``@alienplatform/platform-api``): ``api_key`` defaults to the
     ``ALIEN_API_KEY`` environment variable, ``server_url`` (when ``None``) to
@@ -78,14 +81,15 @@ class Alien(_Bound):
 
         alien = Alien(workspace="my-workspace")
         m = alien.managers.get("mgr_...")
-        page = alien.deployments.list(project="web", deploymentGroup="prod", limit=10)
-        page.nextCursor
+        page = alien.deployments.list(project="web", deployment_group="prod", limit=10)
+        page.next_cursor
 
-    Groups and methods are snake_case. Required arguments are positional and
-    optional ones are keywords. Keywords and fields keep the API's camelCase
-    names (``deploymentGroup=``, ``page.nextCursor``). Any other keyword,
-    such as ``deployment_group=``, raises ``baml_bridge.BamlError``
-    (``InvalidArgument``), not ``TypeError``.
+    Groups, methods, keywords and fields are snake_case
+    (``deployment_group=``, ``page.next_cursor``). Required arguments are
+    positional and optional ones are keywords. Every method has the generated
+    operation's signature, so editors and type checkers see it, and an
+    unknown keyword (``deploymentGroup=``, ``deployment_grop=``) raises
+    ``TypeError`` before any request.
 
     Call :func:`shutdown` before the process ends without running ``atexit``
     handlers (a signal such as SIGTERM, ``os._exit()``).
@@ -101,14 +105,14 @@ class Alien(_Bound):
         timeout_ms: int | None = None,
     ) -> None:
         client = _platform_client(api_key, server_url, workspace, timeout_ms)
-        super().__init__(platform, client)
+        super().__init__(client)
         self.setup = ProjectSetup(client)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r}, workspace={self._client.workspace!r})"
 
 
-class AsyncAlien(_Bound):
+class AsyncAlien(_operations.AsyncPlatform):
     """:class:`Alien` with ``async`` methods, for asyncio programs::
 
         alien = AsyncAlien(workspace="my-workspace")
@@ -124,13 +128,14 @@ class AsyncAlien(_Bound):
         timeout_ms: int | None = None,
     ) -> None:
         client = _platform_client(api_key, server_url, workspace, timeout_ms)
-        super().__init__(platform, client, asynchronous=True)
+        super().__init__(client)
         self.setup = AsyncProjectSetup(client)
 
-    __repr__ = Alien.__repr__
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(server_url={self._client.base_url!r}, workspace={self._client.workspace!r})"
 
 
-class AlienManager(_Bound):
+class AlienManager(_operations.Manager):
     """A Manager API client, for example for the ``managerUrl`` and ``token`` from
     ``alien.commands.bootstrap``. ``AlienManager(server_url, token).commands.create_command(...)``
     calls any Manager API operation; the token is sent on every operation
@@ -140,27 +145,28 @@ class AlienManager(_Bound):
     """
 
     def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(manager, _manager_client(server_url, token, timeout_ms))
+        super().__init__(_manager_client(server_url, token, timeout_ms))
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r})"
 
 
-class AsyncAlienManager(_Bound):
+class AsyncAlienManager(_operations.AsyncManager):
     """:class:`AlienManager` with ``async`` methods:
     ``await AsyncAlienManager(server_url, token).commands.create_command(...)``.
     """
 
     def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(manager, _manager_client(server_url, token, timeout_ms), asynchronous=True)
+        super().__init__(_manager_client(server_url, token, timeout_ms))
 
-    __repr__ = AlienManager.__repr__
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(server_url={self._client.base_url!r})"
 
 
 class ProjectSetup:
     """Setup helpers that need the Platform API (``alien.setup``)."""
 
-    def __init__(self, client: platform.PlatformClient) -> None:
+    def __init__(self, client: _gen.platform.PlatformClient) -> None:
         self._client = client
 
     def launch_url_for_project(
@@ -172,13 +178,13 @@ class ProjectSetup:
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
         with _converted():
-            return _setup.launch_url_for_project(self._client, project, region, stack_name, dict(parameters or {}))
+            return _setup.launch_url_for_project_sync(self._client, project, region, stack_name, dict(parameters or {}))
 
 
 class AsyncProjectSetup:
     """:class:`ProjectSetup` with ``async`` methods (``AsyncAlien(...).setup``)."""
 
-    def __init__(self, client: platform.PlatformClient) -> None:
+    def __init__(self, client: _gen.platform.PlatformClient) -> None:
         self._client = client
 
     async def launch_url_for_project(
@@ -190,13 +196,13 @@ class AsyncProjectSetup:
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
         with _converted():
-            return await _setup.launch_url_for_project_async(self._client, project, region, stack_name, dict(parameters or {}))
+            return await _setup.launch_url_for_project(self._client, project, region, stack_name, dict(parameters or {}))
 
 
 def cloudformation_launch_url(input: CloudFormationLaunch) -> str:
     """Builds an AWS CloudFormation quick-create link from a template URL."""
     with _converted():
-        return _setup.cloudformation_launch_url(input)
+        return _setup.cloudformation_launch_url_sync(input)
 
 
 def shutdown() -> None:

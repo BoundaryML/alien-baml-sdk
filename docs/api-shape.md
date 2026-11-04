@@ -70,11 +70,20 @@ BAML's `language` naming generates them: a multi-word filter reads
 `deployment_group=` and a page's cursor `page.next_cursor`. The wire names do
 not change, and each field keeps the BAML name as its pydantic alias, so
 models also accept it (`CreateCommandRequest(deploymentId=…)`) and
-`model_dump(by_alias=True)` writes it. A keyword that is the BAML name
-(`deploymentGroup=`) works too; any other unknown keyword raises
-`baml_bridge.BamlError` (`InvalidArgument`), not `TypeError`. The facade binds
-the generated names as they are (`sdk/python/alien_sdk/_bind.py`), so it holds
-no casing rules of its own.
+`model_dump(by_alias=True)` writes it. Every method has the generated
+operation's signature, without the client, so editors and type checkers see
+it (mypy: `reveal_type(alien.deployments.list)` shows each keyword and the
+return type), and an unknown keyword raises `TypeError` before any request,
+the BAML name (`deploymentGroup=`) included. The methods are generated from
+the generated package's stubs by `sdk/python/genops.py` into
+`alien_sdk/_operations.py` (gitignored; `scripts/generate.sh` runs it, as
+`sdk/go/internal/genops` writes Go's methods): one class per group, blocking
+(`PlatformDeployments`, calling the generated `list_sync`) and async
+(`AsyncPlatformDeployments`, awaiting the generated `list`), with the same
+methods, so there is no per-operation code and no casing rule of the
+facade's own. An optional argument the caller leaves out is `UNSET`, which
+the generated function does not pass on, as before.
+`alien_sdk/_gen.py` is the only module that imports the generated package.
 
 ```python
 from alien_sdk import Alien, AlienManager, manager
@@ -88,6 +97,37 @@ me = alien.auth.whoami()
 alien.api_keys.revoke(key_id)
 cmd = AlienManager(manager_url, token).commands.create_command(manager.CreateCommandRequest(...))
 ```
+
+**Python: validating input.** `alien_sdk.platform` and `alien_sdk.manager`
+hold every request and response type of each API: the generated pydantic
+models, enums and type aliases, under their generated names, the same
+classes the operations take and return (the generated client is left out).
+They are modules (`from alien_sdk.platform import CreateSetupLinkRequest`),
+one per API, so the 61 names both APIs define (`CreateCommandRequest`,
+`CreateReleaseRequest`, …) never clash. They are written by `sdk/python/genops.py`
+(gitignored). A customer can validate their own input, such as a dashboard
+form, with them before calling the API:
+
+```python
+from alien_sdk.platform import CreateSetupLinkRequest
+
+request = CreateSetupLinkRequest.model_validate(form)   # pydantic.ValidationError if it does not fit
+alien.setup_links.create(request)
+```
+
+`model_validate` (and `model_validate_json`) accept both spellings of a
+field: the wire name, which is each field's pydantic alias
+(`{"externalId": …, "maxDeployments": 5}`), and the Python name
+(`{"external_id": …, "max_deployments": 5}`); the models set
+`populate_by_name`. Use the wire spelling for data in the API's shape (JSON
+bodies, forms built from the API reference), which is also what
+`model_dump(by_alias=True)` writes and what a `ValidationError` names
+(`externalId: Field required`), and the Python spelling for keyword
+arguments in Python code (`CreateSetupLinkRequest(external_id=…)`). Do not
+send both for one field: the wire name wins. Unknown keys are ignored
+(`extra="ignore"`), so a misspelled optional field is dropped without an
+error; values are converted as pydantic's default (lax) mode does
+(`"5"` → `5`). `sdk/python/tests/test_types.py` checks each of these.
 
 **Go.** Calls take the form `c.<Group>.<Method>(ctx, …)`, grouped and named
 as in Alien's TypeScript SDK with Go's initialisms (`c.APIKeys.Revoke`,
@@ -161,10 +201,10 @@ let cmd = AlienManager::new(manager_url, Some(token)).commands().create_command(
 ```
 
 Before, the same `deployments.list` call took every optional argument
-positionally:
+positionally, as the generated function still does:
 
 ```rust
-let page = platform::deployments::list_async(alien.platform(), Some("my-project".into()),
+let page = platform::deployments::list(alien.platform(), Some("my-project".into()),
     None, None, None, None, None, None, None, None, Some(10), None).await?;
 ```
 
@@ -175,7 +215,8 @@ let page = platform::deployments::list_async(alien.platform(), Some("my-project"
 | Topic | Rule |
 |---|---|
 | Groups and methods | As in Alien's TypeScript SDK: `x-speakeasy-group`, else camelCase of the first tag; `x-speakeasy-name-override`, else camelCase of the operation ID. An operation with neither group nor tag (39 Platform operations) is a method of the client itself, as in that SDK. One config rename (`POST /v1/deployment-groups/{id}/tokens` → `createToken`). Checked against names extracted from the SDK's sources: 279 of 279 Platform and 53 of 53 Manager operations match (`tests/naming_oracle.rs`), and the TypeScript, Python and Rust facade tests call each of them by that name (Rust: `every_operation_has_a_builder` in `tests/conformance.rs`). Operations marked `x-speakeasy-ignore` are left out, as Speakeasy does (3: `listPendingAccessRequests`, `reportMaterializedAccessRequests`, `reportAccessApprovals`) |
-| Python and Rust names | BAML's `language` naming (BAML #5481): groups, methods, arguments and fields in snake_case (`deploymentGroups.createToken` → `deployment_groups.create_token`, `nextCursor` → `next_cursor`), types and enum variants in PascalCase. An acronym is one word (`revokeAPIKey` → `revoke_api_key`); `OAuth` is two (`getGcpOAuthProvider` → `get_gcp_o_auth_provider`). A Python keyword gets a trailing underscore (`deployments.import` → `deployments.import_`), a Rust keyword is a raw identifier (`deployments().r#move(id)`). The facades take these names from the generated code and add no casing rules. Wire names do not change |
+| Generated async and blocking functions | BAML #5519: in TypeScript, Python and Rust the plain generated name is async (`platform.deployments.list`, `platform::deployments::list`) and its blocking twin is `<name>_sync`; Rust's per-call-options variants are `<name>_with_options` and `<name>_sync_with_options`. Go has one blocking function per operation, taking a `context.Context`. The facades pick one per client: TypeScript and Rust bind the async functions, Python's `Alien` and `AlienManager` the `_sync` twins and `AsyncAlien` and `AsyncAlienManager` the async ones, all under the plain name (`alien.deployments.list`), so the facades' public API does not depend on the suffix |
+| Python and Rust names | BAML's `language` naming (BAML #5481): groups, methods, arguments and fields in snake_case (`deploymentGroups.createToken` → `deployment_groups.create_token`, `nextCursor` → `next_cursor`), types and enum variants in PascalCase. An acronym is one word (`revokeAPIKey` → `revoke_api_key`), and so is a known word such as `OAuth`, `GraphQL` or `GitHub` (BAML #5524: `getGcpOAuthProvider` → `get_gcp_oauth_provider`). A Python keyword gets a trailing underscore (`deployments.import` → `deployments.import_`), a Rust keyword is a raw identifier (`deployments().r#move(id)`). The facades take these names from the generated code and add no casing rules. Wire names do not change |
 | Operations newer than the SDK | None at the vendored commit: Alien's TypeScript SDK has every Platform and Manager operation of the spec. One that is newer would be named by the same rule |
 | Arguments | Required arguments are positional: path parameters, then other required parameters, then a required body. Optional parameters and an optional body come after them as optional arguments. An operation can be called with no arguments exactly when Alien's SDK makes its request optional (all 332 operations checked) |
 | Workspace | The `workspace` query parameter is a client setting, sent on every operation that accepts it |
@@ -315,7 +356,9 @@ The choices behind the shape above, with the alternative where there was one.
    `BamlAbortError`, Python `baml_bridge.BamlCancelledError`, Go
    `context.DeadlineExceeded`, Rust `Error::Runtime`.
 10. **Python async.** Decided: `AsyncAlien` and `AsyncAlienManager` bind the
-    generated `_async` functions (`await AsyncAlien().managers.get(id)`), with
+    generated async functions, under their plain names
+    (`await AsyncAlien().managers.get(id)`), and `Alien` and `AlienManager`
+    their blocking `_sync` twins, with
     the same groups, methods, options and errors as `Alien` and
     `AlienManager`. They run through the same Platform scenarios as `Alien`.
 11. **Field names with separators.** Decided: fields use the names of Alien's

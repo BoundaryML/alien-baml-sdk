@@ -4,6 +4,7 @@
 #   scripts/generate.sh
 #
 # Generated code lands in sdk/<language>/baml_sdk/ (gitignored; never edit it).
+# The facades' generated methods (Python, Go, Rust) are gitignored as well.
 source "$(dirname "$0")/lib.sh"
 
 ensure_baml_cli
@@ -66,6 +67,10 @@ fi
 
 note "typescript: tsc"
 (cd "$REPO/sdk/typescript" && rm -rf dist && pnpm run build >&2)
+
+note "python: alien_sdk/_operations.py"
+# The facade's methods (alien.deployments.list), generated from baml_sdk's stubs.
+(cd "$REPO/sdk/python" && uv run --frozen python -I genops.py >&2)
 
 note "python: import"
 # Importing starts the runtime: give it an empty BAML_HOME, telemetry off and

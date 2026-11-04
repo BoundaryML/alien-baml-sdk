@@ -25,13 +25,13 @@ def alien_call():
 def other_call():
     import baml_sdk
 
-    return baml_sdk.greet("Alien")
+    return baml_sdk.greet_sync("Alien")
 
 
 def vendored_call():
     import other_baml_sdk
 
-    return other_baml_sdk.greet("Alien")
+    return other_baml_sdk.greet_sync("Alien")
 
 
 # app.py [vendored]: the other SDK is importable as `other_baml_sdk`.

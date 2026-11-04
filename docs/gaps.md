@@ -14,7 +14,7 @@ changed and what remains. B13 is BAML's design, which the SDK works with.
 | [B4](#b4) | Two BAML-generated SDKs cannot share a process | None in this SDK; needs a change in BAML's runtime and generators | An application that also uses another BAML-generated SDK fails or runs the wrong function |
 | [B5](#b5) | Go has no typed error values | Facade decodes the dynamic value | — |
 | [B6](#b6) | No visibility: every function and type is exported | Helpers in `ns_internal`; facades re-export the public surface | — |
-| [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>`; `OAuth` is snake_cased `o_auth` |
+| [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>` |
 | [B9](#b9) | A project cannot depend on another BAML package | One project, `ns_*` namespaces | — |
 | [B13](#b13) | An unset optional field and an explicit `null` are one value | Not changed in BAML; the SDK encodes request bodies by omission, so a request cannot send an explicit `null` | — |
 | [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` plus `baml.FromJson`/`baml.ToJson` mapping it to `"test"` | — |
@@ -143,7 +143,7 @@ Alien's) the way an application would, calls both, and asserts:
 | Same, other SDK imported first | works | `BamlPanic: Function not found: user.greet` |
 | TypeScript, each SDK resolves its own copy of the bridge (`link:` install) | works | works |
 | Python, other SDK installed last (it overwrites `baml_sdk/`) | **Silently runs the other project's function** | works |
-| Python, Alien SDK installed last | works | `AttributeError: module 'baml_sdk' has no attribute 'greet'` |
+| Python, Alien SDK installed last | works | `AttributeError: module 'baml_sdk' has no attribute 'greet_sync'` |
 | Python, other SDK vendored as `other_baml_sdk` | **Silently runs the other project's function** | works |
 
 So the last SDK to initialize owns the process. Calls through the other SDK
@@ -202,8 +202,8 @@ generators (Go already had it; TypeScript supports only `preserve-case`).
 
 | BAML | TypeScript | Python | Go | Rust |
 |---|---|---|---|---|
-| `platform.deploymentGroups.createToken` | `platform.deploymentGroups.createToken` | `platform.deployment_groups.create_token` | `PlatformDeploymentGroupsCreateToken` | `platform::deployment_groups::create_token_async` |
-| `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `SetupCloudformationLaunchUrl` | `setup::cloudformation_launch_url_async` |
+| `platform.deploymentGroups.createToken` | `platform.deploymentGroups.createToken` | `platform.deployment_groups.create_token` | `PlatformDeploymentGroupsCreateToken` | `platform::deployment_groups::create_token` |
+| `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `setup.cloudformation_launch_url` | `SetupCloudformationLaunchUrl` | `setup::cloudformation_launch_url` |
 | `platform.PlatformClient` | `platform.PlatformClient` | `platform.PlatformClient` | `PlatformPlatformClient` | `platform::PlatformClient` |
 | field `templateUrl` | `templateUrl` | `template_url` (alias `templateUrl`) | `TemplateUrl` | `template_url` |
 
@@ -211,10 +211,9 @@ generators (Go already had it; TypeScript supports only `preserve-case`).
 generated names as they are (Python `alien.deployment_groups.create_token`,
 `page.next_cursor`, `deployments.list(deployment_group=…)`; Rust
 `alien.deployment_groups().create_token(id)`, written by `sdk/rust/genops`
-from the generated functions). The wire names do not change. One spelling
-differs from what the Python facade used to produce: BAML splits `OAuth`
-(`get_gcp_o_auth_provider`; the facade's own rule gave
-`get_gcp_oauth_provider`). The TypeScript facade binds every generated
+from the generated functions). The wire names do not change. Known words
+such as `OAuth` stay whole (BAML #5524: `get_gcp_oauth_provider`, as the
+facade's own rule used to spell it). The TypeScript facade binds every generated
 operation under its camelCase name (`alien.deploymentGroups.createToken`).
 The Go facade has a generated method per operation
 (`c.DeploymentGroups.CreateToken`), written by `sdk/go/internal/genops`; Go
@@ -566,9 +565,9 @@ complete fix.
 
 **A Python traceback that records local variables holds the API key.**
 `baml_bridge` encodes each call's arguments, the client included, into a bytes
-local named `args_proto` in the function that runs the call (`_sync`, and
-`_async` for `AsyncAlien`). When the call fails, `AlienError` is chained from
-the bridge's error, whose traceback holds that frame. The facade's clients
+local named `args_proto` in the function that runs the call (its internal
+`_sync`, and `_async` for `AsyncAlien`). When the call fails, `AlienError` is
+chained from the bridge's error, whose traceback holds that frame. The facade's clients
 keep the key out of `repr()`, which does not help here, and the name
 `args_proto` does not match scrubbers that look for `api_key` or `token`.
 

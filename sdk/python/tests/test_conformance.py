@@ -5,6 +5,8 @@ from __future__ import annotations
 import ast
 import asyncio
 import functools
+import importlib
+import inspect
 import json
 import os
 import re
@@ -16,10 +18,12 @@ import pydantic
 import pytest
 
 import alien_sdk
-import baml_sdk
-from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager
+from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, platform
 from alien_sdk._errors import _converted
-from baml_sdk import compat, platform
+
+# The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
+baml_sdk = importlib.import_module(_gen.platform.__name__.rpartition(".")[0])
+compat: Any = importlib.import_module(f"{baml_sdk.__name__}.compat")
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -46,8 +50,8 @@ def _alien_manager(client: dict, cls: type[AlienManager | AsyncAlienManager] = A
     return cls(client["base_url"], client.get("token"), timeout_ms=client.get("timeout_ms"))
 
 
-def _platform_client(client: dict) -> platform.PlatformClient:
-    return platform.PlatformClient(
+def _platform_client(client: dict) -> _gen.platform.PlatformClient:
+    return _gen.platform.PlatformClient(
         base_url=client["base_url"], api_key=client["api_key"], workspace=client.get("workspace"), timeout_ms=client.get("timeout_ms")
     )
 
@@ -72,15 +76,15 @@ CALLS: dict[str, Callable[[dict], Any]] = {
     "manager.getCommandStatus": lambda a: _alien_manager(a["client"]).commands.get_command_status(a["command_id"]),
     "setup.cloudformationLaunchUrl": lambda a: alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(**a["input"])),
     "setup.launchUrlForProject": lambda a: _alien(a["client"]).setup.launch_url_for_project(a["project"], a["region"], a["stackName"], a["parameters"]),
-    "compat.acceptKeySetup": lambda a: _converting(compat.accept_key_setup, _platform_client(a["client"]), compat.KeySetupAction(**a["request"])),
-    "compat.decodeProjectPage": lambda a: _converting(compat.decode_project_page, a["json"]),
-    "compat.decodeMaterialization": lambda a: _converting(compat.decode_materialization, a["json"]),
-    "compat.storedSecretPresence": lambda a: _converting(compat.stored_secret_presence, a["json"]),
-    "compat.reencodeConfig": lambda a: _converting(compat.reencode_config, a["json"]),
-    "compat.roundtripStackByPlatform": lambda a: _converting(compat.roundtrip_stack_by_platform, a["json"]),
-    "compat.roundtripEvent": lambda a: _converting(compat.roundtrip_event, a["json"]),
-    "compat.roleScope": lambda a: _converting(compat.role_scope, a["json"]),
-    "compat.decodeRemoteAccess": lambda a: _converting(compat.decode_remote_access, a["json"]),
+    "compat.acceptKeySetup": lambda a: _converting(compat.accept_key_setup_sync, _platform_client(a["client"]), compat.KeySetupAction(**a["request"])),
+    "compat.decodeProjectPage": lambda a: _converting(compat.decode_project_page_sync, a["json"]),
+    "compat.decodeMaterialization": lambda a: _converting(compat.decode_materialization_sync, a["json"]),
+    "compat.storedSecretPresence": lambda a: _converting(compat.stored_secret_presence_sync, a["json"]),
+    "compat.reencodeConfig": lambda a: _converting(compat.reencode_config_sync, a["json"]),
+    "compat.roundtripStackByPlatform": lambda a: _converting(compat.roundtrip_stack_by_platform_sync, a["json"]),
+    "compat.roundtripEvent": lambda a: _converting(compat.roundtrip_event_sync, a["json"]),
+    "compat.roleScope": lambda a: _converting(compat.role_scope_sync, a["json"]),
+    "compat.decodeRemoteAccess": lambda a: _converting(compat.decode_remote_access_sync, a["json"]),
 }
 
 
@@ -117,7 +121,7 @@ def _adapter(service: str, baml_type: str) -> pydantic.TypeAdapter:
 
 
 _DEFINITION = re.compile(
-    r'^(\w+)\s*= _define_function\("user\.([\w.]+)", "sync",\s*(\[[^\]]*\])(?:, (\[[^\]]*\]))?(?:, param_aliases=(\{[^}]*\}))?',
+    r'^(\w+)\s*= _define_function\("user\.([\w.]+)", "async",\s*(\[[^\]]*\])(?:, (\[[^\]]*\]))?(?:, param_aliases=(\{[^}]*\}))?',
     re.M,
 )
 
@@ -171,7 +175,8 @@ def _operation(call: dict) -> Any:
 
 def test_every_operation_is_bound() -> None:
     """Every operation the scenarios call resolves through the facade: 279
-    Platform and 53 Manager operations, each the generated function itself."""
+    Platform and 53 Manager operations, each a method with the generated
+    function's docs (test_facade.py walks what each calls)."""
     bindings = _bindings()
     assert sum(op.startswith("platform.") for op in bindings) == 279
     assert sum(op.startswith("manager.") for op in bindings) == 53
@@ -182,7 +187,7 @@ def test_every_operation_is_bound() -> None:
         generated: Any = getattr(baml_sdk, service)
         for group in groups:
             target, generated = getattr(target, group), getattr(generated, group)
-        assert getattr(target, name).__wrapped__ is getattr(generated, name), op
+        assert inspect.getdoc(getattr(target, name)) == inspect.getdoc(getattr(generated, name)), op
 
 
 def _to_json(value: Any) -> Any:

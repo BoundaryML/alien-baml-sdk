@@ -5,6 +5,7 @@ Each call goes to conformance/stub-server, scripted by the test.
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import copy
 import importlib
@@ -21,13 +22,15 @@ import textwrap
 import traceback
 import types
 from pathlib import Path
+from typing import Any, Callable
 
 import pydantic
 import pytest
+from baml_bridge import UNSET as BAML_UNSET
 from baml_bridge import BamlError
 
 import alien_sdk
-from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, manager, platform
+from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, manager, platform
 
 
 def script(stub, *exchanges: dict) -> None:
@@ -111,18 +114,25 @@ def test_keyword_arguments_and_fields_are_snake_case(stub, secrets) -> None:
     assert page.model_dump(by_alias=True) == {"items": [], "nextCursor": "c2"}
     requests(stub)
 
-    # The BAML name (the API's camelCase) is accepted too: the generated
-    # function maps snake_case keywords to it. Any other keyword fails before
-    # a request (docs/api-shape.md).
-    script(stub, {
-        "expect": {"method": "GET", "path": "/v1/deployments?workspace=acme&deploymentGroup=prod"},
-        "respond": {"json": {"items": []}},
-    })
-    alien.deployments.list(deploymentGroup="prod")
-    requests(stub)
+
+def test_a_wrong_keyword_raises_type_error(stub, secrets) -> None:
+    """The methods have the generated signatures, so Python itself rejects a
+    keyword they do not take, before a request: a misspelling, and the BAML
+    name (the API's camelCase) as well (docs/api-shape.md)."""
+    alien = Alien(secrets["apiKey"], server_url=stub.base, workspace="acme")
+    async_alien = AsyncAlien(secrets["apiKey"], server_url=stub.base, workspace="acme")
     script(stub)
-    with pytest.raises(BamlError, match="deployment_grop"):
-        alien.deployments.list(deployment_grop="prod")
+    for wrong in ("deployment_grop", "deploymentGroup"):
+        with pytest.raises(TypeError, match=f"unexpected keyword argument '{wrong}'"):
+            alien.deployments.list(**{wrong: "prod"})
+        with pytest.raises(TypeError, match=f"unexpected keyword argument '{wrong}'"):
+            async_alien.deployments.list(**{wrong: "prod"})  # raises before a coroutine exists
+    with pytest.raises(TypeError, match="missing 1 required positional argument: 'id'"):
+        alien.managers.get()
+    with pytest.raises(TypeError, match="takes 2 positional arguments but 3 were given"):
+        alien.managers.get("mgr_1", "extra")
+    with pytest.raises(TypeError, match="unexpected keyword argument 'commandId'"):
+        AlienManager(stub.base).commands.get_command_status("cmd_1", commandId="cmd_1")
     assert requests(stub) == []
 
 
@@ -239,43 +249,116 @@ def test_credentials_stay_out_of_reprs(stub, secrets) -> None:
 
 
 def _operations(module: types.ModuleType) -> set[str]:
+    """A generated module's operations: each async function with a blocking ``_sync`` twin."""
     return {
         name for name, value in vars(module).items()
         if isinstance(value, types.FunctionType) and value.__module__ == module.__name__
-        and not name.startswith("_") and not name.endswith("_async")
+        and not name.startswith("_") and isinstance(vars(module).get(name + "_sync"), types.FunctionType)
     }
 
 
-@pytest.mark.parametrize("module", [platform, manager], ids=lambda m: m.__name__)
-def test_every_generated_operation_is_bound(secrets, module: types.ModuleType) -> None:
-    client = Alien(secrets["apiKey"], server_url="http://127.0.0.1:1") if module is platform else AlienManager("http://127.0.0.1:1")
+def _public(value: object) -> set[str]:
+    return {name for name in dir(value) if not name.startswith("_")}
+
+
+def _stub_signatures(module: types.ModuleType) -> dict[str, list[tuple[str, inspect._ParameterKind, bool]]]:
+    """Each generated operation's parameters after the client, as its stub
+    (``__init__.pyi``) declares them: name, kind and whether it has a default."""
+    tree = ast.parse((Path(module.__file__).parent / "__init__.pyi").read_text(encoding="utf-8"))
+    out = {}
+    for node in tree.body:
+        if isinstance(node, ast.AsyncFunctionDef):
+            a = node.args
+            out[node.name] = [
+                *((arg.arg, inspect.Parameter.POSITIONAL_OR_KEYWORD, False) for arg in a.args[1:]),
+                *((arg.arg, inspect.Parameter.KEYWORD_ONLY, True) for arg in a.kwonlyargs),
+            ]
+    return out
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["blocking", "async"])
+@pytest.mark.parametrize("module", [_gen.platform, _gen.manager], ids=lambda m: m.__name__)
+def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.ModuleType, asynchronous: bool) -> None:
+    """Walks every generated operation: the client (``Alien``, ``AsyncAlien``,
+    ``AlienManager``, ``AsyncAlienManager``) has a method for it under its
+    group, with the stub's parameters (without the client) and docs, and the
+    method calls the generated function (``<name>_sync`` when blocking,
+    ``<name>`` when async) with the client and its arguments, leaving each
+    optional one UNSET (not passed)."""
+    if module is _gen.platform:
+        client: Any = (AsyncAlien if asynchronous else Alien)(secrets["apiKey"], server_url="http://127.0.0.1:1")
+    else:
+        client = (AsyncAlienManager if asynchronous else AlienManager)("http://127.0.0.1:1")
     groups = {info.name for info in pkgutil.iter_modules(module.__path__) if info.ispkg}
     assert groups
-    own = {"setup"} if module is platform else set()
+    own = {"setup"} if module is _gen.platform else set()
     assert not own & groups, "a generated group is shadowed by a facade attribute"
-    assert set(dir(client)) == groups | _operations(module) | own
-    for group in groups:
-        generated = importlib.import_module(f"{module.__name__}.{group}")
-        bound = getattr(client, group)
-        assert set(dir(bound)) == _operations(generated), group
+    assert _public(client) == groups | _operations(module) | own
+    calls: list[tuple[str, tuple, dict]] = []
+
+    def recorder(target: str) -> Callable[..., Any]:
+        def record(*args: Any, **kwargs: Any) -> str:
+            calls.append((target, args, kwargs))
+            return target
+
+        async def record_async(*args: Any, **kwargs: Any) -> str:
+            return record(*args, **kwargs)
+
+        return record_async if asynchronous else record
+
+    bound = 0
+    for owner, generated in [(client, module), *((getattr(client, g), importlib.import_module(f"{module.__name__}.{g}")) for g in groups)]:
+        if owner is not client:
+            assert _public(owner) == _operations(generated), generated.__name__
+        stubs = _stub_signatures(generated)
         for op in _operations(generated):
-            assert getattr(bound, op).__wrapped__ is getattr(generated, op)
+            method = getattr(owner, op)
+            where = f"{generated.__name__}.{op}"
+            assert inspect.iscoroutinefunction(method) is asynchronous, where
+            parameters = list(inspect.signature(method).parameters.values())
+            assert [(p.name, p.kind, p.default is not p.empty) for p in parameters] == stubs[op], where
+            assert inspect.getdoc(method) == inspect.getdoc(getattr(generated, op)), where
+            target = op if asynchronous else f"{op}_sync"
+            monkeypatch.setattr(generated, target, recorder(f"{generated.__name__}.{target}"))
+            required = [object() for p in parameters if p.default is p.empty]
+            result = asyncio.run(method(*required)) if asynchronous else method(*required)
+            assert result == f"{generated.__name__}.{target}", where
+            _, args, kwargs = calls.pop()
+            assert args[0] is client._client and list(args[1:]) == required, where
+            assert kwargs == {p.name: (None if p.name == "_baml" else BAML_UNSET) for p in parameters if p.kind is p.KEYWORD_ONLY}, where
+            bound += 1
+    assert bound == (279 if module is _gen.platform else 53)
 
 
-@pytest.mark.parametrize("module", [platform, manager], ids=lambda m: m.__name__)
-def test_async_clients_bind_the_async_functions(secrets, module: types.ModuleType) -> None:
-    client = AsyncAlien(secrets["apiKey"], server_url="http://127.0.0.1:1") if module is platform else AsyncAlienManager("http://127.0.0.1:1")
-    groups = {info.name for info in pkgutil.iter_modules(module.__path__) if info.ispkg}
-    own = {"setup"} if module is platform else set()
-    assert set(dir(client)) == groups | _operations(module) | own
-    for group in groups:
-        generated = importlib.import_module(f"{module.__name__}.{group}")
-        bound = getattr(client, group)
-        assert set(dir(bound)) == _operations(generated), group
-        for op in _operations(generated):
-            function = getattr(bound, op)
-            assert inspect.iscoroutinefunction(function)
-            assert function.__wrapped__ is getattr(generated, f"{op}_async")
+def test_a_set_keyword_reaches_the_generated_function(monkeypatch) -> None:
+    deployments = importlib.import_module(f"{_gen.platform.__name__}.deployments")
+    seen = {}
+    monkeypatch.setattr(deployments, "list_sync", lambda client, **kwargs: seen.update(kwargs))
+    Alien("key", server_url="http://127.0.0.1:1").deployments.list(deployment_group="prod", limit=None, _baml={"timeout_ms": 5})
+    assert seen["deployment_group"] == "prod" and seen["limit"] is None and seen["_baml"] == {"timeout_ms": 5}
+    assert seen["project"] is BAML_UNSET
+
+
+def test_type_checkers_see_the_signatures() -> None:
+    """mypy (strict on the facade) checks tests/typed_usage.py: calls with the
+    generated signatures type-check, and each wrong call it marks `type:
+    ignore` must be an error (--warn-unused-ignores), which it is only when
+    mypy sees the real signatures (not Any)."""
+    root = Path(__file__).parents[1]
+    # Installed (a wheel), the package needs the marker for type checkers to read it (PEP 561).
+    assert (root / "alien_sdk" / "py.typed").is_file()
+    result = subprocess.run(
+        [sys.executable, "-m", "mypy", "--strict", "--warn-unused-ignores", "--no-incremental", "--cache-dir", os.devnull,
+         "tests/typed_usage.py", "alien_sdk"],
+        cwd=root, capture_output=True, text=True, timeout=600,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    revealed = re.findall(r'typed_usage\.py:\d+: note: Revealed type is "(.*)"', result.stdout)
+    assert len(revealed) == 2, result.stdout
+    blocking, asynchronous = revealed
+    assert blocking.startswith("def (*, project: str | None | UNSET =, deployment_group: str | None | UNSET =")
+    assert blocking.endswith(f"-> {_gen.platform.__name__}.ListDeploymentsResponse")
+    assert asynchronous.endswith(f"-> typing.Coroutine[Any, Any, {_gen.platform.__name__}.ListDeploymentsResponse]")
 
 
 def test_async_manager_sends_its_token(stub, secrets) -> None:
@@ -291,11 +374,17 @@ def test_async_manager_sends_its_token(stub, secrets) -> None:
     requests(stub)
 
 
+# Words that stay whole in snake_case (BAML #5524): ``getGcpOAuthProvider`` → ``get_gcp_oauth_provider``.
+_KNOWN_WORDS = {"OAuth": "Oauth", "GraphQL": "Graphql", "GitHub": "Github"}
+
+
 def _snake(name: str) -> str:
     """The snake_case Alien asked for: ``createToken`` → ``create_token``,
     ``revokeAPIKey`` → ``revoke_api_key``, ``getGcpOAuthProvider`` →
-    ``get_gcp_o_auth_provider``. BAML's ``language`` naming spells the
+    ``get_gcp_oauth_provider``. BAML's ``language`` naming spells the
     generated names; this test checks that they read this way."""
+    for word, whole in _KNOWN_WORDS.items():
+        name = name.replace(word, whole)
     return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", name).lower()
 
 
@@ -319,13 +408,13 @@ def test_every_operation_of_alien_typescript_sdks_is_bound(secrets, service: str
 
 def test_bound_names() -> None:
     alien = Alien("key", server_url="http://127.0.0.1:1")
-    assert alien.deployment_groups.create_token.__wrapped__ is importlib.import_module("baml_sdk.platform.deployment_groups").create_token
-    assert AlienManager("http://127.0.0.1:1").commands.create_command.__wrapped__ is importlib.import_module("baml_sdk.manager.commands").create_command
-    assert callable(alien.api_keys.revoke) and callable(alien.projects.get_gcp_o_auth_provider)
+    assert alien.deployment_groups.create_token.__qualname__ == "PlatformDeploymentGroups.create_token"
+    assert AsyncAlienManager("http://127.0.0.1:1").commands.create_command.__qualname__ == "AsyncManagerCommands.create_command"
+    assert callable(alien.api_keys.revoke) and callable(alien.projects.get_gcp_oauth_provider)
     with pytest.raises(AttributeError, match="createToken"):
         alien.deployment_groups.createToken  # noqa: B018  (only the generated snake_case names are bound)
-    with pytest.raises(AttributeError, match="create_token_async"):
-        alien.deployment_groups.create_token_async  # noqa: B018  (AsyncAlien binds those)
+    with pytest.raises(AttributeError, match="create_token_sync"):
+        alien.deployment_groups.create_token_sync  # noqa: B018  (bound as create_token)
 
 
 def test_shutdown(tmp_path) -> None:

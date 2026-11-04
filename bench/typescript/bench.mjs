@@ -58,7 +58,7 @@ if (mode === "import") {
   }
   done(JSON.stringify(ms))
 } else if (mode === "warm-helper" || mode === "warm-noop") {
-  const call = mode === "warm-helper" ? () => cloudFormationLaunchUrl(input) : () => sdk.compat.newer_remote_sandbox()
+  const call = mode === "warm-helper" ? () => cloudFormationLaunchUrl(input) : () => sdk.compat.newer_remote_sandbox_sync()
   done(JSON.stringify(batchesSync(call, Number(args[0]), Number(args[1]), 1000)))
 } else {
   throw new Error(`unknown mode ${mode}`)
