@@ -5,6 +5,8 @@ from __future__ import annotations
 import ast
 import asyncio
 import functools
+import importlib
+import inspect
 import json
 import os
 import re
@@ -16,10 +18,12 @@ import pydantic
 import pytest
 
 import alien_sdk
-import baml_sdk
-from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager
+from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, platform
 from alien_sdk._errors import _converted
-from baml_sdk import compat, platform
+
+# The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
+baml_sdk = importlib.import_module(platform.__name__.rpartition(".")[0])
+compat: Any = importlib.import_module(f"{baml_sdk.__name__}.compat")
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -171,7 +175,8 @@ def _operation(call: dict) -> Any:
 
 def test_every_operation_is_bound() -> None:
     """Every operation the scenarios call resolves through the facade: 279
-    Platform and 53 Manager operations, each the generated function itself."""
+    Platform and 53 Manager operations, each a method with the generated
+    function's docs (test_facade.py walks what each calls)."""
     bindings = _bindings()
     assert sum(op.startswith("platform.") for op in bindings) == 279
     assert sum(op.startswith("manager.") for op in bindings) == 53
@@ -182,7 +187,7 @@ def test_every_operation_is_bound() -> None:
         generated: Any = getattr(baml_sdk, service)
         for group in groups:
             target, generated = getattr(target, group), getattr(generated, group)
-        assert getattr(target, name).__wrapped__ is getattr(generated, name + "_sync"), op
+        assert inspect.getdoc(getattr(target, name)) == inspect.getdoc(getattr(generated, name)), op
 
 
 def _to_json(value: Any) -> Any:

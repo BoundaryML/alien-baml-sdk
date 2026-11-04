@@ -2,7 +2,8 @@
 """Generates conformance scenarios for every imported operation into
 conformance/scenarios/ops.*.json (conformance/README.md). Each harness calls
 an operation by its BAML path; the Go and Rust tables that map those paths to
-facade calls are written by sdk/go/internal/genops and sdk/rust/genops.
+facade calls are written by sdk/go/internal/genops and sdk/rust/genops (Python's
+methods, by sdk/python/genops.py).
 
     python3 scripts/operation_scenarios.py           rewrite them
     python3 scripts/operation_scenarios.py --check   fail if they differ

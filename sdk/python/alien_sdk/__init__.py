@@ -1,6 +1,6 @@
 """Alien SDK for Python.
 
-A thin facade over the generated BAML SDK (``baml_sdk``): it builds clients,
+A thin facade over the generated BAML SDK (``alien_sdk._gen`` imports it): it builds clients,
 renames, converts errors and picks the public surface. Every behavior lives in
 the BAML project (``baml/baml_src``).
 
@@ -22,11 +22,11 @@ import typing as _typing
 import pydantic as _pydantic
 from baml_bridge import shutdown_runtime as _shutdown_runtime
 
-# Importing the generated SDK starts the runtime.
-from baml_sdk import manager, platform  # (generated types: request and response shapes)
-from baml_sdk import setup as _setup
+# Importing the generated SDK (through _gen, the one module that names it) starts the runtime.
+from ._gen import manager, platform  # (generated types: request and response shapes)
+from ._gen import setup as _setup
 
-from ._bind import Bound as _Bound
+from . import _operations
 from ._errors import AlienError, _converted
 
 CloudFormationLaunch = _setup.CloudFormationLaunch
@@ -61,7 +61,7 @@ def _manager_client(server_url: str, token: str | None, timeout_ms: int | None) 
     return _ManagerClient(base_url=server_url, token=token or None, timeout_ms=timeout_ms)
 
 
-class Alien(_Bound):
+class Alien(_operations.Platform):
     """A Platform API client, configured like Alien's TypeScript SDK
     (``@alienplatform/platform-api``): ``api_key`` defaults to the
     ``ALIEN_API_KEY`` environment variable, ``server_url`` (when ``None``) to
@@ -78,14 +78,15 @@ class Alien(_Bound):
 
         alien = Alien(workspace="my-workspace")
         m = alien.managers.get("mgr_...")
-        page = alien.deployments.list(project="web", deploymentGroup="prod", limit=10)
-        page.nextCursor
+        page = alien.deployments.list(project="web", deployment_group="prod", limit=10)
+        page.next_cursor
 
-    Groups and methods are snake_case. Required arguments are positional and
-    optional ones are keywords. Keywords and fields keep the API's camelCase
-    names (``deploymentGroup=``, ``page.nextCursor``). Any other keyword,
-    such as ``deployment_group=``, raises ``baml_bridge.BamlError``
-    (``InvalidArgument``), not ``TypeError``.
+    Groups, methods, keywords and fields are snake_case
+    (``deployment_group=``, ``page.next_cursor``). Required arguments are
+    positional and optional ones are keywords. Every method has the generated
+    operation's signature, so editors and type checkers see it, and an
+    unknown keyword (``deploymentGroup=``, ``deployment_grop=``) raises
+    ``TypeError`` before any request.
 
     Call :func:`shutdown` before the process ends without running ``atexit``
     handlers (a signal such as SIGTERM, ``os._exit()``).
@@ -101,14 +102,14 @@ class Alien(_Bound):
         timeout_ms: int | None = None,
     ) -> None:
         client = _platform_client(api_key, server_url, workspace, timeout_ms)
-        super().__init__(platform, client)
+        super().__init__(client)
         self.setup = ProjectSetup(client)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r}, workspace={self._client.workspace!r})"
 
 
-class AsyncAlien(_Bound):
+class AsyncAlien(_operations.AsyncPlatform):
     """:class:`Alien` with ``async`` methods, for asyncio programs::
 
         alien = AsyncAlien(workspace="my-workspace")
@@ -124,13 +125,14 @@ class AsyncAlien(_Bound):
         timeout_ms: int | None = None,
     ) -> None:
         client = _platform_client(api_key, server_url, workspace, timeout_ms)
-        super().__init__(platform, client, asynchronous=True)
+        super().__init__(client)
         self.setup = AsyncProjectSetup(client)
 
-    __repr__ = Alien.__repr__
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(server_url={self._client.base_url!r}, workspace={self._client.workspace!r})"
 
 
-class AlienManager(_Bound):
+class AlienManager(_operations.Manager):
     """A Manager API client, for example for the ``managerUrl`` and ``token`` from
     ``alien.commands.bootstrap``. ``AlienManager(server_url, token).commands.create_command(...)``
     calls any Manager API operation; the token is sent on every operation
@@ -140,21 +142,22 @@ class AlienManager(_Bound):
     """
 
     def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(manager, _manager_client(server_url, token, timeout_ms))
+        super().__init__(_manager_client(server_url, token, timeout_ms))
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(server_url={self._client.base_url!r})"
 
 
-class AsyncAlienManager(_Bound):
+class AsyncAlienManager(_operations.AsyncManager):
     """:class:`AlienManager` with ``async`` methods:
     ``await AsyncAlienManager(server_url, token).commands.create_command(...)``.
     """
 
     def __init__(self, server_url: str, token: str | None = None, *, timeout_ms: int | None = None) -> None:
-        super().__init__(manager, _manager_client(server_url, token, timeout_ms), asynchronous=True)
+        super().__init__(_manager_client(server_url, token, timeout_ms))
 
-    __repr__ = AlienManager.__repr__
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(server_url={self._client.base_url!r})"
 
 
 class ProjectSetup:

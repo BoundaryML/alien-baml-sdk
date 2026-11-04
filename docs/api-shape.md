@@ -70,11 +70,20 @@ BAML's `language` naming generates them: a multi-word filter reads
 `deployment_group=` and a page's cursor `page.next_cursor`. The wire names do
 not change, and each field keeps the BAML name as its pydantic alias, so
 models also accept it (`CreateCommandRequest(deploymentId=…)`) and
-`model_dump(by_alias=True)` writes it. A keyword that is the BAML name
-(`deploymentGroup=`) works too; any other unknown keyword raises
-`baml_bridge.BamlError` (`InvalidArgument`), not `TypeError`. The facade binds
-the generated names as they are (`sdk/python/alien_sdk/_bind.py`), so it holds
-no casing rules of its own.
+`model_dump(by_alias=True)` writes it. Every method has the generated
+operation's signature, without the client, so editors and type checkers see
+it (mypy: `reveal_type(alien.deployments.list)` shows each keyword and the
+return type), and an unknown keyword raises `TypeError` before any request,
+the BAML name (`deploymentGroup=`) included. The methods are generated from
+the generated package's stubs by `sdk/python/genops.py` into
+`alien_sdk/_operations.py` (gitignored; `scripts/generate.sh` runs it, as
+`sdk/go/internal/genops` writes Go's methods): one class per group, blocking
+(`PlatformDeployments`, calling the generated `list_sync`) and async
+(`AsyncPlatformDeployments`, awaiting the generated `list`), with the same
+methods, so there is no per-operation code and no casing rule of the
+facade's own. An optional argument the caller leaves out is `UNSET`, which
+the generated function does not pass on, as before.
+`alien_sdk/_gen.py` is the only module that imports the generated package.
 
 ```python
 from alien_sdk import Alien, AlienManager, manager
