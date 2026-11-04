@@ -18,11 +18,11 @@ import pydantic
 import pytest
 
 import alien_sdk
-from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, platform
+from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, platform
 from alien_sdk._errors import _converted
 
 # The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
-baml_sdk = importlib.import_module(platform.__name__.rpartition(".")[0])
+baml_sdk = importlib.import_module(_gen.platform.__name__.rpartition(".")[0])
 compat: Any = importlib.import_module(f"{baml_sdk.__name__}.compat")
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -50,8 +50,8 @@ def _alien_manager(client: dict, cls: type[AlienManager | AsyncAlienManager] = A
     return cls(client["base_url"], client.get("token"), timeout_ms=client.get("timeout_ms"))
 
 
-def _platform_client(client: dict) -> platform.PlatformClient:
-    return platform.PlatformClient(
+def _platform_client(client: dict) -> _gen.platform.PlatformClient:
+    return _gen.platform.PlatformClient(
         base_url=client["base_url"], api_key=client["api_key"], workspace=client.get("workspace"), timeout_ms=client.get("timeout_ms")
     )
 

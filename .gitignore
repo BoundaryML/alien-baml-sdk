@@ -8,6 +8,8 @@
 baml_sdk/
 /sdk/go/alien/operations.go
 /sdk/python/alien_sdk/_operations.py
+/sdk/python/alien_sdk/platform.py
+/sdk/python/alien_sdk/manager.py
 /sdk/go/alien/operations_table_test.go
 /sdk/rust/src/operations.rs
 /sdk/rust/tests/support/operations.rs

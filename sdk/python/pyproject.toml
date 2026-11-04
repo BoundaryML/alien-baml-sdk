@@ -20,11 +20,11 @@ dev = ["mypy>=1.15", "pytest>=8"]
 package = false
 
 # `uv pip install sdk/python` (or pip) builds a wheel of the facade and the
-# generated package; baml_sdk/ and alien_sdk/_operations.py (genops.py) are
-# gitignored, so they are listed as artifacts.
+# generated package; baml_sdk/ and the facade's generated modules (genops.py)
+# are gitignored, so they are listed as artifacts.
 [tool.hatch.build.targets.wheel]
 packages = ["alien_sdk", "baml_sdk"]
-artifacts = ["baml_sdk/", "alien_sdk/_operations.py"]
+artifacts = ["baml_sdk/", "alien_sdk/_operations.py", "alien_sdk/platform.py", "alien_sdk/manager.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing_extensions import assert_type
 
 from alien_sdk import Alien, AlienManager, AsyncAlien, AsyncAlienManager, manager, platform
+from alien_sdk.platform import CreateSetupLinkRequest
 
 alien = Alien()
 reveal_type(alien.deployments.list)
@@ -19,6 +20,10 @@ alien.deployments.list(deployment_grop="prod")  # type: ignore[call-arg]
 alien.deployments.list(limit="10")  # type: ignore[arg-type]
 alien.managers.get()  # type: ignore[call-arg]
 alien.deployments.lst()  # type: ignore[attr-defined]
+
+request = CreateSetupLinkRequest.model_validate({"externalId": "cust-1", "name": "Customer", "project": "web"})
+assert_type(alien.setup_links.create(request), platform.CreateSetupLinkResponse)
+platform.PlatformClient  # type: ignore[attr-defined]  # the generated client stays private
 
 commands = AlienManager("http://manager").commands
 assert_type(commands.get_command_status("cmd_1"), manager.CommandStatusResponse)

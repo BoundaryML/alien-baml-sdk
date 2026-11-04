@@ -98,6 +98,37 @@ alien.api_keys.revoke(key_id)
 cmd = AlienManager(manager_url, token).commands.create_command(manager.CreateCommandRequest(...))
 ```
 
+**Python: validating input.** `alien_sdk.platform` and `alien_sdk.manager`
+hold every request and response type of each API: the generated pydantic
+models, enums and type aliases, under their generated names, the same
+classes the operations take and return (the generated client is left out).
+They are modules (`from alien_sdk.platform import CreateSetupLinkRequest`),
+one per API, so the 61 names both APIs define (`CreateCommandRequest`,
+`CreateReleaseRequest`, …) never clash. They are written by `sdk/python/genops.py`
+(gitignored). A customer can validate their own input, such as a dashboard
+form, with them before calling the API:
+
+```python
+from alien_sdk.platform import CreateSetupLinkRequest
+
+request = CreateSetupLinkRequest.model_validate(form)   # pydantic.ValidationError if it does not fit
+alien.setup_links.create(request)
+```
+
+`model_validate` (and `model_validate_json`) accept both spellings of a
+field: the wire name, which is each field's pydantic alias
+(`{"externalId": …, "maxDeployments": 5}`), and the Python name
+(`{"external_id": …, "max_deployments": 5}`); the models set
+`populate_by_name`. Use the wire spelling for data in the API's shape (JSON
+bodies, forms built from the API reference), which is also what
+`model_dump(by_alias=True)` writes and what a `ValidationError` names
+(`externalId: Field required`), and the Python spelling for keyword
+arguments in Python code (`CreateSetupLinkRequest(external_id=…)`). Do not
+send both for one field: the wire name wins. Unknown keys are ignored
+(`extra="ignore"`), so a misspelled optional field is dropped without an
+error; values are converted as pydantic's default (lax) mode does
+(`"5"` → `5`). `sdk/python/tests/test_types.py` checks each of these.
+
 **Go.** Calls take the form `c.<Group>.<Method>(ctx, …)`, grouped and named
 as in Alien's TypeScript SDK with Go's initialisms (`c.APIKeys.Revoke`,
 `c.Projects.GetTemplateURLs`); an operation without a group is a method of

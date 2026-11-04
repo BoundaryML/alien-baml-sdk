@@ -221,6 +221,8 @@ manager = alien.managers.get("mgr_...")
 page = alien.deployments.list(project="my-project", deployment_group="prod", limit=10)
 page.next_cursor   # groups, methods, keywords and fields are snake_case
 # Methods are typed (mypy and editors see each signature); a wrong keyword raises TypeError.
+from alien_sdk.platform import CreateSetupLinkRequest   # request and response types, per API
+request = CreateSetupLinkRequest.model_validate(form)   # camelCase (wire) or snake_case keys
 ```
 
 ```go

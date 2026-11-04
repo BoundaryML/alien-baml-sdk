@@ -30,7 +30,7 @@ from baml_bridge import UNSET as BAML_UNSET
 from baml_bridge import BamlError
 
 import alien_sdk
-from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, manager, platform
+from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, manager, platform
 
 
 def script(stub, *exchanges: dict) -> None:
@@ -277,7 +277,7 @@ def _stub_signatures(module: types.ModuleType) -> dict[str, list[tuple[str, insp
 
 
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["blocking", "async"])
-@pytest.mark.parametrize("module", [platform, manager], ids=lambda m: m.__name__)
+@pytest.mark.parametrize("module", [_gen.platform, _gen.manager], ids=lambda m: m.__name__)
 def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.ModuleType, asynchronous: bool) -> None:
     """Walks every generated operation: the client (``Alien``, ``AsyncAlien``,
     ``AlienManager``, ``AsyncAlienManager``) has a method for it under its
@@ -285,13 +285,13 @@ def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.
     method calls the generated function (``<name>_sync`` when blocking,
     ``<name>`` when async) with the client and its arguments, leaving each
     optional one UNSET (not passed)."""
-    if module is platform:
+    if module is _gen.platform:
         client: Any = (AsyncAlien if asynchronous else Alien)(secrets["apiKey"], server_url="http://127.0.0.1:1")
     else:
         client = (AsyncAlienManager if asynchronous else AlienManager)("http://127.0.0.1:1")
     groups = {info.name for info in pkgutil.iter_modules(module.__path__) if info.ispkg}
     assert groups
-    own = {"setup"} if module is platform else set()
+    own = {"setup"} if module is _gen.platform else set()
     assert not own & groups, "a generated group is shadowed by a facade attribute"
     assert _public(client) == groups | _operations(module) | own
     calls: list[tuple[str, tuple, dict]] = []
@@ -327,11 +327,11 @@ def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.
             assert args[0] is client._client and list(args[1:]) == required, where
             assert kwargs == {p.name: (None if p.name == "_baml" else BAML_UNSET) for p in parameters if p.kind is p.KEYWORD_ONLY}, where
             bound += 1
-    assert bound == (279 if module is platform else 53)
+    assert bound == (279 if module is _gen.platform else 53)
 
 
 def test_a_set_keyword_reaches_the_generated_function(monkeypatch) -> None:
-    deployments = importlib.import_module(f"{platform.__name__}.deployments")
+    deployments = importlib.import_module(f"{_gen.platform.__name__}.deployments")
     seen = {}
     monkeypatch.setattr(deployments, "list_sync", lambda client, **kwargs: seen.update(kwargs))
     Alien("key", server_url="http://127.0.0.1:1").deployments.list(deployment_group="prod", limit=None, _baml={"timeout_ms": 5})
@@ -357,8 +357,8 @@ def test_type_checkers_see_the_signatures() -> None:
     assert len(revealed) == 2, result.stdout
     blocking, asynchronous = revealed
     assert blocking.startswith("def (*, project: str | None | UNSET =, deployment_group: str | None | UNSET =")
-    assert blocking.endswith(f"-> {platform.__name__}.ListDeploymentsResponse")
-    assert asynchronous.endswith(f"-> typing.Coroutine[Any, Any, {platform.__name__}.ListDeploymentsResponse]")
+    assert blocking.endswith(f"-> {_gen.platform.__name__}.ListDeploymentsResponse")
+    assert asynchronous.endswith(f"-> typing.Coroutine[Any, Any, {_gen.platform.__name__}.ListDeploymentsResponse]")
 
 
 def test_async_manager_sends_its_token(stub, secrets) -> None:

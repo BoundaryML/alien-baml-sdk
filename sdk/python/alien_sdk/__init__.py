@@ -1,17 +1,20 @@
 """Alien SDK for Python.
 
-A thin facade over the generated BAML SDK (``alien_sdk._gen`` imports it): it builds clients,
-renames, converts errors and picks the public surface. Every behavior lives in
-the BAML project (``baml/baml_src``).
+A thin facade over the generated BAML SDK (``alien_sdk._gen`` imports it):
+it builds clients, renames, converts errors and picks the public surface.
+Every behavior lives in the BAML project (``baml/baml_src``).
 
-``platform`` and ``manager`` are the generated modules, exported for their
-request and response types (``platform.CreateSetupLinkRequest``), which are
-also what ``isinstance`` checks need: a union member this SDK does not know
-is ``platform.EventDataOther`` and the like (docs/api-shape.md). Call
-operations through :class:`Alien` and :class:`AlienManager` (or
-:class:`AsyncAlien` and :class:`AsyncAlienManager`): the functions in those
-modules take the client as their first argument and raise
-``baml_bridge.BamlError`` instead of :class:`AlienError`.
+:mod:`alien_sdk.platform` and :mod:`alien_sdk.manager` hold the request and
+response types of each API (generated pydantic models, enums and type
+aliases), one namespace per API so their names never clash::
+
+    from alien_sdk.platform import CreateSetupLinkRequest
+    request = CreateSetupLinkRequest.model_validate(form)   # camelCase or snake_case keys
+
+They are also what ``isinstance`` checks need: a union member this SDK does
+not know is ``platform.EventDataOther`` and the like (docs/api-shape.md).
+Call operations through :class:`Alien` and :class:`AlienManager` (or
+:class:`AsyncAlien` and :class:`AsyncAlienManager`).
 """
 
 from __future__ import annotations
@@ -23,10 +26,10 @@ import pydantic as _pydantic
 from baml_bridge import shutdown_runtime as _shutdown_runtime
 
 # Importing the generated SDK (through _gen, the one module that names it) starts the runtime.
-from ._gen import manager, platform  # (generated types: request and response shapes)
+from . import _gen
 from ._gen import setup as _setup
 
-from . import _operations
+from . import _operations, manager, platform  # (platform, manager: the request and response types)
 from ._errors import AlienError, _converted
 
 CloudFormationLaunch = _setup.CloudFormationLaunch
@@ -38,11 +41,11 @@ DEFAULT_SERVER_URL = "https://api.alien.dev"
 # field. These subclasses leave the credential out of repr(), vars() and
 # debuggers. A traceback that captures locals (as error reporters do) still
 # holds it: baml_bridge keeps the encoded call in a local of its own frame.
-class _PlatformClient(platform.PlatformClient):
+class _PlatformClient(_gen.platform.PlatformClient):
     api_key: str = _pydantic.Field(repr=False)
 
 
-class _ManagerClient(manager.ManagerClient):
+class _ManagerClient(_gen.manager.ManagerClient):
     token: _typing.Optional[str] = _pydantic.Field(default=None, repr=False)
 
 
@@ -163,7 +166,7 @@ class AsyncAlienManager(_operations.AsyncManager):
 class ProjectSetup:
     """Setup helpers that need the Platform API (``alien.setup``)."""
 
-    def __init__(self, client: platform.PlatformClient) -> None:
+    def __init__(self, client: _gen.platform.PlatformClient) -> None:
         self._client = client
 
     def launch_url_for_project(
@@ -181,7 +184,7 @@ class ProjectSetup:
 class AsyncProjectSetup:
     """:class:`ProjectSetup` with ``async`` methods (``AsyncAlien(...).setup``)."""
 
-    def __init__(self, client: platform.PlatformClient) -> None:
+    def __init__(self, client: _gen.platform.PlatformClient) -> None:
         self._client = client
 
     async def launch_url_for_project(
