@@ -3,7 +3,7 @@
 
 use std::{future::Future, io::Read, time::Instant};
 
-use alien_sdk::{Alien, CloudFormationLaunch, Options, platform};
+use alien_sdk::{Alien, CloudFormationLaunch, Options};
 
 const ID: &str = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr";
 
@@ -63,11 +63,11 @@ async fn main() -> Result<(), alien_sdk::Error> {
         }
         "get" => {
             let alien = client(&args[0])?;
-            done(&platform::managers::get_async(alien.platform(), ID.into()).await?.id);
+            done(&alien.managers().get(ID).send().await?.id);
         }
         "warm-get" => {
             let alien = client(&args[0])?;
-            let per_call = batches(|| platform::managers::get_async(alien.platform(), ID.into()), arg(args, 1), arg(args, 2), 200).await;
+            let per_call = batches(|| alien.managers().get(ID).send(), arg(args, 1), arg(args, 2), 200).await;
             done(&serde_json::to_string(&per_call).expect("json"));
         }
         "page" => {
@@ -76,7 +76,7 @@ async fn main() -> Result<(), alien_sdk::Error> {
             let mut ms = Vec::with_capacity(n);
             for i in 0..warmup + n {
                 let start = Instant::now();
-                let page = platform::managers::list_async(alien.platform(), None, Some(size as i64)).await?;
+                let page = alien.managers().list().limit(size as i64).send().await?;
                 if i >= warmup {
                     ms.push(start.elapsed().as_nanos() as f64 / 1e6);
                 }

@@ -4,8 +4,8 @@ mod support;
 
 use std::{path::PathBuf, time::Duration};
 
-use alien_sdk::{Alien, AlienManager, Error, Options, manager, platform};
-use baml_bridge::{BamlValue, OptionalArg};
+use alien_sdk::{Alien, AlienManager, Error, Options};
+use baml_bridge::BamlValue;
 use baml_sdk::compat;
 use serde_json::{Value, json};
 use support::*;
@@ -38,9 +38,10 @@ fn ok<T: BamlValue>(result: Result<T, Error>) -> Result<Value, Error> {
     result.map(|v| to_json(&v))
 }
 
-async fn call<T: BamlValue>(
-    operation: impl Future<Output = Result<T, baml_bridge::Error<baml_sdk::errors::AlienError>>>,
-) -> Result<Value, Error> {
+async fn call<T: BamlValue, E>(operation: impl Future<Output = Result<T, E>>) -> Result<Value, Error>
+where
+    Error: From<E>,
+{
     Ok(to_json(&operation.await?))
 }
 
@@ -49,38 +50,36 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
     let client = || alien(&a["client"]);
     match f {
         "platform.createSetupLink" => {
-            call(platform::setup_links::create_async(
-                client().platform(),
-                create_setup_link_request(&a["request"]),
-            ))
+            call(
+                client()
+                    .setup_links()
+                    .create(create_setup_link_request(&a["request"]))
+                    .send(),
+            )
             .await
         }
         "platform.getProjectTemplateUrls" => {
-            call(platform::projects::get_template_urls_async(
-                client().platform(),
-                s(&a["idOrName"]),
-            ))
-            .await
+            call(client().projects().get_template_urls(s(&a["idOrName"])).send()).await
         }
         "platform.bootstrapCommands" => {
-            call(platform::commands::bootstrap_async(
-                client().platform(),
-                bootstrap_request(&a["request"]),
-            ))
+            call(
+                client()
+                    .commands()
+                    .bootstrap(bootstrap_request(&a["request"]))
+                    .send(),
+            )
             .await
         }
         "platform.getManager" => {
-            call(platform::managers::get_async(
-                client().platform(),
-                s(&a["id"]),
-            ))
-            .await
+            call(client().managers().get(s(&a["id"])).send()).await
         }
         "manager.getCommandStatus" => {
-            call(manager::commands::get_command_status_async(
-                alien_manager(&a["client"]).client(),
-                s(&a["command_id"]),
-            ))
+            call(
+                alien_manager(&a["client"])
+                    .commands()
+                    .get_command_status(s(&a["command_id"]))
+                    .send(),
+            )
             .await
         }
         "setup.cloudformationLaunchUrl" => {
@@ -97,7 +96,7 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
             .await),
         "compat.acceptKeySetup" => {
             call(compat::accept_key_setup_async(
-                client().platform(),
+                &platform_client(&a["client"]),
                 key_setup_action(&a["request"]),
             ))
             .await
@@ -121,32 +120,11 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
 }
 
 // ---------------------------------------------------------------------------
-// Generated operations (`call.op`, conformance/README.md), through one generic
-// dispatch: `operation` in support/operations.rs, written by
-// scripts/operation_scenarios.py, has one row per operation. A row names the
-// generated function and its arguments, `req` ones in order, then `opt` ones.
-// A required class argument names its type (`req "body": platform::X`): the
-// generated function takes it as `impl Borrow<X>`, which leaves the type to
-// the caller. The row passes it by reference. Each row's future is boxed:
-// one future holding all of them overflows the test thread's stack.
-
-macro_rules! op {
-    (@req $a:ident, $name:literal) => { arg($a, $name).await? };
-    (@req $a:ident, $name:literal $ty:ty) => { &arg::<$ty>($a, $name).await? };
-    (@opt $a:ident, $name:literal) => { opt($a, $name).await? };
-    // An operation in a group: platform::managers::get_async.
-    ($a:ident, $ns:ident :: $group:ident :: $f:ident $(, $kind:ident $name:literal $(: $ty:ty)?)* $(,)?) => {
-        Box::pin(async move {
-            Ok(to_json(&$ns::$group::$f(&client::$ns(&$a["client"]) $(, op!(@$kind $a, $name $($ty)?))*).await?))
-        }).await
-    };
-    // An operation without a group: platform::accept_workspace_invitation_async.
-    ($a:ident, $ns:ident :: $f:ident $(, $kind:ident $name:literal $(: $ty:ty)?)* $(,)?) => {
-        Box::pin(async move {
-            Ok(to_json(&$ns::$f(&client::$ns(&$a["client"]) $(, op!(@$kind $a, $name $($ty)?))*).await?))
-        }).await
-    };
-}
+// Generated operations (`call.op`, conformance/README.md): `operation` in
+// support/operations.rs, which genops writes (gitignored; scripts/generate.sh
+// runs it), has one row per operation, calling its builder:
+// `alien(..).deployments().list().project(..)…send()`. Required arguments
+// are decoded with `arg`, optional ones with `opt` and set when present.
 
 include!("support/operations.rs");
 
@@ -170,35 +148,61 @@ async fn arg<T: BamlValue>(a: &Value, name: &str) -> Result<T, Error> {
     .map_err(|error| harness(format!("decode scenario argument {name:?}: {error}")))
 }
 
-async fn opt<T: BamlValue>(a: &Value, name: &str) -> Result<OptionalArg<T>, Error> {
+/// An optional argument: `None` when the scenario leaves it out.
+async fn opt<T: BamlValue>(a: &Value, name: &str) -> Result<Option<T>, Error> {
     Ok(match a.get(name) {
-        None => OptionalArg::Unset,
-        Some(_) => OptionalArg::Set(arg(a, name).await?),
+        None => None,
+        Some(_) => Some(arg(a, name).await?),
     })
 }
 
-/// The client a generated operation takes first, from the scenario's `client`
-/// args. `op!` picks the function named after the operation's namespace.
-mod client {
-    use super::*;
-
-    pub fn platform(client: &Value) -> platform::PlatformClient {
-        let (base_url, api_key, workspace) = client_args(client);
-        platform::PlatformClient {
-            base_url,
-            api_key,
-            workspace,
-            timeout_ms: client["timeout_ms"].as_i64(),
-        }
+/// The generated Platform client, for the internal `compat` functions that
+/// take one (the facade keeps its own private).
+fn platform_client(client: &Value) -> baml_sdk::platform::PlatformClient {
+    let (base_url, api_key, workspace) = client_args(client);
+    baml_sdk::platform::PlatformClient {
+        base_url,
+        api_key,
+        workspace,
+        timeout_ms: client["timeout_ms"].as_i64(),
     }
+}
 
-    pub fn manager(client: &Value) -> manager::ManagerClient {
-        manager::ManagerClient {
-            base_url: s(&client["base_url"]),
-            token: client["token"].as_str().map(str::to_string),
-            timeout_ms: client["timeout_ms"].as_i64(),
+/// Every operation of Alien's TypeScript SDKs (the naming oracle, extracted
+/// from their sources) has a builder, and nothing else does: 279 Platform and
+/// 53 Manager operations. The conformance scenarios call each one.
+#[test]
+fn every_operation_has_a_builder() {
+    let oracle: Value = serde_json::from_str(
+        &std::fs::read_to_string(
+            repo_root().join("tools/openapi2baml/tests/fixtures/naming-oracle.json"),
+        )
+        .expect("read the naming oracle"),
+    )
+    .expect("oracle JSON");
+    let mut expected = std::collections::BTreeSet::new();
+    let mut counts = Vec::new();
+    for service in ["platform", "manager"] {
+        let ops = oracle["operations"][service].as_object().expect("operations");
+        let mut count = 0;
+        for e in ops.values().filter(|e| e["in_sdk"] == json!(true)) {
+            let method = e["method_name"].as_str().expect("method_name");
+            expected.insert(match e["group"].as_str() {
+                Some(group) => format!("{service}.{group}.{method}"),
+                None => format!("{service}.{method}"),
+            });
+            count += 1;
         }
+        counts.push(count);
     }
+    let built: std::collections::BTreeSet<String> =
+        OPERATIONS.iter().map(|op| op.to_string()).collect();
+    assert_eq!(built.len(), OPERATIONS.len(), "an operation is listed twice");
+    assert_eq!(counts, [279, 53]);
+    assert_eq!(
+        built.symmetric_difference(&expected).collect::<Vec<_>>(),
+        Vec::<&String>::new()
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]

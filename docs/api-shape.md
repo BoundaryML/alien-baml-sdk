@@ -61,24 +61,28 @@ const cmd = await new AlienManager({ serverURL: managerUrl, token }).commands.cr
 ```
 
 **Python.** Calls take the form `alien.<group>.<method>`, as in Alien's
-TypeScript SDK, with groups and methods in snake_case. They are synchronous;
-`AsyncAlien` and `AsyncAlienManager` have the same methods, `async`.
-The client takes the TypeScript SDK's options in snake_case: `api_key`
-(default: the `ALIEN_API_KEY` environment variable), `server_url`,
-`workspace` and `timeout_ms`. Optional arguments are keyword arguments. Keyword arguments and
-fields keep the API's camelCase names, so a multi-word filter reads
-`deploymentGroup=` and a page's cursor `page.nextCursor` (fields the API
-spells in snake_case are camelCased too, as in Alien's TypeScript SDK:
-`features.customDomains`). A snake_case keyword
-(`deployment_group=`) raises `baml_bridge.BamlError` (`InvalidArgument`), not
-`TypeError`.
+TypeScript SDK. They are synchronous; `AsyncAlien` and `AsyncAlienManager`
+have the same methods, `async`. The client takes the TypeScript SDK's options
+in snake_case: `api_key` (default: the `ALIEN_API_KEY` environment variable),
+`server_url`, `workspace` and `timeout_ms`. Optional arguments are keyword
+arguments. Groups, methods, keyword arguments and fields are snake_case, as
+BAML's `language` naming generates them: a multi-word filter reads
+`deployment_group=` and a page's cursor `page.next_cursor`. The wire names do
+not change, and each field keeps the BAML name as its pydantic alias, so
+models also accept it (`CreateCommandRequest(deploymentId=…)`) and
+`model_dump(by_alias=True)` writes it. A keyword that is the BAML name
+(`deploymentGroup=`) works too; any other unknown keyword raises
+`baml_bridge.BamlError` (`InvalidArgument`), not `TypeError`. The facade binds
+the generated names as they are (`sdk/python/alien_sdk/_bind.py`), so it holds
+no casing rules of its own.
 
 ```python
 from alien_sdk import Alien, AlienManager, manager
 
 alien = Alien()   # api_key from ALIEN_API_KEY
 m = alien.managers.get(id)
-page = alien.deployments.list(project="my-project", deploymentGroup="prod", limit=10)
+page = alien.deployments.list(project="my-project", deployment_group="prod", limit=10)
+page.next_cursor
 t = alien.deployment_groups.create_token(id)
 me = alien.auth.whoami()
 alien.api_keys.revoke(key_id)
@@ -115,38 +119,53 @@ err = c.APIKeys.Revoke(ctx, keyID)
 cmd, err := alien.NewManager(alien.ManagerOptions{ServerURL: managerURL, Token: token}).Commands.CreateCommand(ctx, req)
 ```
 
-**Rust.** Code calls the generated functions, re-exported as
-`alien_sdk::platform` and `alien_sdk::manager`, with the client from
-`alien.platform()` or `AlienManager::client()`. `?` converts the error into
-`alien_sdk::Error`. Optional arguments are positional `OptionalArg`s, written
-as `None` or a value, in the operation's order: `deployments.list` takes 11.
-An optional parameter Alien adds therefore changes every Rust call to that
-operation (v3.3.43 added `channel`, `effectScope` and `effect` to
-`releases.listDeployments`, before `limit` and `cursor`).
-Alien's Rust client (Progenitor) uses builders instead
-(`client.list_deployments().project(..).limit(10).send()`). The Rust
-generator requires `naming_convention = "preserve-case"`, so modules,
-functions and fields keep BAML's camelCase (B7). `Options` holds Alien's
-TypeScript SDK options in snake_case (`api_key`, `server_url`, `workspace`,
-`timeout`). `api_key: None` reads `ALIEN_API_KEY`; with no key, `Alien::new`
-fails with `INVALID_REQUEST`. The `Debug` output of `Alien` and `AlienManager`
-hides the key and the token; that of the generated clients
-`alien.platform()` and `AlienManager::client()` shows them
-([B22](gaps.md#b22)). Keep those out of `dbg!`, out of `#[derive(Debug)]`
-structs that get logged, and out of `#[tracing::instrument]` arguments
-(`skip(client)`).
+**Rust.** Calls take the form `alien.<group>().<method>(…)`, grouped as in
+Alien's TypeScript SDK; an operation without a group is a method of the client
+(`alien.accept_workspace_invitation(token)`). The method takes the required
+arguments (each `impl Into<T>`, so `&str` works for a `String`) and returns a
+builder with one setter per optional argument, also `impl Into<T>`;
+`.send().await` makes the call and returns `Result<T, alien_sdk::Error>`.
+`.baml_options(BamlOptions::new().timeout_ms(10_000))` sets per-call options.
+An optional parameter Alien adds is one more setter, so existing calls keep
+compiling (v3.3.43 added `channel`, `effectScope` and `effect` to
+`releases.listDeployments`, which positional arguments would have broken).
+Names are BAML's `language` naming: snake_case modules, functions, arguments
+and fields (`deployment_groups().create_token(id)`, `page.next_cursor`),
+PascalCase types and enum variants; the wire names do not change. The
+builders are generated from the generated crate by `sdk/rust/genops` into
+`src/operations.rs` (as `sdk/go/internal/genops` writes Go's methods), so
+there is no per-operation code: one builder per operation, 279 Platform and 53
+Manager, in `alien_sdk::operations::{platform, manager}`, named by joining the
+generated module and function (`DeploymentsList`). Request and response types
+are in `alien_sdk::platform` and `alien_sdk::manager`, which re-export the
+generated types and nothing else. This is the shape of Alien's Rust client
+(Progenitor), grouped like the other three SDKs instead of flat
+(`client.list_deployments()`). `Options` holds Alien's TypeScript SDK options
+in snake_case (`api_key`, `server_url`, `workspace`, `timeout`). `api_key:
+None` reads `ALIEN_API_KEY`; with no key, `Alien::new` fails with
+`INVALID_REQUEST`. The generated clients, whose `Debug` shows the key and the
+token ([B22](gaps.md#b22)), are private to the facade: `Debug` of `Alien`,
+`AlienManager`, every group and every builder shows neither
+(`tests/client_options.rs`).
 
 ```rust
-use alien_sdk::{Alien, AlienManager, Options, manager, platform};
+use alien_sdk::{Alien, AlienManager, Options};
 
 let alien = Alien::new(Options { api_key: Some(api_key), ..Default::default() })?;
-let m = platform::managers::get_async(alien.platform(), id).await?;
+let m = alien.managers().get(id).send().await?;
+let page = alien.deployments().list().project("my-project").limit(10).send().await?;
+let t = alien.deployment_groups().create_token(id).send().await?;
+let me = alien.auth().whoami().send().await?;
+alien.api_keys().revoke(key_id).send().await?;
+let cmd = AlienManager::new(manager_url, Some(token)).commands().create_command(req).send().await?;
+```
+
+Before, the same `deployments.list` call took every optional argument
+positionally:
+
+```rust
 let page = platform::deployments::list_async(alien.platform(), Some("my-project".into()),
     None, None, None, None, None, None, None, None, Some(10), None).await?;
-let t = platform::deploymentGroups::createToken_async(alien.platform(), id, None).await?;
-let me = platform::auth::whoami_async(alien.platform()).await?;
-platform::apiKeys::revoke_async(alien.platform(), key_id).await?;
-let cmd = manager::commands::createCommand_async(AlienManager::new(manager_url, Some(token)).client(), req).await?;
 ```
 
 `tests/shape.rs` compiles these calls.
@@ -155,15 +174,15 @@ let cmd = manager::commands::createCommand_async(AlienManager::new(manager_url, 
 
 | Topic | Rule |
 |---|---|
-| Groups and methods | As in Alien's TypeScript SDK: `x-speakeasy-group`, else camelCase of the first tag; `x-speakeasy-name-override`, else camelCase of the operation ID. An operation with neither group nor tag (39 Platform operations) is a method of the client itself, as in that SDK. One config rename (`POST /v1/deployment-groups/{id}/tokens` → `createToken`). Checked against names extracted from the SDK's sources: 279 of 279 Platform and 53 of 53 Manager operations match (`tests/naming_oracle.rs`), and the TypeScript and Python facade tests call each of them by that name. Operations marked `x-speakeasy-ignore` are left out, as Speakeasy does (3: `listPendingAccessRequests`, `reportMaterializedAccessRequests`, `reportAccessApprovals`) |
-| Python names | Groups and methods in snake_case: `deploymentGroups.createToken` → `deployment_groups.create_token`. An acronym is one word (`revokeAPIKey` → `revoke_api_key`), and so is `OAuth` (`getGcpOAuthProvider` → `get_gcp_oauth_provider`, not `get_gcp_o_auth_provider`). A Python keyword gets a trailing underscore: `deployments.import` → `deployments.import_`. Arguments and fields use Alien's TypeScript names (Field names, below) |
+| Groups and methods | As in Alien's TypeScript SDK: `x-speakeasy-group`, else camelCase of the first tag; `x-speakeasy-name-override`, else camelCase of the operation ID. An operation with neither group nor tag (39 Platform operations) is a method of the client itself, as in that SDK. One config rename (`POST /v1/deployment-groups/{id}/tokens` → `createToken`). Checked against names extracted from the SDK's sources: 279 of 279 Platform and 53 of 53 Manager operations match (`tests/naming_oracle.rs`), and the TypeScript, Python and Rust facade tests call each of them by that name (Rust: `every_operation_has_a_builder` in `tests/conformance.rs`). Operations marked `x-speakeasy-ignore` are left out, as Speakeasy does (3: `listPendingAccessRequests`, `reportMaterializedAccessRequests`, `reportAccessApprovals`) |
+| Python and Rust names | BAML's `language` naming (BAML #5481): groups, methods, arguments and fields in snake_case (`deploymentGroups.createToken` → `deployment_groups.create_token`, `nextCursor` → `next_cursor`), types and enum variants in PascalCase. An acronym is one word (`revokeAPIKey` → `revoke_api_key`); `OAuth` is two (`getGcpOAuthProvider` → `get_gcp_o_auth_provider`). A Python keyword gets a trailing underscore (`deployments.import` → `deployments.import_`), a Rust keyword is a raw identifier (`deployments().r#move(id)`). The facades take these names from the generated code and add no casing rules. Wire names do not change |
 | Operations newer than the SDK | None at the vendored commit: Alien's TypeScript SDK has every Platform and Manager operation of the spec. One that is newer would be named by the same rule |
 | Arguments | Required arguments are positional: path parameters, then other required parameters, then a required body. Optional parameters and an optional body come after them as optional arguments. An operation can be called with no arguments exactly when Alien's SDK makes its request optional (all 332 operations checked) |
 | Workspace | The `workspace` query parameter is a client setting, sent on every operation that accepts it |
 | Types | Component schemas keep their names. Operation-level schemas use Alien's names: `<OperationId>Response`, plus `<OperationId>Request` for a body that is the only argument, else `<OperationId>RequestBody`. Other inline schemas are named `<Parent><Field>`. Identical classes are merged |
 | Optional fields | Unset optionals are omitted from request bodies. A request cannot send an explicit `null` (decision 5; [B13](gaps.md#b13) lists the fields where the spec gives `null` a meaning) |
 | Extra keys | An object with both `properties` and `additionalProperties` keeps the unlisted keys in an `additionalProperties` map, as Speakeasy names it (34 schemas) |
-| Field and argument names | As in Alien's TypeScript SDK (decisions 11 and 12): a wire name with separators is camelCased (`custom_domains` → `customDomains`, `vpc_id` → `vpcId`, `on-other` → `onOther`, `_internal` → `internal`; 21 Platform and 14 Manager wire names), any other is kept. A BAML reserved word then gets a trailing underscore (`test` → `test_`, B14). Requests and responses keep the wire names on the wire, through a `baml.FromJson`/`baml.ToJson` mapping; `docs/importer-coverage.md` lists every renamed field. Arguments follow the same rule: the Manager's path parameters `command_id`, `lease_id` and `vault_name` are `commandId`, `leaseId` and `vaultName`, and the Platform header `If-Match` is `ifMatch` (`alien.dynamicContainers.put(id, name, body, { ifMatch: etag })`). `tests/naming_oracle.rs` checks every field and argument name against the SDK's sources |
+| Field and argument names | BAML names as in Alien's TypeScript SDK (decisions 11 and 12), which TypeScript and Go use as they are and Python and Rust snake_case (Python and Rust names, above): a wire name with separators is camelCased (`custom_domains` → `customDomains`, `vpc_id` → `vpcId`, `on-other` → `onOther`, `_internal` → `internal`; 21 Platform and 14 Manager wire names), any other is kept. A BAML reserved word then gets a trailing underscore (`test` → `test_`, B14). Requests and responses keep the wire names on the wire, through a `baml.FromJson`/`baml.ToJson` mapping; `docs/importer-coverage.md` lists every renamed field. Arguments follow the same rule: the Manager's path parameters `command_id`, `lease_id` and `vault_name` are `commandId`, `leaseId` and `vaultName`, and the Platform header `If-Match` is `ifMatch` (`alien.dynamicContainers.put(id, name, body, { ifMatch: etag })`). `tests/naming_oracle.rs` checks every field and argument name against the SDK's sources |
 | Enums | Open: a string enum becomes `string`, so values a newer server adds still decode. Its values are listed in the doc comment. A single-value enum or constant stays a literal only where it tags a union member, so the union decodes unambiguously; anywhere else it becomes its base type (`string`, `int`, `bool`), with its value in the doc comment |
 | Unions | Open: a union whose members share a tag field (`type`, `platform`, …) has one more member, last, named `<Owner><Field>Other` (`EventDataOther`). Its tag is always `"UNKNOWN"` and `raw` holds the member as the server sent it (the server's tag is `raw.type`), as in Speakeasy's forward-compatible unions. So a member a newer server adds decodes instead of failing the call, and a switch on the tag handles it like any other member: TypeScript `case "UNKNOWN":` (exhaustiveness-checked with a `never` default), Python `match` on the class or the tag, Go a type switch (`case baml_sdk.PlatformEventDataOther:`), Rust a `match` on the union's `EventDataOther` variant. A known tag that does not decode still fails with `MALFORMED_RESPONSE`. A union tagged by two fields has the same one catch-all (decision 13): `ExternalBinding` is tagged by `type`, then by `service` where several bindings share a `type`, and a new `type`, or a known `type` with a new `service` (`{"type": "storage", "service": "minio", …}`), decodes as `ExternalBindingOther { type: "UNKNOWN", raw }`, with the server's `type` and `service` in `raw`: TypeScript `if (b.type === "UNKNOWN") b.raw.service`, Python `case platform.ExternalBindingOther(raw=raw):`, Go `case baml_sdk.PlatformExternalBindingOther:`, Rust `platform::ExternalBinding::ExternalBindingOther(o) => o.raw["service"]`. A known pair that does not decode (`storage`/`s3` with `forcePathStyle: "yes"`) still fails with `MALFORMED_RESPONSE`. Unions without such tags stay closed |
 | Responses | 2xx JSON → the type; JSON or empty → `T?`; no content → `null`. Unknown fields are ignored. A required field the spec leaves untyped (`json`) may be missing, and is then `null`. A number too large for a 64-bit float (`1e400`), even in an ignored field, fails the body with `MALFORMED_RESPONSE` |
@@ -199,7 +218,7 @@ follows the TypeScript SDK. The table lists where they differ from this SDK.
 | | Alien's Rust clients | This SDK |
 |---|---|---|
 | Operations | Default features: the 74 Platform operations Alien's own code calls; `full-api`: all 282. Manager: all 53 | All 332 in every language |
-| Calls | Builders: `client.list_deployments().project(p).limit(10).send().await?.into_inner()`; `workspace` is an argument of each call; authentication is a `reqwest::Client` with a default `Authorization` header | Positional and optional arguments; `workspace` and the API key are client options |
+| Calls | Builders, flat: `client.list_deployments().project(p).limit(10).send().await?.into_inner()`; `workspace` is an argument of each call; authentication is a `reqwest::Client` with a default `Authorization` header | Builders, grouped as in the other SDKs: `alien.deployments().list().project(p).limit(10).send().await?`; `workspace` and the API key are client options |
 | An optional request body left out | Sent anyway, as the body type's default: `{}`, or `INVALID_REQUEST` before sending when that type has required fields (98 operations) | Not sent |
 | String constraints (`pattern`, `minLength`, `maxLength`, `format: uuid`) | Checked on arguments (refused before sending) and on responses (`INVALID_RESPONSE_PAYLOAD`) | Not checked: the server decides |
 | Enums | Closed, apart from three fields Alien opens: an unknown `Manager.platform` fails the response | Open (decision 1) |
@@ -224,14 +243,15 @@ The choices behind the shape above, with the alternative where there was one.
 2. **Naming.** Decided: Alien's names in every language: the TypeScript
    SDK's groups and methods (implemented and verified against it) and its
    client options (`apiKey`, `serverURL`, `workspace`, `ALIEN_API_KEY`), in
-   each language's casing. Rust still calls the generated functions (see
-   above).
+   each language's casing.
 3. **Arguments.** Decided: required arguments positional and optional ones
    named (implemented). List calls then read exactly like Alien's SDK
    (`deployments.list({ project, limit })`), and no params classes are
    generated, except in Go, which has no named arguments: its optional
-   arguments are one `<OperationID>Params` struct per operation.
-   Alternative: Speakeasy's request objects (`managers.get({ id })`),
+   arguments are one `<OperationID>Params` struct per operation, and Rust,
+   whose optional arguments are a builder's setters
+   (`deployments().list().project(p).limit(10).send()`), as in Alien's Rust
+   client. Alternative: Speakeasy's request objects (`managers.get({ id })`),
    generated as `<OperationId>Params` classes.
 4. **Manager.** Decided (implemented):
    - Send the token on every operation, as `@alienplatform/commands` does,
@@ -255,8 +275,13 @@ The choices behind the shape above, with the alternative where there was one.
    nullable key counts as `null`, and generated classes declare nullable
    fields optional (BAML PRs #5291 and #5377, in BAML 0.23.0). Request
    bodies are plain objects or classes, with unset keys left out.
-8. **Rust casing (B7).** Decided: accept the generator's camelCase modules
-   and functions.
+8. **Python and Rust casing (B7).** Decided: BAML's `language` naming
+   (BAML #5481), so Python and Rust names are snake_case everywhere
+   (`deployment_groups.create_token`, `page.next_cursor`,
+   `deployments.list(deployment_group="prod")`), as Alien asked. The wire
+   names do not change. Earlier the generators supported only
+   `preserve-case` for both, so Python fields and keywords and all Rust names
+   were camelCase.
 9. **Timeouts.** Decided and implemented: a client-level timeout, as
    Speakeasy's `timeoutMs`, for the Platform and the Manager client. It is a
    `timeout_ms` field of the generated `PlatformClient` and `ManagerClient`,
@@ -280,7 +305,8 @@ The choices behind the shape above, with the alternative where there was one.
    /v1/managers/m1 failed: timed out after 300 ms (timeout)`.
 
    Per-call timeouts keep working as before: `$baml` in TypeScript options,
-   `_baml=` in Python, the `ctx` deadline in Go and `*_with_options` in Rust.
+   `_baml=` in Python, the `ctx` deadline in Go and `.baml_options(..)` on a
+   Rust builder.
    They limit the whole call, and the shorter of the two limits ends it. So a
    per-call timeout can shorten the client's for one call but not lengthen it
    (Speakeasy's per-call `timeoutMs` replaces the client's), and it ends the
@@ -303,10 +329,10 @@ The choices behind the shape above, with the alternative where there was one.
     field-name rule, as in Alien's TypeScript SDK: `command_id` →
     `commandId`, `lease_id` → `leaseId`, `vault_name` → `vaultName` (Manager
     path parameters) and `If-Match` → `ifMatch` (`dynamicContainers.put`).
-    TypeScript `{ ifMatch: etag }`, Python `ifMatch=etag`; Go's
-    `&alien.PutDynamicContainerParams{IfMatch: …}` is unchanged, and Rust
-    arguments are positional, so only their documentation changes. The
-    request is unchanged.
+    TypeScript `{ ifMatch: etag }`; Python and Rust then snake_case the BAML
+    name (`if_match=etag`, `.if_match(etag)`), and Go's
+    `&alien.PutDynamicContainerParams{IfMatch: …}` is unchanged. The request
+    is unchanged.
 13. **Unions tagged by two fields.** Decided: one catch-all, shaped like
     every other open union's. `ExternalBinding` (the external bindings in a
     deployment's stack settings) has no single tag: `type` (`storage`,

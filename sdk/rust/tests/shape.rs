@@ -1,9 +1,8 @@
 //! Compile-time checks that the Rust calls docs/api-shape.md and the README
-//! show type-check: required arguments, positional optional ones (`None` or a
-//! value), no arguments, no response body, a Manager operation, per-call
-//! options, the setup helper and `shutdown`, with `?` converting the generated
-//! error into `alien_sdk::Error`, and a match on a union's catch-all. Nothing
-//! here runs.
+//! show type-check: one required argument, optional arguments as setters, no
+//! arguments, no response body, a Manager operation, per-call options, the
+//! setup helper and `shutdown`, with `send()` returning `alien_sdk::Error`, and
+//! a match on a union's catch-all. Nothing here runs.
 
 use alien_sdk::{Alien, AlienManager, BamlOptions, Error, Options, manager, platform};
 
@@ -20,30 +19,28 @@ async fn documented_calls(
         workspace: Some("my-workspace".into()),
         ..Default::default()
     })?;
-    let _m: platform::Manager = platform::managers::get_async(alien.platform(), id.clone()).await?;
-    #[rustfmt::skip] // the eight `None`s on one line, as in docs/api-shape.md
-    let _page: platform::ListDeploymentsResponse = platform::deployments::list_async(
-        alien.platform(),
-        Some("my-project".to_string()), // project
-        None, None, None, None, None, None, None, None, // deployment_group … include
-        Some(10),                       // limit
-        None,                           // cursor
-    )
-    .await?;
-    let _t =
-        platform::deployment_groups::create_token_async(alien.platform(), id.clone(), None).await?;
-    let _me = platform::auth::whoami_async(alien.platform()).await?;
-    platform::api_keys::revoke_async(alien.platform(), key_id).await?;
+    let _m: platform::Manager = alien.managers().get(&id).send().await?;
+    let _page: platform::ListDeploymentsResponse = alien
+        .deployments()
+        .list()
+        .project("my-project")
+        .limit(10)
+        .send()
+        .await?;
+    let _next = _page.next_cursor;
+    let _t = alien.deployment_groups().create_token(&id).send().await?;
+    let _me = alien.auth().whoami().send().await?;
+    alien.api_keys().revoke(key_id).send().await?;
+    let _invitation = alien.accept_workspace_invitation("token").send().await?;
     let mgr = AlienManager::new(manager_url, Some(token));
-    let _cmd: manager::CreateCommandResponse =
-        manager::commands::create_command_async(mgr.client(), req).await?;
+    let _cmd: manager::CreateCommandResponse = mgr.commands().create_command(req).send().await?;
 
-    let _m = platform::managers::get_async_with_options(
-        alien.platform(),
-        id,
-        BamlOptions::new().timeout_ms(10_000),
-    )
-    .await?;
+    let _m = alien
+        .managers()
+        .get(id)
+        .baml_options(BamlOptions::new().timeout_ms(10_000))
+        .send()
+        .await?;
     let _url: String = alien
         .setup()
         .launch_url_for_project("my-project", "us-east-1", "alien-setup", [])

@@ -261,9 +261,9 @@ overlays), so a call reads the same in every language:
 | `alienManager.commands.createCommand(body)` | `manager.commands.createCommand(client, body)` | `new AlienManager(o).commands.createCommand(body)` | `AlienManager(url, token).commands.create_command(body)` |
 
 Go calls generated methods (`c.Managers.Get(ctx, id)`, written into
-`alien/operations.go` by `sdk/go/internal/genops`) and Rust the generated
-functions (`platform::managers::get_async(client, id)`); see
-`docs/api-shape.md`.
+`alien/operations.go` by `sdk/go/internal/genops`) and Rust generated builders
+(`alien.managers().get(id).send()`, written into `src/operations.rs` by
+`sdk/rust/genops`); see `docs/api-shape.md`.
 
 - Platform: group = `x-speakeasy-group`, else camelCase of the first tag (41
   operations, as Speakeasy does); method = `x-speakeasy-name-override`, else
@@ -283,7 +283,8 @@ parameters as the path uses them, other required parameters in spec order,
 then a required body. Optional parameters follow in spec order, then an
 optional body, each as a BAML default argument (`limit: int? = null`), which
 every binding lets the caller omit: an options object in TypeScript, keyword
-arguments in Python, `With…` call options in Go, `OptionalArg` in Rust. A
+arguments in Python, `With…` call options in Go, `OptionalArg` in Rust (the
+facade's builder setters). A
 function is callable with the client alone exactly when Alien's TypeScript SDK
 makes its request argument optional (`tests/naming_oracle.rs` checks all 332
 operations). Argument names follow the field-name rule, as Alien's TypeScript
