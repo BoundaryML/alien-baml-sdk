@@ -14,6 +14,7 @@ import keyword
 import os
 import pickle
 import pkgutil
+import re
 import subprocess
 import sys
 import textwrap
@@ -27,7 +28,6 @@ from baml_bridge import BamlError
 
 import alien_sdk
 from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, manager, platform
-from alien_sdk._bind import _snake
 
 
 def script(stub, *exchanges: dict) -> None:
@@ -99,20 +99,30 @@ def test_default_server_url(secrets) -> None:
     assert repr(AsyncAlien(secrets["apiKey"])) == "AsyncAlien(server_url='https://api.alien.dev', workspace=None)"
 
 
-def test_keyword_arguments_keep_wire_names(stub, secrets) -> None:
+def test_keyword_arguments_and_fields_are_snake_case(stub, secrets) -> None:
     alien = Alien(secrets["apiKey"], server_url=stub.base, workspace="acme")
     script(stub, {
         "expect": {"method": "GET", "path": "/v1/deployments?workspace=acme&project=web&deploymentGroup=prod&limit=2"},
         "respond": {"json": {"items": [], "nextCursor": "c2"}},
     })
-    page = alien.deployments.list(project="web", deploymentGroup="prod", limit=2)
-    assert page.nextCursor == "c2"
+    page = alien.deployments.list(project="web", deployment_group="prod", limit=2)
+    assert page.next_cursor == "c2"
+    # The wire names stay the pydantic aliases.
+    assert page.model_dump(by_alias=True) == {"items": [], "nextCursor": "c2"}
     requests(stub)
 
-    # A snake_case keyword is not one of the operation's names (docs/api-shape.md).
+    # The BAML name (the API's camelCase) is accepted too: the generated
+    # function maps snake_case keywords to it. Any other keyword fails before
+    # a request (docs/api-shape.md).
+    script(stub, {
+        "expect": {"method": "GET", "path": "/v1/deployments?workspace=acme&deploymentGroup=prod"},
+        "respond": {"json": {"items": []}},
+    })
+    alien.deployments.list(deploymentGroup="prod")
+    requests(stub)
     script(stub)
-    with pytest.raises(BamlError, match="deployment_group"):
-        alien.deployments.list(deployment_group="prod")
+    with pytest.raises(BamlError, match="deployment_grop"):
+        alien.deployments.list(deployment_grop="prod")
     assert requests(stub) == []
 
 
@@ -137,8 +147,8 @@ def test_manager_sends_its_token(stub, secrets) -> None:
     })
     commands = AlienManager(stub.base, secrets["managerToken"]).commands
     created = commands.create_command(manager.CreateCommandRequest(
-        command="generate-report", deploymentId="dep_1", params=manager.BodySpecInline(mode="inline", inlineBase64="e30=")))
-    assert created.commandId == "cmd_1"
+        command="generate-report", deployment_id="dep_1", params=manager.BodySpecInline(mode="inline", inline_base64="e30=")))
+    assert created.command_id == "cmd_1"
     requests(stub)
 
 
@@ -149,7 +159,7 @@ def test_manager_without_token_sends_no_authorization(stub, token) -> None:
         "respond": {"json": {"commandId": "cmd_1", "inlineAllowedUpTo": 1024, "next": "poll", "state": "PENDING"}},
     })
     AlienManager(stub.base, token).commands.create_command(manager.CreateCommandRequest(
-        command="c", deploymentId="d", params=manager.BodySpecInline(mode="inline", inlineBase64="")))
+        command="c", deployment_id="d", params=manager.BodySpecInline(mode="inline", inline_base64="")))
     requests(stub)
 
 
@@ -193,11 +203,11 @@ def test_a_union_tagged_by_two_fields_has_one_catch_all(stub, secrets) -> None:
     deployment = Alien(secrets["apiKey"], server_url=stub.base).deployments.get("dep_1")
     requests(stub)
     got = []
-    for binding in deployment.stackSettings.externalBindings.values():
+    for binding in deployment.stack_settings.external_bindings.values():
         match binding:
             case platform.ExternalBindingOther(raw=raw):
                 got.append(raw["service"])
-            case platform.ExternalBindingStorageS3(bucketName=bucket):
+            case platform.ExternalBindingStorageS3(bucket_name=bucket):
                 got.append(bucket)
     assert got == ["files", "minio"]
 
@@ -242,14 +252,14 @@ def test_every_generated_operation_is_bound(secrets, module: types.ModuleType) -
     groups = {info.name for info in pkgutil.iter_modules(module.__path__) if info.ispkg}
     assert groups
     own = {"setup"} if module is platform else set()
-    assert not own & {_snake(group) for group in groups}, "a generated group is shadowed by a facade attribute"
-    assert set(dir(client)) == {_snake(group) for group in groups} | {_snake(op) for op in _operations(module)} | own
+    assert not own & groups, "a generated group is shadowed by a facade attribute"
+    assert set(dir(client)) == groups | _operations(module) | own
     for group in groups:
         generated = importlib.import_module(f"{module.__name__}.{group}")
-        bound = getattr(client, _snake(group))
-        assert set(dir(bound)) == {_snake(op) for op in _operations(generated)}, group
+        bound = getattr(client, group)
+        assert set(dir(bound)) == _operations(generated), group
         for op in _operations(generated):
-            assert getattr(bound, _snake(op)).__wrapped__ is getattr(generated, op)
+            assert getattr(bound, op).__wrapped__ is getattr(generated, op)
 
 
 @pytest.mark.parametrize("module", [platform, manager], ids=lambda m: m.__name__)
@@ -257,13 +267,13 @@ def test_async_clients_bind_the_async_functions(secrets, module: types.ModuleTyp
     client = AsyncAlien(secrets["apiKey"], server_url="http://127.0.0.1:1") if module is platform else AsyncAlienManager("http://127.0.0.1:1")
     groups = {info.name for info in pkgutil.iter_modules(module.__path__) if info.ispkg}
     own = {"setup"} if module is platform else set()
-    assert set(dir(client)) == {_snake(group) for group in groups} | {_snake(op) for op in _operations(module)} | own
+    assert set(dir(client)) == groups | _operations(module) | own
     for group in groups:
         generated = importlib.import_module(f"{module.__name__}.{group}")
-        bound = getattr(client, _snake(group))
-        assert set(dir(bound)) == {_snake(op) for op in _operations(generated)}, group
+        bound = getattr(client, group)
+        assert set(dir(bound)) == _operations(generated), group
         for op in _operations(generated):
-            function = getattr(bound, _snake(op))
+            function = getattr(bound, op)
             assert inspect.iscoroutinefunction(function)
             assert function.__wrapped__ is getattr(generated, f"{op}_async")
 
@@ -274,11 +284,19 @@ def test_async_manager_sends_its_token(stub, secrets) -> None:
         "respond": {"json": {"commandId": "cmd_1", "inlineAllowedUpTo": 1024, "next": "poll", "state": "PENDING"}},
     })
     request = manager.CreateCommandRequest(
-        command="generate-report", deploymentId="dep_1", params=manager.BodySpecInline(mode="inline", inlineBase64="e30="))
+        command="generate-report", deployment_id="dep_1", params=manager.BodySpecInline(mode="inline", inline_base64="e30="))
     created = asyncio.run(AsyncAlienManager(stub.base, secrets["managerToken"]).commands.create_command(request))
-    assert created.commandId == "cmd_1"
+    assert created.command_id == "cmd_1"
     assert repr(AsyncAlienManager(stub.base, secrets["managerToken"])) == f"AsyncAlienManager(server_url={stub.base!r})"
     requests(stub)
+
+
+def _snake(name: str) -> str:
+    """The snake_case Alien asked for: ``createToken`` → ``create_token``,
+    ``revokeAPIKey`` → ``revoke_api_key``, ``getGcpOAuthProvider`` →
+    ``get_gcp_o_auth_provider``. BAML's ``language`` naming spells the
+    generated names; this test checks that they read this way."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", name).lower()
 
 
 @pytest.mark.parametrize("service", ["platform", "manager"])
@@ -289,7 +307,7 @@ def test_every_operation_of_alien_typescript_sdks_is_bound(secrets, service: str
     oracle = json.loads((Path(__file__).parents[3] / "tools/openapi2baml/tests/fixtures/naming-oracle.json").read_text())
     client = Alien(secrets["apiKey"], server_url="http://127.0.0.1:1") if service == "platform" else AlienManager("http://127.0.0.1:1")
     entries = [e for e in oracle["operations"][service].values() if e["in_sdk"]]
-    assert len(entries) > 50
+    assert len(entries) == (279 if service == "platform" else 53)
     missing = []
     for e in entries:
         target = client if e["group"] is None else getattr(client, _snake(e["group"]))
@@ -301,17 +319,13 @@ def test_every_operation_of_alien_typescript_sdks_is_bound(secrets, service: str
 
 def test_bound_names() -> None:
     alien = Alien("key", server_url="http://127.0.0.1:1")
-    assert alien.deployment_groups.create_token.__wrapped__ is importlib.import_module("baml_sdk.platform.deploymentGroups").createToken
-    assert AlienManager("http://127.0.0.1:1").commands.create_command.__wrapped__ is importlib.import_module("baml_sdk.manager.commands").createCommand
+    assert alien.deployment_groups.create_token.__wrapped__ is importlib.import_module("baml_sdk.platform.deployment_groups").create_token
+    assert AlienManager("http://127.0.0.1:1").commands.create_command.__wrapped__ is importlib.import_module("baml_sdk.manager.commands").create_command
+    assert callable(alien.api_keys.revoke) and callable(alien.projects.get_gcp_o_auth_provider)
     with pytest.raises(AttributeError, match="createToken"):
-        alien.deployment_groups.createToken  # noqa: B018  (only snake_case names are bound)
-
-
-def test_snake_case_names() -> None:
-    assert _snake("createToken") == "create_token"
-    assert _snake("revokeAPIKey") == "revoke_api_key"
-    assert _snake("createExternalAIModelCheck") == "create_external_ai_model_check"
-    assert _snake("getGcpOAuthProvider") == "get_gcp_oauth_provider"  # OAuth is one word
+        alien.deployment_groups.createToken  # noqa: B018  (only the generated snake_case names are bound)
+    with pytest.raises(AttributeError, match="create_token_async"):
+        alien.deployment_groups.create_token_async  # noqa: B018  (AsyncAlien binds those)
 
 
 def test_shutdown(tmp_path) -> None:
@@ -322,7 +336,7 @@ def test_shutdown(tmp_path) -> None:
         alien_sdk.shutdown()
         try:
             alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
-                templateUrl="https://example.com/setup.yaml", region="us-east-1", stackName="s", parameters={}))
+                template_url="https://example.com/setup.yaml", region="us-east-1", stack_name="s", parameters={}))
         except BamlPanic:
             print("BamlPanic after shutdown")
     """)

@@ -25,18 +25,18 @@ async fn documented_calls(
     let _page: platform::ListDeploymentsResponse = platform::deployments::list_async(
         alien.platform(),
         Some("my-project".to_string()), // project
-        None, None, None, None, None, None, None, None, // deploymentGroup … include
+        None, None, None, None, None, None, None, None, // deployment_group … include
         Some(10),                       // limit
         None,                           // cursor
     )
     .await?;
     let _t =
-        platform::deploymentGroups::createToken_async(alien.platform(), id.clone(), None).await?;
+        platform::deployment_groups::create_token_async(alien.platform(), id.clone(), None).await?;
     let _me = platform::auth::whoami_async(alien.platform()).await?;
-    platform::apiKeys::revoke_async(alien.platform(), key_id).await?;
+    platform::api_keys::revoke_async(alien.platform(), key_id).await?;
     let mgr = AlienManager::new(manager_url, Some(token));
     let _cmd: manager::CreateCommandResponse =
-        manager::commands::createCommand_async(mgr.client(), req).await?;
+        manager::commands::create_command_async(mgr.client(), req).await?;
 
     let _m = platform::managers::get_async_with_options(
         alien.platform(),

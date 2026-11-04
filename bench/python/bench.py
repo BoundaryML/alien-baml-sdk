@@ -12,7 +12,7 @@ from baml_sdk import compat
 
 ID = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
 INPUT = alien_sdk.CloudFormationLaunch(
-    templateUrl="https://example.com/setup.yaml", region="us-east-1", stackName="alien-setup",
+    template_url="https://example.com/setup.yaml", region="us-east-1", stack_name="alien-setup",
     parameters={"ExternalId": "customer-0001"})
 
 
@@ -47,7 +47,7 @@ elif mode == "page":
         page = alien.managers.list(limit=size)
         if i >= warmup:
             ms.append((time.perf_counter_ns() - start) / 1e6)
-        if len(page) != size or page[-1].metrics is None or page[-1].metrics.cpuUsagePercent != 12.25:
+        if len(page) != size or page[-1].metrics is None or page[-1].metrics.cpu_usage_percent != 12.25:
             raise SystemExit("bad page")
     line = json.dumps(ms)
 elif mode in ("warm-helper", "warm-noop"):

@@ -115,8 +115,8 @@ console.log(cloudFormationLaunchUrl({
 import alien_sdk
 
 print(alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
-    templateUrl="https://example.com/setup.yaml", region="us-east-1",
-    stackName="alien-setup", parameters={"ExternalId": "customer-0001"})))
+    template_url="https://example.com/setup.yaml", region="us-east-1",
+    stack_name="alien-setup", parameters={"ExternalId": "customer-0001"})))
 ```
 
 **Go.** Save as `sdk/go/cmd/quickstart/main.go`, then run
@@ -169,8 +169,8 @@ numbers and orders JSON objects ([gaps B24](docs/gaps.md#b24)).
 #[tokio::main]
 async fn main() -> Result<(), alien_sdk::Error> {
     let url = alien_sdk::cloudformation_launch_url(alien_sdk::CloudFormationLaunch {
-        templateUrl: "https://example.com/setup.yaml".into(), region: "us-east-1".into(),
-        stackName: "alien-setup".into(),
+        template_url: "https://example.com/setup.yaml".into(), region: "us-east-1".into(),
+        stack_name: "alien-setup".into(),
         parameters: [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
     }).await?;
     println!("{url}");
@@ -216,7 +216,8 @@ const url = await alien.setup.launchUrlForProject("my-project", "us-east-1", "al
 ```python
 alien = alien_sdk.Alien(workspace="my-workspace")   # api_key defaults to ALIEN_API_KEY
 manager = alien.managers.get("mgr_...")
-page = alien.deployments.list(project="my-project", limit=10)
+page = alien.deployments.list(project="my-project", deployment_group="prod", limit=10)
+page.next_cursor   # groups, methods, keywords and fields are snake_case
 ```
 
 ```go

@@ -49,14 +49,14 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
     let client = || alien(&a["client"]);
     match f {
         "platform.createSetupLink" => {
-            call(platform::setupLinks::create_async(
+            call(platform::setup_links::create_async(
                 client().platform(),
                 create_setup_link_request(&a["request"]),
             ))
             .await
         }
         "platform.getProjectTemplateUrls" => {
-            call(platform::projects::getTemplateUrls_async(
+            call(platform::projects::get_template_urls_async(
                 client().platform(),
                 s(&a["idOrName"]),
             ))
@@ -77,7 +77,7 @@ async fn run(f: &str, a: &Value) -> Result<Value, Error> {
             .await
         }
         "manager.getCommandStatus" => {
-            call(manager::commands::getCommandStatus_async(
+            call(manager::commands::get_command_status_async(
                 alien_manager(&a["client"]).client(),
                 s(&a["command_id"]),
             ))
@@ -140,7 +140,7 @@ macro_rules! op {
             Ok(to_json(&$ns::$group::$f(&client::$ns(&$a["client"]) $(, op!(@$kind $a, $name $($ty)?))*).await?))
         }).await
     };
-    // An operation without a group: platform::acceptWorkspaceInvitation_async.
+    // An operation without a group: platform::accept_workspace_invitation_async.
     ($a:ident, $ns:ident :: $f:ident $(, $kind:ident $name:literal $(: $ty:ty)?)* $(,)?) => {
         Box::pin(async move {
             Ok(to_json(&$ns::$f(&client::$ns(&$a["client"]) $(, op!(@$kind $a, $name $($ty)?))*).await?))

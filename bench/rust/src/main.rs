@@ -9,9 +9,9 @@ const ID: &str = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr";
 
 fn input() -> CloudFormationLaunch {
     CloudFormationLaunch {
-        templateUrl: "https://example.com/setup.yaml".into(),
+        template_url: "https://example.com/setup.yaml".into(),
         region: "us-east-1".into(),
-        stackName: "alien-setup".into(),
+        stack_name: "alien-setup".into(),
         parameters: [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
     }
 }
@@ -80,7 +80,7 @@ async fn main() -> Result<(), alien_sdk::Error> {
                 if i >= warmup {
                     ms.push(start.elapsed().as_nanos() as f64 / 1e6);
                 }
-                let cpu = page.last().and_then(|m| m.metrics.as_ref()).and_then(|m| m.cpuUsagePercent);
+                let cpu = page.last().and_then(|m| m.metrics.as_ref()).and_then(|m| m.cpu_usage_percent);
                 assert!(page.len() == size && cpu == Some(12.25), "bad page");
             }
             done(&serde_json::to_string(&ms).expect("json"));

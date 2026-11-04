@@ -1,26 +1,35 @@
 """Binds a generated BAML namespace to a client, without per-operation code.
 
 ``Alien(...).deployment_groups.create_token(...)`` calls
-``baml_sdk.platform.deploymentGroups.createToken(client, ...)``: attribute names
-are snake_case, group submodules are bound the same way, and BAML-thrown
-AlienErrors become ``alien_sdk.AlienError``.
+``baml_sdk.platform.deployment_groups.create_token(client, ...)``: attributes
+are the generated names (snake_case, BAML's ``language`` naming), group
+submodules are bound the same way, and BAML-thrown AlienErrors become
+``alien_sdk.AlienError``.
 """
 
 from __future__ import annotations
 
 import functools
-import re
 import types
 from typing import Any
 
 from ._errors import _converted
 
+# What the generated SDK appends to an operation's name for its async function.
+_ASYNC_SUFFIX = "_async"
 
-def _snake(name: str) -> str:
-    """``createToken`` → ``create_token``, ``createAPIKey`` → ``create_api_key``,
-    ``getGcpOAuthProvider`` → ``get_gcp_oauth_provider`` (OAuth is one word)."""
-    name = name.replace("OAuth", "Oauth")
-    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", name).lower()
+
+def _members(module: types.ModuleType) -> frozenset[str]:
+    """The generated module's groups (submodules) and operations, by name."""
+    groups = set(getattr(module, "_LAZY_CHILDREN", ()))
+    operations = {
+        name
+        for name in getattr(module, "__all__", ())
+        if not name.startswith("_")
+        and not name.endswith(_ASYNC_SUFFIX)
+        and isinstance(module.__dict__.get(name), types.FunctionType)
+    }
+    return frozenset(groups | operations)
 
 
 class Bound:
@@ -31,31 +40,21 @@ class Bound:
         self._asynchronous = asynchronous
 
     @functools.cached_property
-    def _names(self) -> dict[str, str]:
-        """snake_case name → generated name, for operations and groups only."""
-        groups = set(getattr(self._module, "_LAZY_CHILDREN", ()))
-        operations = {
-            name
-            for name in getattr(self._module, "__all__", ())
-            if not name.startswith("_")
-            and not name.endswith("_async")
-            and isinstance(self._module.__dict__.get(name), types.FunctionType)
-        }
-        return {_snake(name): name for name in groups | operations}
+    def _names(self) -> frozenset[str]:
+        return _members(self._module)
 
     def __getattr__(self, name: str) -> Any:
         # Private names never resolve to operations (copy and pickle probe them
         # before __init__ has run).
         if name.startswith("_"):
             raise AttributeError(name)
-        target = self._names.get(name)
-        if target is None:
+        if name not in self._names:
             raise AttributeError(f"{self._module.__name__} has no operation or group {name!r}")
-        value = getattr(self._module, target)
+        value = getattr(self._module, name)
         if isinstance(value, types.ModuleType):
             result: Any = Bound(value, self._client, asynchronous=self._asynchronous)
         elif self._asynchronous:
-            function = getattr(self._module, f"{target}_async")
+            function = getattr(self._module, name + _ASYNC_SUFFIX)
 
             @functools.wraps(function)
             async def result(*args: Any, **kwargs: Any) -> Any:

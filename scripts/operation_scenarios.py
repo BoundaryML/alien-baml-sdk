@@ -752,6 +752,12 @@ CLASS = re.compile(r"^class (\w+) ", re.M)
 ALIAS = re.compile(r"^type (\w+) = (.+)$", re.M)
 
 
+def rust_name(name: str) -> str:
+    """A BAML name as the Rust generator spells it: `deploymentGroups` →
+    `deployment_groups`, `getGcpOAuthProvider` → `get_gcp_o_auth_provider`."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", name).lower()
+
+
 def rust_table(operations: dict[str, tuple[str, dict]]) -> str:
     """`sdk/rust/tests/support/operations.rs`: one `op!` row per operation
     (`sdk/rust/tests/conformance.rs` explains the rows). A required argument
@@ -767,7 +773,8 @@ def rust_table(operations: dict[str, tuple[str, dict]]) -> str:
     rows = []
     for op in sorted(operations):
         service, fn = operations[op]
-        *path, name = op.split(".")
+        # The Rust generator's names (BAML's `language` naming): snake_case.
+        *path, name = (rust_name(segment) for segment in op.split("."))
         args = ["a", "::".join(path) + f"::{name}_async"]
         for param in fn["params"]:
             kind = "opt" if param["optional"] else "req"
