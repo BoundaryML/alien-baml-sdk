@@ -15,9 +15,13 @@ command -v gofmt >/dev/null || die "go is not on PATH (baml generate runs gofmt)
 # Output of earlier `baml generate` runs under BAML's default name, before
 # package_name named each SDK. BAML only warns that it is no longer updated;
 # a stale sdk/python/baml_sdk would still be importable, and sdk/go/baml_sdk
-# still built by `go build ./...`.
+# still built by `go build ./...`. Only a directory `baml generate` created
+# (it holds BAML's ownership marker) is removed.
 for stale in "$REPO"/sdk/*/baml_sdk; do
   [[ -d "$stale" ]] || continue
+  if [[ ! -e "$stale/.baml-generator-output-root" ]]; then
+    die "${stale#"$REPO/"} exists but baml generate did not create it; move it aside"
+  fi
   note "removing ${stale#"$REPO/"} (generated before package_name named the SDK)"
   rm -rf "$stale"
 done

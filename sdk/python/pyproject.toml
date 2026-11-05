@@ -22,10 +22,21 @@ package = false
 # `uv pip install sdk/python` (or pip) builds a wheel of one package,
 # alien_sdk, which holds the generated SDK (alien_sdk/_generated/, BAML's
 # package_name) and the facade's generated modules (genops.py). Those are
-# gitignored, so they are listed as artifacts.
+# gitignored, so they are listed as artifacts. The generated package is listed
+# by file type, not as a directory: a directory artifact would also pull in
+# BAML's bookkeeping files (.gitignore, .baml-generator-output*), which
+# `exclude` cannot then remove.
 [tool.hatch.build.targets.wheel]
 packages = ["alien_sdk"]
-artifacts = ["alien_sdk/_generated/", "alien_sdk/_operations.py", "alien_sdk/platform.py", "alien_sdk/manager.py"]
+artifacts = [
+    "alien_sdk/_generated/**/*.py",
+    "alien_sdk/_generated/**/*.pyi",
+    "alien_sdk/_generated/**/py.typed",
+    "alien_sdk/_operations.py",
+    "alien_sdk/platform.py",
+    "alien_sdk/manager.py",
+]
+exclude = ["alien_sdk/_generated/.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

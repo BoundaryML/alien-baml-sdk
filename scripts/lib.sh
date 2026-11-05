@@ -37,8 +37,8 @@ BAML_PIN="0.23.0"     # what the toolchain reports and sdk/*/ pin
 # This repository needs BAML changes that are on canary but in no release yet
 # (`naming_convention = "language"`, BAML #5481, among others), and the
 # generator setting `package_name`, which is not on canary yet (this commit is
-# on its branch), so it builds against this one BAML commit, built locally. Its baml-cli still reports
-# $BAML_PIN, so the manifests keep that pin. Moving to another commit: check
+# on its branch), so it builds against this one BAML commit, built locally.
+# Its baml-cli still reports $BAML_PIN, so the manifests keep that pin. Moving to another commit: check
 # it out in BAML_SOURCE, run scripts/build_baml.sh "$BAML_SOURCE", then
 # BAML_UNPINNED=1 scripts/generate.sh, which records the new bridge's
 # dependencies in sdk/rust/Cargo.lock (with the pin, Cargo runs --locked; the
@@ -46,7 +46,7 @@ BAML_PIN="0.23.0"     # what the toolchain reports and sdk/*/ pin
 # scripts/verify.sh. Back to a release: set it to "", follow the steps
 # above for BAML_PIN, and record crates.io's baml_bridge again in
 # sdk/rust/Cargo.lock and bench/rust/Cargo.lock (`cargo update -p baml_bridge`).
-BAML_COMMIT_PIN="cf9b633907ab7eb8249186a336b14f29007aa8b4"
+BAML_COMMIT_PIN="a227dbf39dfbcb4395f8b4b91d37a9a89f6d58c2"
 [[ -z "$BAML_COMMIT_PIN" || "$BAML_COMMIT_PIN" =~ ^[0-9a-f]{40}$ ]] \
   || { echo "error: BAML_COMMIT_PIN must be a full 40-character commit hash, got \"$BAML_COMMIT_PIN\"" >&2; exit 1; }
 export DO_NOT_TRACK=1

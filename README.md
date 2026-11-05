@@ -72,7 +72,9 @@ inside the facade's package, as `alien_sdk._generated`, so installing
 overwrite ([gaps B4](docs/gaps.md#b4)). To rename one, change it there and in
 the facade's imports of it (Python `alien_sdk/_gen.py`, the TypeScript and Go
 imports, the Rust path dependency in `sdk/rust/Cargo.toml` and its uses);
-each language's genops finds the generated package through the facade.
+each language's genops finds the generated package through the facade (so
+the Go facade's hand-written files import exactly one package of the module,
+the generated one).
 The generated directories are not checked in, nor are the facades'
 generated methods (`sdk/python/alien_sdk/_operations.py`,
 `sdk/go/alien/operations.go`, `sdk/rust/src/operations.rs`). Never edit them, nor
