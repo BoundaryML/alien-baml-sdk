@@ -91,7 +91,7 @@ async fn main() -> Result<(), alien_sdk::Error> {
         }
         "warm-noop" => {
             alien_sdk::init()?;
-            let per_call = batches(baml_sdk::compat::newer_remote_sandbox, arg(args, 0), arg(args, 1), 1000).await;
+            let per_call = batches(alien_api::compat::newer_remote_sandbox, arg(args, 0), arg(args, 1), 1000).await;
             done(&serde_json::to_string(&per_call).expect("json"));
         }
         other => panic!("unknown mode {other}"),

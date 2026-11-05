@@ -1,11 +1,11 @@
 // Alien SDK for TypeScript: a thin facade over the generated BAML SDK
-// (../baml_sdk). It only builds clients, renames, converts errors and picks the
+// (../generated). It only builds clients, renames, converts errors and picks the
 // public surface; every behavior lives in the BAML project (baml/baml_src).
 // Client options and error fields use the names of Alien's TypeScript SDK
 // (@alienplatform/platform-api); the Manager's `token` is the name
 // @alienplatform/commands uses.
 import { shutdownRuntime } from "@boundaryml/baml-bridge"
-import * as sdk from "../baml_sdk/index.js"
+import * as sdk from "../generated/index.js"
 import { type Bound, type BoundOperations, type Groups, bind } from "./bind.js"
 import { AlienError, call, callSync } from "./errors.js"
 
@@ -15,8 +15,8 @@ export { AlienError } from "./errors.js"
  * only: request bodies are plain objects, as in Alien's TypeScript SDK, and the
  * generated functions (which skip the facade's error conversion) stay private.
  */
-export type * as platform from "../baml_sdk/platform/index.js"
-export type * as manager from "../baml_sdk/manager/index.js"
+export type * as platform from "../generated/platform/index.js"
+export type * as manager from "../generated/manager/index.js"
 
 export type CloudFormationLaunch = sdk.setup.CloudFormationLaunch
 

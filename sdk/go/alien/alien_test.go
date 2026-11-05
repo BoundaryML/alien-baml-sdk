@@ -18,7 +18,7 @@ import (
 
 	baml_go "github.com/boundaryml/baml-go"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 func TestConvert(t *testing.T) {
@@ -194,7 +194,7 @@ func TestCalls(t *testing.T) {
 	t.Run("Err with the API key from the environment", func(t *testing.T) {
 		s := server(t, "DELETE /v1/api-keys/key_1", "Bearer key_from_env", 204, "")
 		t.Setenv("ALIEN_API_KEY", "key_from_env")
-		if err := Err(baml_sdk.PlatformApiKeysRevoke(ctx, newClient(t, Options{ServerURL: s.URL}).Platform, "key_1")); err != nil {
+		if err := Err(alienapi.PlatformApiKeysRevoke(ctx, newClient(t, Options{ServerURL: s.URL}).Platform, "key_1")); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -234,7 +234,7 @@ func TestCalls(t *testing.T) {
 		}))
 		t.Cleanup(s.Close)
 		c := newClient(t, Options{APIKey: "key", ServerURL: s.URL})
-		_, err1 := c.DeploymentGroups.CreateToken(ctx, "dg_1", &baml_sdk.PlatformCreateDeploymentGroupTokenRequest{Description: Ptr("CI")})
+		_, err1 := c.DeploymentGroups.CreateToken(ctx, "dg_1", &alienapi.PlatformCreateDeploymentGroupTokenRequest{Description: Ptr("CI")})
 		_, err2 := c.DeploymentGroups.CreateToken(ctx, "dg_1", nil)
 		if err1 != nil || err2 != nil {
 			t.Fatal(err1, err2)
@@ -270,9 +270,9 @@ func TestCalls(t *testing.T) {
 		got := map[string]any{}
 		for name, b := range *d.StackSettings.ExternalBindings {
 			switch b := b.(type) {
-			case baml_sdk.PlatformExternalBindingOther:
+			case alienapi.PlatformExternalBindingOther:
 				got[name] = b.Raw["service"]
-			case baml_sdk.PlatformExternalBindingStorageS3:
+			case alienapi.PlatformExternalBindingStorageS3:
 				got[name] = b.BucketName
 			}
 		}
@@ -283,7 +283,7 @@ func TestCalls(t *testing.T) {
 
 	t.Run("Err converts a failure", func(t *testing.T) {
 		s := server(t, "DELETE /v1/api-keys/key_1", "Bearer key", 404, `{"code":"NOT_FOUND","message":"no such key","retryable":false}`)
-		err := Err(baml_sdk.PlatformApiKeysRevoke(ctx, newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Platform, "key_1"))
+		err := Err(alienapi.PlatformApiKeysRevoke(ctx, newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Platform, "key_1"))
 		var alienErr *AlienError
 		if !errors.As(err, &alienErr) || alienErr.Code != "NOT_FOUND" || alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 {
 			t.Fatalf("got %T %v", err, err)
@@ -323,7 +323,7 @@ func TestCalls(t *testing.T) {
 		t.Cleanup(s.Close)
 		short, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
 		defer cancel()
-		err := Err(baml_sdk.PlatformApiKeysRevoke(short, newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Platform, "key_1"))
+		err := Err(alienapi.PlatformApiKeysRevoke(short, newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Platform, "key_1"))
 		var alienErr *AlienError
 		if !errors.Is(err, context.DeadlineExceeded) || errors.As(err, &alienErr) {
 			t.Fatalf("got %T %v", err, err)

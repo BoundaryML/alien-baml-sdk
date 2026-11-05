@@ -53,10 +53,10 @@ are placeholders.
 specs/                   Alien's OpenAPI specs, vendored (see specs/README.md)
 tools/openapi2baml/      the OpenAPI → BAML importer (scripts/import.sh)
 baml/                    the BAML project: baml.toml + baml_src/ns_*/ (ns_platform, ns_manager imported)
-sdk/typescript/          baml_sdk/ (generated)  src/ (facade)        test/
-sdk/python/              baml_sdk/ (generated)  alien_sdk/ (facade)  tests/
-sdk/go/                  baml_sdk/ (generated)  alien/ (facade + tests)
-sdk/rust/                baml_sdk/ (generated)  src/ (facade crate)  tests/
+sdk/typescript/          generated/ (generated)  src/ (facade)        test/
+sdk/python/              alien_sdk/ (facade; the generated SDK is alien_sdk/_generated/)  tests/
+sdk/go/                  alienapi/ (generated)   alien/ (facade + tests)
+sdk/rust/                alien_api/ (generated)  src/ (facade crate)  tests/
 conformance/             language-neutral scenarios, stub server, fixtures
 docs/                    API shape, errors, gaps, importer coverage, telemetry;
                          bindings/ compares Alien's Node and Python bindings adapters
@@ -65,7 +65,15 @@ metrics/                 size, startup, per-call, large-page and Rust build meas
 scripts/                 import.sh, generate.sh, verify.sh
 ```
 
-Generated `baml_sdk/` directories are not checked in, nor are the facades'
+Each generated SDK is named by `package_name` in `baml/baml.toml` (BAML's
+default is `baml_sdk`; these names are placeholders): the Python one lives
+inside the facade's package, as `alien_sdk._generated`, so installing
+`alien-sdk` writes no top-level package that another BAML-generated SDK would
+overwrite ([gaps B4](docs/gaps.md#b4)). To rename one, change it there and in
+the facade's imports of it (Python `alien_sdk/_gen.py`, the TypeScript and Go
+imports, the Rust path dependency in `sdk/rust/Cargo.toml` and its uses);
+each language's genops finds the generated package through the facade.
+The generated directories are not checked in, nor are the facades'
 generated methods (`sdk/python/alien_sdk/_operations.py`,
 `sdk/go/alien/operations.go`, `sdk/rust/src/operations.rs`). Never edit them, nor
 the imported `baml/baml_src/ns_platform/` and `ns_manager/`: change the
@@ -108,7 +116,9 @@ all BAML state in the repository (`.baml_home/`, `.cache/`), never in
 **Why.** The SDKs need BAML changes that are on BAML's canary branch but in no
 release: `naming_convention = "language"` (BAML #5481), async functions with
 `_sync` twins (#5519), known words such as `OAuth` kept whole (#5524),
-serde_json left alone (#5509) and Rust logging through `log` (#5521). So every script uses one BAML commit, `BAML_COMMIT_PIN` in
+serde_json left alone (#5509), Rust logging through `log` (#5521), and
+`package_name`, which names each generated SDK (not merged into canary yet:
+the pin is a commit of its branch, on top of canary with #5526 and #5527). So every script uses one BAML commit, `BAML_COMMIT_PIN` in
 `scripts/lib.sh`, built from a BAML checkout you point at with `BAML_SOURCE`
 ([Building BAML](#building-baml)).
 

@@ -1,8 +1,15 @@
 """B4 repro: two BAML-generated SDKs installed into one Python environment.
 
+    python app.py installed                  each SDK's installed files are intact
+    python app.py alien-first | other-first  imports both SDKs in that order, then calls both
+
 Prints one JSON line per call so run.sh can assert the observed behavior.
 """
 
+import base64
+import hashlib
+import importlib
+import importlib.metadata
 import json
 import sys
 
@@ -13,6 +20,19 @@ def attempt(name, fn):
     except BaseException as error:  # BamlPanic derives from BaseException
         first_line = (str(error).splitlines() or [""])[0]
         print(json.dumps({"call": name, "error": f"{type(error).__name__}: {first_line}"}, separators=(",", ":")))
+
+
+def intact(distribution):
+    """Every file the distribution installed is there, with the hash its
+    RECORD lists: installing or removing the other SDK overwrote none."""
+    files = importlib.metadata.files(distribution) or []
+    hashed = [f for f in files if f.hash]
+    for f in hashed:
+        digest = hashlib.new(f.hash.mode, f.locate().read_bytes()).digest()
+        if base64.urlsafe_b64encode(digest).rstrip(b"=").decode() != f.hash.value:
+            raise AssertionError(f"{f} is not the file {distribution} installed")
+    top = sorted({f.parts[0] for f in files if not f.parts[0].endswith(".dist-info")})
+    return f"{len(hashed)} files intact, top-level [{' '.join(top)}]"
 
 
 def alien_call():
@@ -28,18 +48,15 @@ def other_call():
     return baml_sdk.greet_sync("Alien")
 
 
-def vendored_call():
-    import other_baml_sdk
-
-    return other_baml_sdk.greet_sync("Alien")
-
-
-# app.py [vendored]: the other SDK is importable as `other_baml_sdk`.
-if sys.argv[1:] == ["vendored"]:
-    attempt("vendored.import_order", lambda: "alien_sdk, then other_baml_sdk")
-    import alien_sdk  # noqa: F401  (starts the runtime with the Alien program)
-    attempt("vendored.greet", vendored_call)  # importing it starts a second runtime
-    attempt("alien.cloudformation_launch_url", alien_call)
-else:
+ORDERS = {"alien-first": ["alien_sdk", "baml_sdk"], "other-first": ["baml_sdk", "alien_sdk"]}
+mode = sys.argv[1] if len(sys.argv) == 2 else ""
+if mode == "installed":
+    attempt("installed.alien-sdk", lambda: intact("alien-sdk"))
+    attempt("installed.other-baml-sdk", lambda: intact("other-baml-sdk"))
+elif mode in ORDERS:
+    for module in ORDERS[mode]:  # importing an SDK starts its runtime
+        attempt(f"import.{module}", lambda: importlib.import_module(module).__name__)
     attempt("alien.cloudformation_launch_url", alien_call)
     attempt("other.greet", other_call)
+else:
+    sys.exit("usage: python app.py installed | alien-first | other-first")

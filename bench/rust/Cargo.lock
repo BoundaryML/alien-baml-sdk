@@ -9,11 +9,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "alien_api"
+version = "0.1.0"
+dependencies = [
+ "baml_bridge",
+]
+
+[[package]]
 name = "alien_bench"
 version = "0.0.0"
 dependencies = [
+ "alien_api",
  "alien_sdk",
- "baml_sdk",
  "serde_json",
  "tokio",
 ]
@@ -22,8 +29,8 @@ dependencies = [
 name = "alien_sdk"
 version = "0.0.0"
 dependencies = [
+ "alien_api",
  "baml_bridge",
- "baml_sdk",
 ]
 
 [[package]]
@@ -54,13 +61,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "ureq",
-]
-
-[[package]]
-name = "baml_sdk"
-version = "0.1.0"
-dependencies = [
- "baml_bridge",
 ]
 
 [[package]]

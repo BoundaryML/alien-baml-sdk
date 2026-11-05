@@ -1,26 +1,38 @@
 [package]
 name = "alien"
 
+# package_name names each generated SDK (BAML's default is `baml_sdk`) and its
+# directory under output_dir. The names are placeholders; the real ones are
+# Alien's choice. To rename one, change it here and in the facade's imports of
+# it (README "Layout"); each genops tool finds the generated SDK through the
+# facade.
+
 [generator.typescript]
 output_type = "typescript/node"
 naming_convention = "preserve-case"
 output_dir = "../sdk/typescript"
+package_name = "generated"   # sdk/typescript/generated/, compiled into the package's dist/
 
 [generator.python]
 output_type = "python/pydantic"
 naming_convention = "language"
 output_dir = "../sdk/python"
+# Inside the facade's package, so installing the SDK writes no top-level
+# `baml_sdk` that another BAML-generated SDK would overwrite (docs/gaps.md#b4).
+package_name = "alien_sdk._generated"
 
 [generator.go]
 output_type = "go"
 naming_convention = "language"
-sdk_import_path = "example.com/alien-baml-sdk/go/baml_sdk"   # placeholder module path; the real one is Alien's choice
+package_name = "alienapi"
+sdk_import_path = "example.com/alien-baml-sdk/go/alienapi"   # placeholder module path; must end in /<package_name>
 output_dir = "../sdk/go"
 
 [generator.rust]
 output_type = "rust"
 naming_convention = "language"
 output_dir = "../sdk/rust"
+package_name = "alien_api"   # the crate's directory, package and lib name
 
 [bridge]
 # Telemetry failures stay silent: when the telemetry endpoint cannot be reached

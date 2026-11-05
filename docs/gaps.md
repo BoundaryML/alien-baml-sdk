@@ -13,7 +13,7 @@ BAML's design, which the SDK works with.
 | [B1](#b1) | Telemetry is on (`medium`) when the level variable is unset, and no setting changes that | None: the SDK keeps this default | — |
 | [B2](#b2) | HTTP bodies are recorded verbatim, tokens included | `http_bodies = false` in `baml/baml.toml` (BAML #5389, in 0.23.0) | — |
 | [B3](#b3) | Without an API key the runtime uses a saved Boundary login from `BAML_HOME` | None; users can set `BOUNDARY_API_KEY=local`. Tests isolate `BAML_HOME` | On a machine with a saved Boundary login, the SDK uploads its recordings with that login |
-| [B4](#b4) | Two BAML-generated SDKs cannot share a process | None in this SDK; needs a change in BAML's runtime and generators | An application that also uses another BAML-generated SDK fails or runs the wrong function |
+| [B4](#b4) | Two BAML-generated SDKs cannot share a process | Install collision fixed (`package_name`); the shared runtime needs a change in BAML's runtime | An application that also uses another BAML-generated SDK fails or runs the wrong function |
 | [B5](#b5) | Go has no typed error values | Facade decodes the dynamic value | — |
 | [B6](#b6) | No visibility: every function and type is exported | Helpers in `ns_internal`; facades re-export the public surface | — |
 | [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>` |
@@ -130,38 +130,57 @@ Everyone else gets local files only.
 
 ## B4
 
-**Two BAML-generated SDKs cannot share a process.** The runtime is
-process-global: initializing a second generated SDK replaces the first one's
-program. Every generated package is also named `baml_sdk`.
+**Two BAML-generated SDKs cannot share a process.** It had two causes; one is
+fixed:
+
+1. **Install collision: fixed.** Every generated package used to be named
+   `baml_sdk`, so in Python two SDKs installed into one environment wrote the
+   same top-level `baml_sdk/` and the one installed last overwrote the other.
+   BAML's generator setting `package_name` (`baml/baml.toml`) now names each
+   SDK: the Python SDK is `alien_sdk._generated`, inside the facade's package,
+   and the `alien-sdk` wheel holds `alien_sdk/` and nothing else. Go
+   (`alienapi`), Rust (`alien_api`) and TypeScript (`generated/`) are named
+   the same way, so no Alien package is called `baml_sdk`.
+2. **Shared engine: open.** The BAML runtime is process-global: the SDK that
+   starts it last (in Python and TypeScript, the one imported last) replaces
+   the other's program. Naming the packages does not change this.
 
 Repro: `examples/coexistence/run.sh` (after `scripts/generate.sh`). It installs
 the Alien SDK and a second BAML project's SDK (`examples/coexistence/other/`,
-one function `greet` plus a function whose name happens to match one of
-Alien's) the way an application would, calls both, and asserts:
+which keeps the default name `baml_sdk`; one function `greet` plus a function
+whose name happens to match one of Alien's) the way an application would,
+calls both, and asserts:
 
 | Setup | Alien SDK call | Other SDK call |
 |---|---|---|
 | TypeScript, both installed from tarballs (one shared `@boundaryml/baml-bridge`), Alien imported first | **Silently runs the other project's function** with the same name | works |
 | Same, other SDK imported first | works | `BamlPanic: Function not found: user.greet` |
 | TypeScript, each SDK resolves its own copy of the bridge (`link:` install) | works | works |
-| Python, other SDK installed last (it overwrites `baml_sdk/`) | **Silently runs the other project's function** | works |
-| Python, Alien SDK installed last | works | `AttributeError: module 'baml_sdk' has no attribute 'greet_sync'` |
-| Python, other SDK vendored as `other_baml_sdk` | **Silently runs the other project's function** | works |
+| Python, both installed (either order: every file of both packages stays as installed), Alien imported first | `TypeError: … expected setup.CloudFormationLaunch, found CloudFormationLaunch` | works |
+| Same, other SDK imported first | works | `BamlPanic: Function not found: user.greet` |
+| Python, either SDK uninstalled again | the remaining SDK's files are intact and it works | |
 
-So the last SDK to initialize owns the process. Calls through the other SDK
-either fail with a panic or, worse, run a different function with the same
-fully qualified name and return its result.
+So the last SDK to start the runtime owns the process. Calls through the
+other SDK either fail or, worse, run a different function with the same fully
+qualified name and return its result. In Python the runtime also holds the
+owning SDK's type map, so an argument of a generated class of the other SDK
+is rejected, as above; a same-named function that takes no class argument
+still runs silently. Before `package_name`, the Python install order decided
+as well: the SDK installed last replaced the other's `baml_sdk/`, and the
+Alien call above silently ran the other project's function.
 
 **Impact on Alien.** An application that uses the Alien SDK and any other
-BAML-generated SDK would break or silently misbehave.
+BAML-generated SDK can install both, but calls through the SDK imported first
+would break or silently misbehave.
 
-**Status.** Not fixed in this SDK; it needs a change in BAML's runtime and
-generators. No workaround is built here. One configuration happens to work
-and is checked by `run.sh`: when each SDK resolves a physically separate copy
-of `@boundaryml/baml-bridge`, Node loads two native addons and each SDK gets
-its own runtime. Package managers deduplicate the bridge by default, so
-applications do not get this on their own. In Python, renaming the package
-fixes the import clash but the runtime is still shared.
+**Status.** The install collision is fixed (`package_name`, a BAML change this
+repository pins; README "Temporary: building against BAML canary"). The
+shared engine is not: it needs a change in BAML's runtime, and no workaround
+is built here. One configuration happens to work and is checked by `run.sh`:
+when each SDK resolves a physically separate copy of
+`@boundaryml/baml-bridge`, Node loads two native addons and each SDK gets its
+own runtime. Package managers deduplicate the bridge by default, so
+applications do not get this on their own.
 
 ## B5
 
@@ -189,9 +208,9 @@ helpers in `internal`).
 then have to keep stable or document as private.
 
 **Workaround.** Helpers live in `ns_internal` (test-only code in `ns_compat`),
-and the facades re-export only the public surface. The generated `baml_sdk`
-modules still contain everything. In Go, users call the facade's methods but
-import `baml_sdk` for request and response types; the `alien` package
+and the facades re-export only the public surface. The generated packages
+still contain everything. In Go, users call the facade's methods but
+import the generated `alienapi` for request and response types; the `alien` package
 documentation says its `Internal*` and `Compat*` functions are not part of the
 SDK.
 
@@ -657,7 +676,7 @@ are longer than 200 characters; the longest, the union of event types, has
 allow 255 bytes in a file name:
 
 ```
-$ cargo doc --no-deps                   # in sdk/rust; cargo doc --no-deps -p baml_sdk fails the same way
+$ cargo doc --no-deps                   # in sdk/rust; cargo doc --no-deps -p alien_api fails the same way
 error: couldn't generate documentation: File name too long (os error 63)
   = note: failed to create or modify ".../target/doc/type.impl/alien_sdk/platform/enum.AgentSessionStatusEventOrAgentSessionStepEventOr…OrAgentSessionEventOther.js": File name too long (os error 63)
 ```
@@ -665,7 +684,7 @@ error: couldn't generate documentation: File name too long (os error 63)
 **Impact on Alien.** No local documentation for the Rust crates, and a
 published crate would get no docs.rs page.
 
-**Workaround.** None. Read the generated sources (`sdk/rust/baml_sdk/src/`) or
+**Workaround.** None. Read the generated sources (`sdk/rust/alien_api/src/`) or
 the BAML types (`baml/baml_src/ns_platform/types.baml`) instead. A fix needs
 the generator to name a union after where it is used, not after its members.
 Such names would also stop changing when a member is added

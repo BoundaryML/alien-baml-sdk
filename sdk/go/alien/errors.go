@@ -15,7 +15,7 @@ import (
 // Three kinds of error are not *AlienError:
 //   - context.Canceled and context.DeadlineExceeded when ctx ends; they pass
 //     through unchanged, so errors.Is(err, context.DeadlineExceeded) works.
-//   - every failure of a generated baml_sdk call that is not wrapped in Do or
+//   - every failure of a generated alienapi call that is not wrapped in Do or
 //     Err: it is a *baml_go.BamlError (docs/gaps.md#b5).
 //   - runtime failures: a runtime that cannot start, a BAML panic, a call
 //     made after Shutdown.

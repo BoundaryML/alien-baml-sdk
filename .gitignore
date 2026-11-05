@@ -4,7 +4,13 @@
 /.cache/
 /.verify/
 
-# Generated SDKs: scripts/generate.sh recreates them
+# Generated SDKs (package_name in baml/baml.toml): scripts/generate.sh recreates them
+/sdk/typescript/generated/
+/sdk/python/alien_sdk/_generated/
+/sdk/go/alienapi/
+/sdk/rust/alien_api/
+# BAML's default name: the coexistence example's second SDK, and output from
+# before package_name (scripts/generate.sh removes that)
 baml_sdk/
 /sdk/go/alien/operations.go
 /sdk/python/alien_sdk/_operations.py

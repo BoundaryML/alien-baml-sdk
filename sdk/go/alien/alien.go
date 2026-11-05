@@ -1,5 +1,5 @@
 // Package alien is the Alien SDK for Go: a thin facade over the generated BAML
-// SDK (package baml_sdk). It builds clients and converts errors; every
+// SDK (package alienapi). It builds clients and converts errors; every
 // behavior lives in the BAML project (baml/baml_src). Option names follow
 // Alien's TypeScript SDK.
 //
@@ -12,10 +12,10 @@
 //	m, err := c.Managers.Get(ctx, "mgr_...")
 //	page, err := c.Deployments.List(ctx, &alien.ListDeploymentsParams{Project: alien.Ptr("my-project"), Limit: alien.Ptr[int64](10)})
 //
-// Request and response types are in package baml_sdk (Platform<Name>,
+// Request and response types are in package alienapi (Platform<Name>,
 // Manager<Name>). The methods are generated from it (operations.go).
 //
-// Package baml_sdk also exports the SDK's own helpers (Internal*) and test
+// Package alienapi also exports the SDK's own helpers (Internal*) and test
 // support (Compat*). They are not part of the SDK: BAML has no visibility
 // modifiers (docs/gaps.md#b6).
 //
@@ -34,12 +34,12 @@ import (
 
 	baml_go "github.com/boundaryml/baml-go"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 // CloudFormationLaunch is the input of CloudFormationLaunchURL. Every other
-// request and response type is in package baml_sdk (Platform<Name>, Manager<Name>).
-type CloudFormationLaunch = baml_sdk.SetupCloudFormationLaunch
+// request and response type is in package alienapi (Platform<Name>, Manager<Name>).
+type CloudFormationLaunch = alienapi.SetupCloudFormationLaunch
 
 // DefaultServerURL is the Platform API used when Options.ServerURL is empty.
 const DefaultServerURL = "https://api.alien.dev"
@@ -73,7 +73,7 @@ type Client struct {
 	PlatformAPI
 	// Platform is the generated client every method uses, as it is when the
 	// method is called. Generated functions take it directly; wrap them in Do.
-	Platform baml_sdk.PlatformPlatformClient
+	Platform alienapi.PlatformPlatformClient
 	// Setup holds the setup helpers that need the Platform API.
 	Setup ProjectSetup
 }
@@ -85,7 +85,7 @@ func New(options Options) (*Client, error) {
 	if apiKey == "" {
 		return nil, &AlienError{Code: "INVALID_REQUEST", Message: "no API key: pass Options.APIKey or set ALIEN_API_KEY"}
 	}
-	c := &Client{Platform: baml_sdk.PlatformPlatformClient{
+	c := &Client{Platform: alienapi.PlatformPlatformClient{
 		BaseUrl:   cmp.Or(options.ServerURL, DefaultServerURL),
 		ApiKey:    apiKey,
 		Workspace: optional(cmp.Or(options.Workspace, os.Getenv("ALIEN_WORKSPACE"))),
@@ -116,13 +116,13 @@ type ManagerClient struct {
 	ManagerAPI
 	// Generated is the generated client every method uses. (It is not named
 	// Manager: m.Manager is the Manager API's manager group.)
-	Generated baml_sdk.ManagerManagerClient
+	Generated alienapi.ManagerManagerClient
 }
 
 // NewManager returns a Manager API client, for example for the ManagerUrl and
 // Token that c.Commands.Bootstrap returns.
 func NewManager(options ManagerOptions) *ManagerClient {
-	m := &ManagerClient{Generated: baml_sdk.ManagerManagerClient{
+	m := &ManagerClient{Generated: alienapi.ManagerManagerClient{
 		BaseUrl:   options.ServerURL,
 		Token:     optional(options.Token),
 		TimeoutMs: timeoutMs(options.Timeout),
@@ -160,7 +160,7 @@ func timeoutMs(timeout time.Duration) *int64 {
 // AlienError into *AlienError (docs/gaps.md#b5). Every method does this; call
 // it yourself only around a generated function:
 //
-//	m, err := alien.Do(baml_sdk.PlatformManagersGet(ctx, c.Platform, id))
+//	m, err := alien.Do(alienapi.PlatformManagersGet(ctx, c.Platform, id))
 //
 // Other errors pass through unchanged (see AlienError).
 func Do[R any](result R, err error) (R, error) {
@@ -169,14 +169,14 @@ func Do[R any](result R, err error) (R, error) {
 
 // Err is Do for operations that return only an error:
 //
-//	err := alien.Err(baml_sdk.PlatformApiKeysRevoke(ctx, c.Platform, keyID))
+//	err := alien.Err(alienapi.PlatformApiKeysRevoke(ctx, c.Platform, keyID))
 func Err(err error) error {
 	return convert(err)
 }
 
 // Ptr returns a pointer to v, for optional arguments and optional fields of
 // request bodies: &alien.ListDeploymentsParams{Limit: alien.Ptr[int64](10)},
-// &baml_sdk.PlatformCreateDeploymentGroupTokenRequest{Description: alien.Ptr("CI")}.
+// &alienapi.PlatformCreateDeploymentGroupTokenRequest{Description: alien.Ptr("CI")}.
 // From Go 1.26, new("CI") does the same.
 func Ptr[T any](v T) *T {
 	return &v
@@ -190,13 +190,13 @@ type ProjectSetup struct {
 // LaunchURLForProject fetches the project's AWS template and builds a
 // quick-create link for it. A nil parameters map adds no parameters.
 func (s ProjectSetup) LaunchURLForProject(ctx context.Context, project, region, stackName string, parameters map[string]string) (string, error) {
-	return Do(baml_sdk.SetupLaunchUrlForProject(ctx, s.client.Platform, project, region, stackName, parameters))
+	return Do(alienapi.SetupLaunchUrlForProject(ctx, s.client.Platform, project, region, stackName, parameters))
 }
 
 // CloudFormationLaunchURL builds an AWS CloudFormation quick-create link from
 // a template URL.
 func CloudFormationLaunchURL(ctx context.Context, input CloudFormationLaunch) (string, error) {
-	return Do(baml_sdk.SetupCloudformationLaunchUrl(ctx, input))
+	return Do(alienapi.SetupCloudformationLaunchUrl(ctx, input))
 }
 
 // Shutdown shuts the SDK's runtime down: it waits for calls in flight and

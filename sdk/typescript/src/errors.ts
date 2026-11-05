@@ -1,5 +1,5 @@
 import { BamlError } from "@boundaryml/baml-bridge"
-import * as sdk from "../baml_sdk/index.js"
+import * as sdk from "../generated/index.js"
 
 /**
  * The error every Alien SDK call throws (docs/errors.md). Field names follow

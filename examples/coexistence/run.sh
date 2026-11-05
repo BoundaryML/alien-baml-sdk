@@ -5,7 +5,9 @@
 #
 # Builds the Alien SDK and a second, unrelated BAML project (other/), installs
 # both into one TypeScript app and one Python environment the way a customer
-# would, calls both, and asserts what happens today. It fails if the observed
+# would, calls both, and asserts what happens today. The other project keeps
+# BAML's default package name, baml_sdk; the Alien SDK names its own
+# (package_name in baml/baml.toml). It fails if the observed
 # behavior changes, so a BAML fix shows up here first. With a local BAML build
 # (scripts/lib.sh), every install gets its runtime packages instead of the
 # published ones.
@@ -21,7 +23,7 @@ export ALIEN_TELEMETRY=off BAML_TELEMETRY=off BAML_HOME="$WORK/baml_home"
 unset BOUNDARY_API_KEY BOUNDARY_API_URL BOUNDARY_PROJECT
 mkdir -p "$BAML_HOME"
 
-[[ -d "$REPO/sdk/typescript/dist" && -d "$REPO/sdk/python/baml_sdk" ]] || die "run scripts/generate.sh first"
+[[ -d "$REPO/sdk/typescript/dist" && -f "$REPO/sdk/python/alien_sdk/_operations.py" ]] || die "run scripts/generate.sh first"
 ensure_baml_cli
 
 note "generate the second BAML project"
@@ -93,28 +95,38 @@ expect "ts separate bridges, other first" "$out" alien.cloudFormationLaunchUrl o
 expect "ts separate bridges, other first" "$out" other.greet ok "$GREETING"
 
 # ---------------------------------------------------------------------------
-note "python: package both SDKs"
-package() {  # package <dir> <name> <source package dirs...>
-  local dir="$1" name="$2"; shift 2
-  mkdir -p "$dir"
-  for src in "$@"; do cp -R "$src" "$dir/"; done
-  find "$dir" -name __pycache__ -prune -exec rm -rf {} +
-  cat >"$dir/pyproject.toml" <<EOF
+note "python: build the Alien SDK's wheel, as \`uv pip install sdk/python\` does"
+# Its only package is alien_sdk: the generated SDK is alien_sdk._generated.
+uv build --quiet --wheel --out-dir "$WORK/py/dist" "$REPO/sdk/python" >&2
+wheel="$(echo "$WORK"/py/dist/alien_sdk-*.whl)"
+[[ -f "$wheel" ]] || die "uv build wrote no alien_sdk wheel to $WORK/py/dist"
+top="$(unzip -Z1 "$wheel" | cut -d/ -f1 | sort -u | tr '\n' ' ')"
+echo "python, alien-sdk wheel: top-level $top"
+[[ "$top" == "alien_sdk alien_sdk-0.0.0.dist-info " ]] || die "the alien-sdk wheel must hold only alien_sdk/ and its metadata, got: $top"
+
+note "python: package the other SDK (top-level baml_sdk, BAML's default)"
+other="$WORK/py/other-pkg"
+mkdir -p "$other"
+cp -R "$HERE/other/python/baml_sdk" "$other/"
+find "$other" -name __pycache__ -prune -exec rm -rf {} +
+cat >"$other/pyproject.toml" <<EOF
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "$name"
+name = "other-baml-sdk"
 version = "0.0.0"
 dependencies = ["baml-bridge==$BAML_PIN", "pydantic>=2.6", "typing-extensions>=4.14.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
 EOF
-}
-package "$WORK/py/alien-pkg" alien-sdk "$REPO/sdk/python/alien_sdk" "$REPO/sdk/python/baml_sdk"
-package "$WORK/py/other-pkg" other-baml-sdk "$HERE/other/python/baml_sdk"
+# One wheel for both environments: a second build from the same directory
+# would also package the build/ the first one leaves there.
+uv build --quiet --wheel --out-dir "$WORK/py/dist" "$other" >&2
+other="$(echo "$WORK"/py/dist/other_baml_sdk-*.whl)"
+[[ -f "$other" ]] || die "uv build wrote no other_baml_sdk wheel to $WORK/py/dist"
 
 pyenv() {  # pyenv <venv> <first package> <second package>
   uv venv --quiet "$1" >&2
@@ -122,29 +134,43 @@ pyenv() {  # pyenv <venv> <first package> <second package>
     uv pip install --quiet --python "$1" --no-deps --no-index --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN" >&2
   fi
   uv pip install --quiet --python "$1" "$2" >&2
-  uv pip install --quiet --python "$1" "$3" 2>&1 | tee "$1.install.log" >&2
+  uv pip install --quiet --python "$1" "$3" >&2
+}
+app() { "$1/bin/python" -I "$HERE/python/app.py" "$2"; }  # app <venv> <mode>
+
+# Either install order leaves both packages whole. Both still share the one
+# process-global runtime: the SDK imported last owns it.
+python_both() {  # python_both <venv> <label>
+  local venv="$1" label="$2" out
+  out="$(app "$venv" installed)"; echo "$out"
+  expect "python, $label" "$out" installed.alien-sdk ok "intact, top-level [alien_sdk]"
+  expect "python, $label" "$out" installed.other-baml-sdk ok "intact, top-level [baml_sdk]"
+  out="$(app "$venv" alien-first)"; echo "$out"
+  # The other SDK's type map, also runtime state, does not know the Alien SDK's argument class.
+  expect "python, $label, alien imported first" "$out" alien.cloudformation_launch_url error "expected setup.CloudFormationLaunch, found CloudFormationLaunch"
+  expect "python, $label, alien imported first" "$out" other.greet ok "$GREETING"
+  out="$(app "$venv" other-first)"; echo "$out"
+  expect "python, $label, other imported first" "$out" alien.cloudformation_launch_url ok "$ALIEN_URL"
+  expect "python, $label, other imported first" "$out" other.greet error "Function not found: user.greet"
 }
 
 note "python: install the Alien SDK, then the other SDK"
-pyenv "$WORK/py/venv-alien-then-other" "$WORK/py/alien-pkg" "$WORK/py/other-pkg"
-out="$("$WORK/py/venv-alien-then-other/bin/python" -I "$HERE/python/app.py")"; echo "$out"
-expect "python, other installed last" "$out" alien.cloudformation_launch_url ok "$SAME_NAME"
-expect "python, other installed last" "$out" other.greet ok "$GREETING"
+pyenv "$WORK/py/venv-alien-then-other" "$wheel" "$other"
+python_both "$WORK/py/venv-alien-then-other" "other installed last"
 
 note "python: install the other SDK, then the Alien SDK"
-pyenv "$WORK/py/venv-other-then-alien" "$WORK/py/other-pkg" "$WORK/py/alien-pkg"
-out="$("$WORK/py/venv-other-then-alien/bin/python" -I "$HERE/python/app.py")"; echo "$out"
-expect "python, alien installed last" "$out" alien.cloudformation_launch_url ok "$ALIEN_URL"
-expect "python, alien installed last" "$out" other.greet error "AttributeError"
+pyenv "$WORK/py/venv-other-then-alien" "$other" "$wheel"
+python_both "$WORK/py/venv-other-then-alien" "alien installed last"
 
-note "python: vendoring the other SDK under another import name"
-# Renaming the package directory avoids the module clash. Both SDKs still
-# share the one process-global runtime.
-mkdir -p "$WORK/py/vendored"
-cp -R "$HERE/other/python/baml_sdk" "$WORK/py/vendored/other_baml_sdk"
-out="$(cd "$WORK/py/vendored" && PYTHONPATH="$WORK/py/vendored" "$WORK/py/venv-other-then-alien/bin/python" "$HERE/python/app.py" vendored)"; echo "$out"
-expect "python, vendored as other_baml_sdk" "$out" vendored.greet ok "$GREETING"
-expect "python, vendored as other_baml_sdk" "$out" alien.cloudformation_launch_url ok "$SAME_NAME"
+note "python: uninstalling either SDK leaves the other whole"
+uv pip uninstall --quiet --python "$WORK/py/venv-alien-then-other" other-baml-sdk >&2
+out="$(app "$WORK/py/venv-alien-then-other" installed; app "$WORK/py/venv-alien-then-other" alien-first)"; echo "$out"
+expect "python, other uninstalled" "$out" installed.alien-sdk ok "intact"
+expect "python, other uninstalled" "$out" alien.cloudformation_launch_url ok "$ALIEN_URL"
+uv pip uninstall --quiet --python "$WORK/py/venv-other-then-alien" alien-sdk >&2
+out="$(app "$WORK/py/venv-other-then-alien" installed; app "$WORK/py/venv-other-then-alien" other-first)"; echo "$out"
+expect "python, alien uninstalled" "$out" installed.other-baml-sdk ok "intact"
+expect "python, alien uninstalled" "$out" other.greet ok "$GREETING"
 
 stray="$(find "$BAML_HOME" -type f | wc -l | tr -d ' ')"
 echo "files under BAML_HOME after the runs: $stray"

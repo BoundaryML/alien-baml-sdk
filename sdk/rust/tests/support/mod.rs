@@ -14,7 +14,7 @@ use baml_bridge::{
     encode::Encoder,
     wire::{self, inbound_map_entry::Key, inbound_value::Value as In},
 };
-use baml_sdk::{compat, platform};
+use alien_api::{compat, platform};
 use serde_json::{Map, Value, json};
 
 /// Refuses to run without a BAML_HOME other than ~/.baml: the runtime keeps
@@ -295,8 +295,8 @@ pub fn bootstrap_request(v: &Value) -> platform::CommandBootstrapRequest {
     }
 }
 
-pub fn launch_input(v: &Value) -> baml_sdk::setup::CloudFormationLaunch {
-    baml_sdk::setup::CloudFormationLaunch {
+pub fn launch_input(v: &Value) -> alien_api::setup::CloudFormationLaunch {
+    alien_api::setup::CloudFormationLaunch {
         template_url: s(&v["templateUrl"]),
         region: s(&v["region"]),
         stack_name: s(&v["stackName"]),

@@ -9,7 +9,7 @@ import { inspect } from "node:util"
 import { BamlAbortError } from "@boundaryml/baml-bridge"
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, test, vi } from "vitest"
 import { Alien, AlienError, AlienManager, type platform, shutdown } from "../src/index.js"
-import * as sdk from "../baml_sdk/index.js"
+import * as sdk from "../generated/index.js"
 
 const KEY = "alien_test_key_6f1c"
 const TOKEN = "manager_test_token_93ad"

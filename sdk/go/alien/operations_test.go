@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"strings"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 type operation func(ctx context.Context, args map[string]json.RawMessage) (any, error)
@@ -43,7 +43,7 @@ func arg[T any](ctx context.Context, args map[string]json.RawMessage, name strin
 	if !ok {
 		panic(harnessError{fmt.Errorf("scenario args have no %q", name)})
 	}
-	value, err := baml_sdk.InternalDecodeBody[T](ctx, string(raw), 200, "scenario argument "+name)
+	value, err := alienapi.InternalDecodeBody[T](ctx, string(raw), 200, "scenario argument "+name)
 	if err != nil {
 		panic(harnessError{fmt.Errorf("decode scenario argument %q: %w", name, err)})
 	}

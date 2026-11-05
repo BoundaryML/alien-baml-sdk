@@ -10,16 +10,18 @@ description = "Alien SDK for Rust, generated from one BAML project (reference im
 # genops writes src/operations.rs from the generated crate (scripts/generate.sh).
 members = ["genops"]
 # The generated crate declares its own [workspace]; keep it out of ours.
-exclude = ["baml_sdk"]
+exclude = ["alien_api"]
 
 [dependencies]
-baml_sdk = { path = "baml_sdk" }
+# The generated crate (package_name in baml/baml.toml). genops finds it as this
+# manifest's one path dependency.
+alien_api = { path = "alien_api" }
 baml_bridge = "=0.23.0"
 
 [dev-dependencies]
 # Only tests/serde.rs uses the generated crate's `serde` feature: the derived
 # impls do not follow the SDK's JSON mapping yet, so users do not get them
 # (docs/gaps.md, B26).
-baml_sdk = { path = "baml_sdk", features = ["serde"] }
+alien_api = { path = "alien_api", features = ["serde"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
