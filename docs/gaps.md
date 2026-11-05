@@ -2,9 +2,11 @@
 
 What BAML could not do that this SDK needed, each with a minimal repro, what
 it means for Alien, and the workaround used here. IDs (`B1`, …) name each
-gap. B15, B16 and B19 are fixed in BAML 0.23.0, the release this SDK uses,
-and need no workaround; they stay listed because their sections say what
-changed and what remains. B13 is BAML's design, which the SDK works with.
+gap. The SDK uses BAML 0.23.0 plus the changes on BAML's canary branch up to
+the pinned commit (`BAML_COMMIT_PIN` in `scripts/lib.sh`). B15, B16 and B19
+are fixed in BAML 0.23.0, and B24 on canary; they need no workaround and stay
+listed because their sections say what changed and what remains. B13 is
+BAML's design, which the SDK works with.
 
 | ID | Gap | Workaround here | Impact |
 |---|---|---|---|
@@ -27,7 +29,7 @@ changed and what remains. B13 is BAML's design, which the SDK works with.
 | [B21](#b21) | A decode failure inside a `baml.FromJson` override loses its location | None: `json_path` is absent or starts at that object; `decode_error` still says what failed | Some malformed responses report what failed without its full location |
 | [B22](#b22) | The generated client classes print their credential (Rust `Debug`, Go `fmt` and `encoding/json`) | The facade types hide it. Rust keeps the generated clients private; Go documents what to keep out of logs | Logging Go's generated client (`c.Platform`) writes the API key or Manager token |
 | [B23](#b23) | The Python bridge keeps each encoded call, API key included, in a local variable | None; the entry gives Sentry settings | Error reporters that record local variables (Sentry by default) store the API key |
-| [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None | In every crate of a Rust build that links the SDK, floats inside untagged, internally tagged or flattened serde types fail to deserialize, and `Value` objects keep their input order |
+| [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None: fixed on canary (BAML #5509) | — |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
 | [B26](#b26) | The Rust generator's `serde` impls ignore the SDK's JSON mapping (`baml.FromJson`/`baml.ToJson`) | The SDK leaves the `serde` feature off; `tests/serde.rs` pins what it does | Alien's Rust code cannot `serde_json::from_value` an SDK type, as it does with Progenitor's types |
 
@@ -196,9 +198,12 @@ SDK.
 ## B7
 
 **Generated names follow BAML, not the host language.** Fixed for Python and
-Rust by BAML #5481, which adds `naming_convention = "language"` to their
-generators (Go already had it; TypeScript supports only `preserve-case`).
-`baml/baml.toml` sets `language` for Python, Go and Rust:
+Rust by BAML #5481 (on canary, not in 0.23.0), which adds
+`naming_convention = "language"` to their generators (Go already had it;
+TypeScript supports only `preserve-case`). `baml/baml.toml` sets `language`
+for Python, Go and Rust. Since BAML #5519, a TypeScript, Python or Rust
+function is async under these names and has a blocking `<name>_sync` twin; Go
+has one blocking function:
 
 | BAML | TypeScript | Python | Go | Rust |
 |---|---|---|---|---|
@@ -603,16 +608,23 @@ code. A fix needs the Python bridge not to keep the encoded call in a local.
 
 ## B24
 
-**Adding the Rust SDK turns on two serde_json features for the whole build.**
+**Adding the Rust SDK turned on two serde_json features for the whole build.**
 `baml_bridge` 0.23.0 depends on `serde_json` with
 `features = ["arbitrary_precision", "preserve_order"]`. Cargo unifies a
 crate's features across a build, so every crate in a binary that links
-`alien_sdk` gets a `serde_json` with both, including code that has nothing to
+`alien_sdk` got a `serde_json` with both, including code that has nothing to
 do with the SDK. `cargo tree -e features -i serde_json` shows where they come
 from.
 
-Repro: one crate, built with and without `alien_sdk` as a dependency it never
-uses (serde 1.0.229, serde_json 1.0.154):
+Fixed on BAML canary by PR #5509, in the pinned commit: `baml_bridge` depends
+on a plain `serde_json`, and an application that wants either feature turns
+it on in its own dependency. With the pinned commit, `cargo tree -e features
+-i serde_json` in `sdk/rust` shows only `default` and `std`, and the repro
+below, linking `alien_sdk`, gives the "Without `alien_sdk`" column in every
+row.
+
+Repro: one crate, built with and without `alien_sdk` on BAML 0.23.0 as a
+dependency it never uses (serde 1.0.229, serde_json 1.0.154):
 
 | Code in the crate | Without `alien_sdk` | With it |
 |---|---|---|
@@ -630,13 +642,11 @@ buffers the input first (untagged and internally tagged enums, `flatten`), and
 numbers compare by their text. With `preserve_order`, `Value` objects keep
 their keys in input order instead of sorting them.
 
-**Impact on Alien.** A binary that adds the SDK, such as Alien's CLI, gets
-both features in all its crates. Nothing fails to compile: code that decodes
-floats through those serde attributes fails at run time, and output or tests
-that rely on sorted `Value` keys change.
-
-**Workaround.** None: the features come from `baml_bridge`'s own manifest, and
-a crate that depends on it cannot turn them off.
+**Impact on Alien.** None with the pinned commit. With 0.23.0, a binary that
+adds the SDK, such as Alien's CLI, gets both features in all its crates.
+Nothing fails to compile: code that decodes floats through those serde
+attributes fails at run time, and output or tests that rely on sorted `Value`
+keys change.
 
 ## B25
 

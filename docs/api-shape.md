@@ -64,9 +64,10 @@ const cmd = await new AlienManager({ serverURL: managerUrl, token }).commands.cr
 TypeScript SDK. They are synchronous; `AsyncAlien` and `AsyncAlienManager`
 have the same methods, `async`. The client takes the TypeScript SDK's options
 in snake_case: `api_key` (default: the `ALIEN_API_KEY` environment variable),
-`server_url`, `workspace` and `timeout_ms`. Optional arguments are keyword
-arguments. Groups, methods, keyword arguments and fields are snake_case, as
-BAML's `language` naming generates them: a multi-word filter reads
+`server_url`, `workspace` and `timeout` (in seconds, where `timeoutMs` is
+milliseconds; decision 9). Optional arguments are keyword arguments. Groups,
+methods, keyword arguments and fields are snake_case, as BAML's `language`
+naming generates them: a multi-word filter reads
 `deployment_group=` and a page's cursor `page.next_cursor`. The wire names do
 not change, and each field keeps the BAML name as its pydantic alias, so
 models also accept it (`CreateCommandRequest(deploymentId=…)`) and
@@ -247,7 +248,7 @@ let page = platform::deployments::list(alien.platform(), Some("my-project".into(
 | Timeout | `timeoutMs` per HTTP request, on the client and per call; a per-call `timeoutMs` replaces the client's; a timeout throws `RequestTimeoutError` | `timeoutMs` per HTTP request on the client (decision 9). A per-call `{ $baml: { timeoutMs } }` limits the whole call as well, and the shorter one ends it, so it can shorten the client's limit but not lengthen it. A client timeout fails with `AlienError` `COMMUNICATION_ERROR` (retryable); a per-call one throws `BamlAbortError` |
 | Other TypeScript client options | `retryConfig`, `httpClient`, `userAgent`, `serverIdx`, `debugLogger` (`ALIEN_DEBUG`) | Not supported. Per call: `{ $baml: { timeoutMs, signal } }` |
 | TypeScript errors | `APIError` for an API error body (`code`, `retryable`, `hint`, `requestId`, `context` as JSON, `statusCode`, `body`, `headers`), other classes for connection, timeout and validation failures | One `AlienError` for all of them: `code`, `message`, `retryable`, `statusCode` (`null` without a response), `hint`, `requestId`, and `context` as strings (the server's context is JSON text in `context.details`). No `body` or `headers` ([errors.md](errors.md)) |
-| Client options in Python, Go and Rust | Alien has no Python or Go SDK; its Rust client (Progenitor) takes a base URL, `Client::new(baseurl)` | The TypeScript SDK's options in each language's casing: Python `Alien(api_key, *, server_url, workspace, timeout_ms)`, Go `alien.Options{APIKey, ServerURL, Workspace, Timeout}`, Rust `Options { api_key, server_url, workspace, timeout }`. The API key defaults to `ALIEN_API_KEY`; without one, creating the client fails with `INVALID_REQUEST`. Go also reads `ALIEN_WORKSPACE`; Python and Rust do not. Only TypeScript takes `apiKey` as a function. Manager: a server URL, `token` and the timeout (Python `AlienManager(server_url, token, *, timeout_ms)`, Go `alien.NewManager(alien.ManagerOptions{ServerURL, Token, Timeout})`, Rust `AlienManager::new(server_url, token).with_timeout(..)`); an empty token sends no `Authorization` header |
+| Client options in Python, Go and Rust | Alien has no Python or Go SDK; its Rust client (Progenitor) takes a base URL, `Client::new(baseurl)` | The TypeScript SDK's options in each language's casing: Python `Alien(api_key, *, server_url, workspace, timeout)`, Go `alien.Options{APIKey, ServerURL, Workspace, Timeout}`, Rust `Options { api_key, server_url, workspace, timeout }`. The API key defaults to `ALIEN_API_KEY`; without one, creating the client fails with `INVALID_REQUEST`. Go also reads `ALIEN_WORKSPACE`; Python and Rust do not. Only TypeScript takes `apiKey` as a function. Manager: a server URL, `token` and the timeout (Python `AlienManager(server_url, token, *, timeout)`, Go `alien.NewManager(alien.ManagerOptions{ServerURL, Token, Timeout})`, Rust `AlienManager::new(server_url, token).with_timeout(..)`); an empty token sends no `Authorization` header |
 
 ## Rust incumbent differences
 
@@ -328,12 +329,12 @@ The choices behind the shape above, with the alternative where there was one.
    Speakeasy's `timeoutMs`, for the Platform and the Manager client. It is a
    `timeout_ms` field of the generated `PlatformClient` and `ManagerClient`,
    which `internal.send` applies to each HTTP request, from connecting to
-   reading the whole response; the facades only pass it through:
+   reading the whole response; the facades pass it through, or convert to it:
 
    | Language | Platform | Manager |
    |---|---|---|
    | TypeScript | `new Alien({ timeoutMs: 30_000 })` | `new AlienManager({ serverURL, token, timeoutMs: 30_000 })` |
-   | Python | `Alien(timeout_ms=30_000)` | `AlienManager(url, token, timeout_ms=30_000)` |
+   | Python | `Alien(timeout=30.0)` | `AlienManager(url, token, timeout=30.0)` |
    | Go | `alien.New(alien.Options{Timeout: 30 * time.Second})` | `alien.NewManager(alien.ManagerOptions{ServerURL: url, Token: token, Timeout: 30 * time.Second})` |
    | Rust | `Alien::new(Options { timeout: Some(Duration::from_secs(30)), ..Default::default() })` | `AlienManager::new(url, token).with_timeout(Duration::from_secs(30))` |
 
@@ -341,9 +342,13 @@ The choices behind the shape above, with the alternative where there was one.
    `context.WithTimeout` do, rather than a millisecond count; Rust takes a
    `std::time::Duration`. Both are rounded up to whole milliseconds. Unset is
    BAML's default of 5 minutes; zero or negative (Go: negative; Rust:
-   `Duration::ZERO`) is no limit, as in Speakeasy. A request that runs out
-   fails with `COMMUNICATION_ERROR`, retryable, as other transport failures do
-   (Alien's Rust client uses the same code for a timeout): `HTTP request GET
+   `Duration::ZERO`) is no limit, as in Speakeasy. Python takes seconds as a
+   float, as httpx does, also rounded up to whole milliseconds: unset is
+   `DEFAULT_TIMEOUT` (the same 5 minutes) and `None` is no limit, as in
+   httpx. Zero or negative raises `ValueError`: in Python 0 reads as "time
+   out at once", not "no limit". A request that runs out fails with
+   `COMMUNICATION_ERROR`, retryable, as other transport failures do (Alien's
+   Rust client uses the same code for a timeout): `HTTP request GET
    /v1/managers/m1 failed: timed out after 300 ms (timeout)`.
 
    Per-call timeouts keep working as before: `$baml` in TypeScript options,
@@ -356,11 +361,10 @@ The choices behind the shape above, with the alternative where there was one.
    `BamlAbortError`, Python `baml_bridge.BamlCancelledError`, Go
    `context.DeadlineExceeded`, Rust `Error::Runtime`.
 10. **Python async.** Decided: `AsyncAlien` and `AsyncAlienManager` bind the
-    generated async functions, under their plain names
-    (`await AsyncAlien().managers.get(id)`), and `Alien` and `AlienManager`
-    their blocking `_sync` twins, with
-    the same groups, methods, options and errors as `Alien` and
-    `AlienManager`. They run through the same Platform scenarios as `Alien`.
+    generated async functions (`await AsyncAlien().managers.get(id)`; `Alien`
+    binds their blocking `_sync` twins), with the same groups, methods,
+    options and errors as `Alien` and `AlienManager`. They run through the
+    same Platform scenarios as `Alien`.
 11. **Field names with separators.** Decided: fields use the names of Alien's
     TypeScript SDK, which camelCases wire names with separators (21 in the
     Platform API, 14 in the Manager API; `billing.getEntitlements`: `features.customDomains` for

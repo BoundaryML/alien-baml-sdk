@@ -2,7 +2,10 @@
 
 Each generated SDK runs the project's compiled BAML code inside an embedded
 runtime, version **0.23.0**, which every runtime package must match exactly
-(the generated code checks it at start-up).
+(the generated code checks it at start-up). Until a BAML release has the
+changes this SDK needs, the runtime is a local build of one BAML commit
+([Building BAML](../README.md#building-baml)), which still reports 0.23.0 and
+stands in for the published packages below.
 
 | Language | Runtime package | How it gets the native runtime |
 |---|---|---|
@@ -29,23 +32,34 @@ not download at run time (a container, CI without network), either fill that
 cache at build time by running the program once with the same `BAML_HOME`, or
 put the library anywhere and point `BAML_BRIDGE_PATH` at it.
 
-The scripts fetch the library once into `.cache/bridge-home/bridges/` (with
-`cargo run --example provision_bridge` in `sdk/rust`, then the manifest), or
-use the one of a [local BAML build](../README.md#testing-an-unreleased-baml-build),
-and run every Go and Rust test with `BAML_BRIDGE_PATH` pointing at it and
-downloads disabled. The README quickstarts run as written, with the release's
-library already in their `BAML_HOME`'s cache. Do not set `BAML_BRIDGE_PATH`
-for TypeScript: its bridge reads the same variable as the path of its `.node`
-addon.
+With the BAML build, set `BAML_BRIDGE_PATH` to its library
+(`$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib`, `.so` on
+Linux): the download fetches the published 0.23.0 library, which Go and Rust
+then refuse for its older BAML ABI version.
+
+The scripts run every Go and Rust test with `BAML_BRIDGE_PATH` pointing at the
+BAML build's library and downloads disabled, and the README quickstarts with
+`BAML_BRIDGE_PATH` set, as the README says. (With a release, they fetch the
+library once into `.cache/bridge-home/bridges/`, with `cargo run --example
+provision_bridge` in `sdk/rust`, then the manifest, and run the quickstarts as
+written, with that library already in their `BAML_HOME`'s cache.) Do not set
+`BAML_BRIDGE_PATH` for TypeScript: its bridge reads the same variable as the
+path of its `.node` addon.
 
 Go needs cgo (`CGO_ENABLED=1`, the default on macOS with Xcode command-line
 tools). `baml generate` runs `gofmt`, so Go must be installed where you
 generate.
 
-Rust prints `[BAML INFO]` lines on stderr once per process, when the library
-loads: where it found it (`Found cached BAML library at …`, or a checksum and
-`Successfully downloaded and cached BAML library at …` line after a download)
-and `BAML (v0.23.0) loaded`. `BAML_LOG=warn` silences them. Go prints nothing.
+Neither prints anything when the library loads. Rust logs through the `log`
+crate, target `baml_bridge`, to whatever logger the program installs
+(`env_logger`, or a `tracing` subscriber with `tracing-log`, which
+`tracing-subscriber` enables by default): at `debug`, where it found the
+library (`Using BAML library path from BAML_BRIDGE_PATH: …`, `Found cached
+BAML library at …`) and `Loaded BAML v0.23.0 from …`; at `info`, a download
+(`Downloading BAML library v0.23.0 from …`, `Successfully downloaded and
+cached BAML library at …`). With `env_logger`, `RUST_LOG=baml_bridge=debug`
+shows them. `BAML_LOG` does not change them (it sets the level of `baml run`
+and `baml test`).
 
 ## One runtime per process
 

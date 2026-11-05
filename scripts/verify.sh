@@ -128,7 +128,14 @@ suite() {
   [[ "$count" == 0 ]]
 }
 
-suite_typescript() { suite typescript pnpm -C "$REPO/sdk/typescript" test; }
+suite_typescript() {
+  # Any `pnpm install` replaces generate.sh's link to a local build's bridge with npm's.
+  if (( BAML_LOCAL_BUILD )); then
+    [[ "$(cd "$REPO/sdk/typescript/node_modules/@boundaryml/baml-bridge" && pwd -P)" == "$(cd "$BAML_LOCAL_SDKS/typescript/bridge_typescript" && pwd -P)" ]] \
+      || die "sdk/typescript uses npm's @boundaryml/baml-bridge, not the local build's: run scripts/generate.sh"
+  fi
+  suite typescript pnpm -C "$REPO/sdk/typescript" test
+}
 suite_python() { suite python uv run --frozen --directory "$REPO/sdk/python" pytest; }
 suite_go() { (cd "$REPO/sdk/go" && suite go go test -count=1 ./...); }
 # Cargo finds sdk/rust/.cargo/config.toml (local BAML build) from the working directory.
