@@ -8,9 +8,9 @@
 # ALIEN_REF is a checkout of github.com/alienplatform/alien. Its HEAD commit is
 # exported with `git archive` into .cache/incumbents/alien (nothing is written
 # inside ALIEN_REF) and the incumbents are built there. They are rebuilt only
-# when that commit changes. The SDKs use the local BAML build in BAML_SOURCE
-# (README "Building BAML"), or the published release when BAML_COMMIT_PIN in
-# scripts/lib.sh is unset. Writes .cache/bench/build.json for bench/run.py.
+# when that commit changes. The SDKs use the published BAML release, or the
+# local BAML build in BAML_SOURCE with BAML_LOCAL_BUILD=1 (README "Building
+# against an unreleased BAML"). Writes .cache/bench/build.json for bench/run.py.
 source "$(dirname "$0")/../scripts/lib.sh"
 
 [[ -n "${ALIEN_REF:-}" && -d "$ALIEN_REF/client-sdks/platform" ]] || die "set ALIEN_REF to a checkout of the Alien repository"

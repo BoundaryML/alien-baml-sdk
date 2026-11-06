@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Alien SDK for Python, generated from one BAML project (reference implementation)"
 requires-python = ">=3.10"
 dependencies = [
-    "baml-bridge==0.23.0",
+    "baml-bridge==0.25.1",
     "pydantic>=2.6",
     "typing-extensions>=4.14.0",
 ]
@@ -19,12 +19,24 @@ dev = ["mypy>=1.15", "pytest>=8"]
 [tool.uv]
 package = false
 
-# `uv pip install sdk/python` (or pip) builds a wheel of the facade and the
-# generated package; baml_sdk/ and the facade's generated modules (genops.py)
-# are gitignored, so they are listed as artifacts.
+# `uv pip install sdk/python` (or pip) builds a wheel of one package,
+# alien_sdk, which holds the generated SDK (alien_sdk/_generated/, BAML's
+# package_name) and the facade's generated modules (genops.py). Those are
+# gitignored, so they are listed as artifacts. The generated package is listed
+# by file type, not as a directory: a directory artifact would also pull in
+# BAML's bookkeeping files (.gitignore, .baml-generator-output*), which
+# `exclude` cannot then remove.
 [tool.hatch.build.targets.wheel]
-packages = ["alien_sdk", "baml_sdk"]
-artifacts = ["baml_sdk/", "alien_sdk/_operations.py", "alien_sdk/platform.py", "alien_sdk/manager.py"]
+packages = ["alien_sdk"]
+artifacts = [
+    "alien_sdk/_generated/**/*.py",
+    "alien_sdk/_generated/**/*.pyi",
+    "alien_sdk/_generated/**/py.typed",
+    "alien_sdk/_operations.py",
+    "alien_sdk/platform.py",
+    "alien_sdk/manager.py",
+]
+exclude = ["alien_sdk/_generated/.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

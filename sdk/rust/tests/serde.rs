@@ -1,4 +1,4 @@
-//! The generated types under `baml_sdk`'s `serde` feature (BAML #5375), read
+//! The generated types under `alien_api`'s `serde` feature (BAML #5375), read
 //! from and written to the JSON the Alien API sends and accepts. Payloads come
 //! from the conformance scenarios, so they are the ones every SDK is tested
 //! against.

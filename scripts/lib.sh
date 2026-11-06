@@ -33,11 +33,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # sdk/python/pyproject.toml, sdk/go/go.mod, sdk/rust/Cargo.toml,
 # examples/coexistence/other/typescript/package.json, bench/go/go.mod), update
 # their lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
-BAML_PIN="0.23.0"     # what the toolchain reports and sdk/*/ pin
-# This repository needs BAML changes that are on canary but in no release yet
-# (`naming_convention = "language"`, BAML #5481, among others), so it builds
-# against this one BAML commit, built locally. Its baml-cli still reports
-# $BAML_PIN, so the manifests keep that pin. Moving to another commit: check
+BAML_PIN="0.25.1"     # what the toolchain reports and sdk/*/ pin
+# Empty: the scripts use the published BAML $BAML_PIN. To build against one
+# unreleased BAML commit instead (when the SDKs need a change no release has
+# yet), set it to that commit, built locally: check
 # it out in BAML_SOURCE, run scripts/build_baml.sh "$BAML_SOURCE", then
 # BAML_UNPINNED=1 scripts/generate.sh, which records the new bridge's
 # dependencies in sdk/rust/Cargo.lock (with the pin, Cargo runs --locked; the
@@ -45,7 +44,7 @@ BAML_PIN="0.23.0"     # what the toolchain reports and sdk/*/ pin
 # scripts/verify.sh. Back to a release: set it to "", follow the steps
 # above for BAML_PIN, and record crates.io's baml_bridge again in
 # sdk/rust/Cargo.lock and bench/rust/Cargo.lock (`cargo update -p baml_bridge`).
-BAML_COMMIT_PIN="aabd3533218619285a461ace5bf11dd6b482ead9"
+BAML_COMMIT_PIN=""
 [[ -z "$BAML_COMMIT_PIN" || "$BAML_COMMIT_PIN" =~ ^[0-9a-f]{40}$ ]] \
   || { echo "error: BAML_COMMIT_PIN must be a full 40-character commit hash, got \"$BAML_COMMIT_PIN\"" >&2; exit 1; }
 export DO_NOT_TRACK=1
@@ -138,10 +137,11 @@ baml_cli() {
 }
 
 # True when `baml --version` (with the given selector) reports toolchain
-# $BAML_PIN, as "baml toolchain 0.23.0 …" or "baml toolchain baml-cli 0.23.0 …".
+# $BAML_PIN: "baml toolchain 0.25.1 …" or "baml toolchain baml-cli 0.25.1 …"
+# from wrapper 0.2, "baml-cli 0.25.1" from wrapper 0.3.
 toolchain_is_pinned() {
   BAML_HOME="$CLI_HOME" BAML_VERSION="$1" BAML_TOOLCHAIN="$1" baml --version 2>&1 \
-    | grep -Eq "^baml toolchain (baml-cli )?${BAML_PIN//./\\.}( |$)"
+    | grep -Eq "^(baml toolchain (baml-cli )?|baml-cli )${BAML_PIN//./\\.}( |$)"
 }
 
 ensure_baml_cli() {

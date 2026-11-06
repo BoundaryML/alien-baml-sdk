@@ -15,7 +15,7 @@ import (
 
 	baml_go "github.com/boundaryml/baml-go"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 type clientArgs struct {
@@ -69,19 +69,19 @@ func compatJSON[R any](fn func(context.Context, string, ...baml_go.CallOption) (
 	}
 }
 
-func bootstrapRequest(raw map[string]json.RawMessage) baml_sdk.PlatformCommandBootstrapRequest {
+func bootstrapRequest(raw map[string]json.RawMessage) alienapi.PlatformCommandBootstrapRequest {
 	request := decode[map[string]json.RawMessage](raw, "request")
 	if decode[string](request, "role") == "receiver" {
-		return baml_sdk.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestReceiver(
-			decode[baml_sdk.PlatformCommandBootstrapRequestReceiver](raw, "request"))
+		return alienapi.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestReceiver(
+			decode[alienapi.PlatformCommandBootstrapRequestReceiver](raw, "request"))
 	}
-	return baml_sdk.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestSender(
-		decode[baml_sdk.PlatformCommandBootstrapRequestSender](raw, "request"))
+	return alienapi.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestSender(
+		decode[alienapi.PlatformCommandBootstrapRequestSender](raw, "request"))
 }
 
 var calls = map[string]operation{
 	"platform.createSetupLink": func(ctx context.Context, a map[string]json.RawMessage) (any, error) {
-		return wrap(facade(a).SetupLinks.Create(ctx, decode[baml_sdk.PlatformCreateSetupLinkRequest](a, "request")))
+		return wrap(facade(a).SetupLinks.Create(ctx, decode[alienapi.PlatformCreateSetupLinkRequest](a, "request")))
 	},
 	"platform.getProjectTemplateUrls": func(ctx context.Context, a map[string]json.RawMessage) (any, error) {
 		return wrap(facade(a).Projects.GetTemplateURLs(ctx, decode[string](a, "idOrName")))
@@ -103,16 +103,16 @@ var calls = map[string]operation{
 			decode[string](a, "stackName"), decode[map[string]string](a, "parameters")))
 	},
 	"compat.acceptKeySetup": func(ctx context.Context, a map[string]json.RawMessage) (any, error) {
-		return wrap(Do(baml_sdk.CompatAcceptKeySetup(ctx, facade(a).Platform, decode[baml_sdk.CompatKeySetupAction](a, "request"))))
+		return wrap(Do(alienapi.CompatAcceptKeySetup(ctx, facade(a).Platform, decode[alienapi.CompatKeySetupAction](a, "request"))))
 	},
-	"compat.decodeProjectPage":        compatJSON(baml_sdk.CompatDecodeProjectPage),
-	"compat.decodeMaterialization":    compatJSON(baml_sdk.CompatDecodeMaterialization),
-	"compat.storedSecretPresence":     compatJSON(baml_sdk.CompatStoredSecretPresence),
-	"compat.reencodeConfig":           compatJSON(baml_sdk.CompatReencodeConfig),
-	"compat.roundtripStackByPlatform": compatJSON(baml_sdk.CompatRoundtripStackByPlatform),
-	"compat.roundtripEvent":           compatJSON(baml_sdk.CompatRoundtripEvent),
-	"compat.roleScope":                compatJSON(baml_sdk.CompatRoleScope),
-	"compat.decodeRemoteAccess":       compatJSON(baml_sdk.CompatDecodeRemoteAccess),
+	"compat.decodeProjectPage":        compatJSON(alienapi.CompatDecodeProjectPage),
+	"compat.decodeMaterialization":    compatJSON(alienapi.CompatDecodeMaterialization),
+	"compat.storedSecretPresence":     compatJSON(alienapi.CompatStoredSecretPresence),
+	"compat.reencodeConfig":           compatJSON(alienapi.CompatReencodeConfig),
+	"compat.roundtripStackByPlatform": compatJSON(alienapi.CompatRoundtripStackByPlatform),
+	"compat.roundtripEvent":           compatJSON(alienapi.CompatRoundtripEvent),
+	"compat.roleScope":                compatJSON(alienapi.CompatRoleScope),
+	"compat.decodeRemoteAccess":       compatJSON(alienapi.CompatDecodeRemoteAccess),
 }
 
 // callTimeout bounds one scenario call, so a stuck call fails its scenario

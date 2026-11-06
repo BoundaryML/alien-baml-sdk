@@ -1,7 +1,7 @@
 // Benchmarks for the TypeScript SDK (bench/run.py drives it and lists the modes).
 // Every mode prints one line, then waits for stdin EOF so the driver can read RSS.
 import { Alien, cloudFormationLaunchUrl } from "../../sdk/typescript/dist/src/index.js"
-import * as sdk from "../../sdk/typescript/dist/baml_sdk/index.js"
+import * as sdk from "../../sdk/typescript/dist/generated/index.js"
 
 const ID = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
 const input = { templateUrl: "https://example.com/setup.yaml", region: "us-east-1", stackName: "alien-setup", parameters: { ExternalId: "customer-0001" } }

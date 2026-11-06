@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { Alien, AlienError, AlienManager, cloudFormationLaunchUrl, shutdown } from "../src/index.js"
-import * as sdk from "../baml_sdk/index.js"
+import * as sdk from "../generated/index.js"
 import { call } from "../src/errors.js"
 import { type Call, loadScenarios, type OperationCall, Stub } from "./stub.js"
 

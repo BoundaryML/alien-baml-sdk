@@ -123,7 +123,7 @@ What an application installs. TypeScript: `npm install` of the packed SDK (produ
 | Rust (bench program) | 45.9 | bench program 13.4, libbridge_cffi.dylib 32.6 |
 | Incumbent Rust (bench program) | 5.3 | bench program 5.3 |
 
-The BAML runtime (native addon, Python extension or `libbridge_cffi`) is about 30 MB of every BAML package. Generated SDK source on disk (`sdk/*/baml_sdk`): TypeScript 7.4 MB, Python 16.4 MB, Go 10.7 MB, Rust 25.8 MB; most of it is BAML's standard library, which every generated SDK includes.
+The BAML runtime (native addon, Python extension or `libbridge_cffi`) is about 30 MB of every BAML package. Generated SDK source on disk (each `sdk/<language>/` directory `baml generate` writes): TypeScript 7.4 MB, Python 16.4 MB, Go 10.7 MB, Rust 25.8 MB; most of it is BAML's standard library, which every generated SDK includes.
 
 ## Rust build time and generated code
 

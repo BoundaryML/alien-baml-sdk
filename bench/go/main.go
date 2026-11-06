@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"example.com/alien-baml-sdk/go/alien"
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 const id = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
@@ -93,7 +93,7 @@ func main() {
 	case "warm-helper", "warm-noop":
 		call := func() error { _, err := alien.CloudFormationLaunchURL(ctx, input); return err }
 		if os.Args[1] == "warm-noop" {
-			call = func() error { _, err := baml_sdk.CompatNewerRemoteSandbox(ctx); return err }
+			call = func() error { _, err := alienapi.CompatNewerRemoteSandbox(ctx); return err }
 		}
 		done(jsonLine(batches(call, atoi(args[0]), atoi(args[1]), 1000)))
 	default:

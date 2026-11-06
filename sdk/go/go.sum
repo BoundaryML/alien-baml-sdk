@@ -1,5 +1,5 @@
-github.com/boundaryml/baml-go v0.23.0 h1:6R4o7ttaBBB7mSVsRWimZfV6Yv/Svt2SoAswGnwQf/k=
-github.com/boundaryml/baml-go v0.23.0/go.mod h1:cy+Sy8c04Shuzf+W7QZ0nT08m94DtVgmxwb8WfXx67Y=
+github.com/boundaryml/baml-go v0.25.1 h1:DKWxtLLsQgyxTb+9t7AyxvyoPoewmUB8mo0QXS0Zlpc=
+github.com/boundaryml/baml-go v0.25.1/go.mod h1:cy+Sy8c04Shuzf+W7QZ0nT08m94DtVgmxwb8WfXx67Y=
 github.com/google/go-cmp v0.5.5 h1:Khx7svrCpmxxtHBq5j2mp/xVjsi8hQMfNLvJFAlrGgU=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=

@@ -275,7 +275,7 @@ g = sizes["generated_source_kb"]
 lines += [
     "",
     f"The BAML runtime (native addon, Python extension or `libbridge_cffi`) is about 30 MB of every BAML package. Generated SDK "
-    f"source on disk (`sdk/*/baml_sdk`): TypeScript {mb(g['typescript'])} MB, Python {mb(g['python'])} MB, Go {mb(g['go'])} MB, "
+    f"source on disk (each `sdk/<language>/` directory `baml generate` writes): TypeScript {mb(g['typescript'])} MB, Python {mb(g['python'])} MB, Go {mb(g['go'])} MB, "
     f"Rust {mb(g['rust'])} MB; most of it is BAML's standard library, which every generated SDK includes.",
     "",
 ]

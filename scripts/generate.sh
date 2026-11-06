@@ -3,12 +3,28 @@
 #
 #   scripts/generate.sh
 #
-# Generated code lands in sdk/<language>/baml_sdk/ (gitignored; never edit it).
+# Generated code lands in sdk/<language>/, in the directory package_name in
+# baml/baml.toml names (gitignored; never edit it): sdk/typescript/generated/,
+# sdk/python/alien_sdk/_generated/, sdk/go/alienapi/, sdk/rust/alien_api/.
 # The facades' generated methods (Python, Go, Rust) are gitignored as well.
 source "$(dirname "$0")/lib.sh"
 
 ensure_baml_cli
 command -v gofmt >/dev/null || die "go is not on PATH (baml generate runs gofmt)"
+
+# Output of earlier `baml generate` runs under BAML's default name, before
+# package_name named each SDK. BAML only warns that it is no longer updated;
+# a stale sdk/python/baml_sdk would still be importable, and sdk/go/baml_sdk
+# still built by `go build ./...`. Only a directory `baml generate` created
+# (it holds BAML's ownership marker) is removed.
+for stale in "$REPO"/sdk/*/baml_sdk; do
+  [[ -d "$stale" ]] || continue
+  if [[ ! -e "$stale/.baml-generator-output-root" ]]; then
+    die "${stale#"$REPO/"} exists but baml generate did not create it; move it aside"
+  fi
+  note "removing ${stale#"$REPO/"} (generated before package_name named the SDK)"
+  rm -rf "$stale"
+done
 
 note "baml generate"
 # Skip warnings only print with display_all_warnings. Each generator prints
@@ -71,7 +87,7 @@ note "typescript: tsc"
 (cd "$REPO/sdk/typescript" && rm -rf dist && pnpm run build >&2)
 
 note "python: alien_sdk/_operations.py"
-# The facade's methods (alien.deployments.list), generated from baml_sdk's stubs.
+# The facade's methods (alien.deployments.list), generated from alien_sdk._generated's stubs.
 (cd "$REPO/sdk/python" && uv run --frozen python -I genops.py >&2)
 
 note "python: import"
@@ -84,7 +100,7 @@ rm -rf "$home"
 [[ -z "$(find "$home" -type f)" ]] || die "importing alien_sdk wrote files under $home"
 
 note "go: alien/operations.go"
-# The facade's methods (c.Deployments.List), generated from baml_sdk/functions.go.
+# The facade's methods (c.Deployments.List), generated from alienapi/functions.go.
 (cd "$REPO/sdk/go" && go run ./internal/genops >&2)
 
 note "go: build + vet"
@@ -97,7 +113,7 @@ locked=(--locked)
 if (( BAML_LOCAL_BUILD )) && [[ "$BAML_COMMIT" != "$BAML_COMMIT_PIN" ]]; then locked=(); fi
 
 note "rust: src/operations.rs"
-# The facade's builders (alien.deployments().list()), generated from baml_sdk/src.
+# The facade's builders (alien.deployments().list()), generated from alien_api/src.
 (cd "$REPO/sdk/rust" && cargo run --quiet ${locked[@]+"${locked[@]}"} -p genops >&2) \
   || die "rust: genops failed. If cargo says the lock file needs to be updated: a cargo run without sdk/rust/.cargo/config.toml (the local bridge) rewrote sdk/rust/Cargo.lock, so restore it (git checkout sdk/rust/Cargo.lock); or, when moving BAML_COMMIT_PIN, see scripts/lib.sh"
 

@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"example.com/alien-baml-sdk/go/alien"
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	"example.com/alien-baml-sdk/go/alienapi"
 )
 
 // These examples are compiled but not run: they would call the Alien API.
@@ -40,7 +40,7 @@ func Example() {
 	}
 	fmt.Println(len(page.Items), page.NextCursor != nil) // NextCursor is set when there are more pages
 
-	token, err := c.DeploymentGroups.CreateToken(ctx, "dg_...", &baml_sdk.PlatformCreateDeploymentGroupTokenRequest{Description: alien.Ptr("CI")})
+	token, err := c.DeploymentGroups.CreateToken(ctx, "dg_...", &alienapi.PlatformCreateDeploymentGroupTokenRequest{Description: alien.Ptr("CI")})
 	if err != nil {
 		log.Print(err)
 		return
@@ -57,8 +57,8 @@ func ExampleNewManager() {
 		return
 	}
 	boot, err := c.Commands.Bootstrap(ctx,
-		baml_sdk.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestSender(
-			baml_sdk.PlatformCommandBootstrapRequestSender{DeploymentId: "dep_...", Role: "sender"}))
+		alienapi.NewPlatformCommandBootstrapRequestOtherOrPlatformCommandBootstrapRequestReceiverOrPlatformCommandBootstrapRequestSenderFromPlatformCommandBootstrapRequestSender(
+			alienapi.PlatformCommandBootstrapRequestSender{DeploymentId: "dep_...", Role: "sender"}))
 	if err != nil {
 		log.Print(err)
 		return

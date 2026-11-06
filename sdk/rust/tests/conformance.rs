@@ -6,7 +6,7 @@ use std::{path::PathBuf, time::Duration};
 
 use alien_sdk::{Alien, AlienManager, Error, Options};
 use baml_bridge::BamlValue;
-use baml_sdk::compat;
+use alien_api::compat;
 use serde_json::{Value, json};
 use support::*;
 
@@ -139,7 +139,7 @@ async fn arg<T: BamlValue>(a: &Value, name: &str) -> Result<T, Error> {
     let value = a
         .get(name)
         .ok_or_else(|| harness(format!("scenario args have no {name:?}")))?;
-    baml_sdk::internal::decode_body::<T>(
+    alien_api::internal::decode_body::<T>(
         value.to_string(),
         200,
         format!("scenario argument {name}"),
@@ -158,9 +158,9 @@ async fn opt<T: BamlValue>(a: &Value, name: &str) -> Result<Option<T>, Error> {
 
 /// The generated Platform client, for the internal `compat` functions that
 /// take one (the facade keeps its own private).
-fn platform_client(client: &Value) -> baml_sdk::platform::PlatformClient {
+fn platform_client(client: &Value) -> alien_api::platform::PlatformClient {
     let (base_url, api_key, workspace) = client_args(client);
-    baml_sdk::platform::PlatformClient {
+    alien_api::platform::PlatformClient {
         base_url,
         api_key,
         workspace,

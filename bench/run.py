@@ -52,6 +52,14 @@ REPO = Path(__file__).resolve().parents[1]
 CACHE = REPO / ".cache" / "bench"
 INCUMBENTS = REPO / ".cache" / "incumbents"
 OURS = ["typescript", "python", "go", "rust"]
+
+
+def generated_sdk(lang: str) -> tuple[str, Path]:
+    """The generated SDK of `lang` in sdk/<lang>: its name (`package_name` in
+    baml/baml.toml, BAML's default `baml_sdk` when unset) and its directory."""
+    generators = tomllib.loads((REPO / "baml" / "baml.toml").read_text())["generator"]
+    name = generators[lang].get("package_name", "baml_sdk")
+    return name, REPO / "sdk" / lang / Path(*name.split("."))
 # The same programs with telemetry at its default (records into BAML_HOME).
 TELEMETRY = [f"{name}+telemetry" for name in OURS]
 QUIET_LOAD = 2.0  # as bench/render.py
@@ -207,7 +215,8 @@ def python_size(build: dict, workdir: Path) -> dict:
     shutil.rmtree(workdir, ignore_errors=True)
     pkg = workdir / "alien-pkg"
     pkg.mkdir(parents=True)
-    for name in ["alien_sdk", "baml_sdk"]:
+    # The facade and the generated SDK's top-level package (the facade's own, alien_sdk._generated).
+    for name in sorted({"alien_sdk", generated_sdk("python")[0].split(".")[0]}):
         shutil.copytree(REPO / "sdk" / "python" / name, pkg / name, ignore=shutil.ignore_patterns("__pycache__"))
     dependencies = tomllib.loads((REPO / "sdk" / "python" / "pyproject.toml").read_text())["project"]["dependencies"]
     (pkg / "pyproject.toml").write_text(
@@ -238,7 +247,7 @@ def wait_quiet(block: str, minutes: float, log) -> dict:
 # shape (bench/incumbent-rust), default features and every operation: (directory, cargo
 # arguments, the packages "crate only" rebuilds: the generated SDK and the program).
 BUILDS = {
-    "rust": (REPO / "bench" / "rust", [], ["baml_sdk", "alien_sdk", "alien_bench"]),
+    "rust": (REPO / "bench" / "rust", [], [generated_sdk("rust")[0], "alien_sdk", "alien_bench"]),
     "progenitor-default": (REPO / "bench" / "incumbent-rust", [], ["alien-platform-api", "incumbent_bench"]),
     "progenitor-full-api": (REPO / "bench" / "incumbent-rust", ["--features", "full-api"], ["alien-platform-api", "incumbent_bench"]),
 }
@@ -284,7 +293,7 @@ def rust_builds(runs: int, build: dict, log) -> dict:
                 if len(generated) != 1:
                     raise RuntimeError(f"{name}: expected one codegen.rs, found {generated}")
                 out["lines"][name] = len(generated[0].read_text().splitlines())
-    src = REPO / "sdk" / "rust" / "baml_sdk" / "src"
+    src = generated_sdk("rust")[1] / "src"
     out["lines"]["rust"] = {"total": lines(src.rglob("*.rs")),
                             "api": lines(p for d in ("platform", "manager") for p in (src / d).rglob("*.rs"))}
     shutil.rmtree(target, ignore_errors=True)
@@ -437,7 +446,7 @@ def main() -> int:
         for lang, exe in [("go", "bench-go"), ("rust", "bench-rust")]:
             sizes[lang] = {"total_kb": du_kb(CACHE / exe) + du_kb(lib), "packages_kb": {"bench program": du_kb(CACHE / exe), lib.name: du_kb(lib)}}
         sizes["incumbent-rust"] = {"total_kb": du_kb(CACHE / "bench-incumbent-rust"), "packages_kb": {"bench program": du_kb(CACHE / "bench-incumbent-rust")}}
-        sizes["generated_source_kb"] = {lang: du_kb(REPO / "sdk" / lang / "baml_sdk") for lang in OURS}
+        sizes["generated_source_kb"] = {lang: du_kb(generated_sdk(lang)[1]) for lang in OURS}
         raw["sizes"] = sizes
     out_file.parent.mkdir(parents=True, exist_ok=True)
     out_file.write_text(json.dumps(raw, indent=1) + "\n")

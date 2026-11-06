@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@boundaryml/baml-bridge':
-        specifier: 0.23.0
-        version: 0.23.0
+        specifier: 0.25.1
+        version: 0.25.1
     devDependencies:
       '@types/node':
         specifier: 24.10.1
@@ -24,52 +24,52 @@ importers:
 
 packages:
 
-  '@boundaryml/baml-bridge-darwin-arm64@0.23.0':
-    resolution: {integrity: sha512-Xe340VWjxDEZL4WY82s5dkeYRn2k0NBAVOxgNLxVF24yRx5KJDAjfWBrUDdsVUfGVQSb8WmWmGEsECcll0NDWA==}
+  '@boundaryml/baml-bridge-darwin-arm64@0.25.1':
+    resolution: {integrity: sha512-b6NoCyRtLc/TnNBo7NTGn2cJs/LfB9kgHNbLgShVViUdPrbxfPTCvCembIxPjhhHDsiH9fDFcldg9ZbCvAuzaQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@boundaryml/baml-bridge-darwin-x64@0.23.0':
-    resolution: {integrity: sha512-5FvNZI39zUfSKcb9gIs1KvagYlAbEBOfSr3sib8EkJ8PfG6pP6VV+Ymofxh0aUY2PYJst0wmf5p9FlUttwy34g==}
+  '@boundaryml/baml-bridge-darwin-x64@0.25.1':
+    resolution: {integrity: sha512-CfyHBuIoI8noYJFOFBUTy9MRB6mwy732UQkpa5nIhlQzbYmXazYned4gNXTOl1RzFj121R/dRNMHau5b34F4PQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@boundaryml/baml-bridge-linux-arm64-gnu@0.23.0':
-    resolution: {integrity: sha512-EfrCB+sisxxw2Pr+GjvLmf7JPPFwkFeIXKstWDV9/4PYLFalD+Kl3oSLX3BsiMRufsfqlxjj+NDgcGYOd4Nx+A==}
+  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.1':
+    resolution: {integrity: sha512-XnfSU8tMU81B+fdQKOvNo1DnLlxDkkAEKXkA6ahhJSTUvm7QGmzCE+R2Lpu1Fdsxw3V7+IVMryz1St2G6ZTeQg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@boundaryml/baml-bridge-linux-arm64-musl@0.23.0':
-    resolution: {integrity: sha512-dfvBmTtGaRvtOZEwDUP5QRSOZxL5Lq0rLEKm1POwzIQUv5KMdzp6BQZIhfutISfHOo1FKwfSrJ9ATD5Ap09bsw==}
+  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.1':
+    resolution: {integrity: sha512-871RWyuFwC2lwKqViBnbyOWXG/SrnozVaJuBQsEeTU+OvlLRDtcOj8yMqib43St0RX9ToTmarfQnIX7qVBEV5Q==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@boundaryml/baml-bridge-linux-x64-gnu@0.23.0':
-    resolution: {integrity: sha512-jzeBJ9Lt+2GW3ZW86C+oTq9Yy3yBser+0rilC9SPqwE2wkmMD78ftUE70sBDKQtgxxkp6ZRWVmm9KDYIRaikww==}
+  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.1':
+    resolution: {integrity: sha512-vKcz9I6Loy8grJ93fg+B+W3EmOilutYoZv9l0HF9fcU89HDvyOwRMJHKbTE1pDApCnfSHz1E6C4Tvnc5Xr4Sfg==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@boundaryml/baml-bridge-linux-x64-musl@0.23.0':
-    resolution: {integrity: sha512-4HtXeijPAJu/GE6H2bdRwGoDUU/0yHnUqCVJGUVKiwupyuWZqczU8urUz8gxJyIvOsBXn77/WjHi/2N4xPBK5A==}
+  '@boundaryml/baml-bridge-linux-x64-musl@0.25.1':
+    resolution: {integrity: sha512-TIWwi+tq0nYF5MozbnIzkuSPHKHNKGbBP4tkl4D/5J2EgSIslxRG9Kiy+z1HKn4di+F6cTmuyq3nDsgxBb53Zw==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@boundaryml/baml-bridge-win32-arm64-msvc@0.23.0':
-    resolution: {integrity: sha512-5gFe46YENyAmMsAWSU+Zj6VaNOo51/HqB7PdfHSIBws+vxKOmKgkE3k2umJTa33jVzu3/1ecWvvKwObuf5gpsg==}
+  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.1':
+    resolution: {integrity: sha512-2IwuTYGrs8C7zygXoZuZXGTO4mfH2soque4lqvEuzDM0xoFzYWvPP0a6AxJR4D17gkC2Wv7L0Os+mj2vEe/1Jw==}
     cpu: [arm64]
     os: [win32]
 
-  '@boundaryml/baml-bridge-win32-x64-msvc@0.23.0':
-    resolution: {integrity: sha512-J/heTvyxaF8LeD5CZrO+offUYotCVVQkrHQGRQ2HVJKZIUeBdk/HYRcZrwSrHVmgLuB5K/cpOrGgKCP82LATYQ==}
+  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.1':
+    resolution: {integrity: sha512-mQrS0LE92o+CByUg2kaWipjCdF5SHvccVPyf8vPPuj7VGNlaPjS3jOzQAoUjJuKShqn0t2qaO1EjNSm0YEOy5w==}
     cpu: [x64]
     os: [win32]
 
-  '@boundaryml/baml-bridge@0.23.0':
-    resolution: {integrity: sha512-d0Z8TDxXP+HsH4fZp3etCJapsTtvmwnY5u31VqxlX7wZsqBm3C8Ulm2F4Vy0mbMyZGXvmjuTUUU9cUpCCy9rcQ==}
+  '@boundaryml/baml-bridge@0.25.1':
+    resolution: {integrity: sha512-99jsvAtYCerxUqDIEXYpLo2QOO4pY5FA2KxkxXKICsOlB4ylsyV8nkQWPjKx8+J0RKTtwDSroAWAHI5kjGlKdw==}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -677,42 +677,42 @@ packages:
 
 snapshots:
 
-  '@boundaryml/baml-bridge-darwin-arm64@0.23.0':
+  '@boundaryml/baml-bridge-darwin-arm64@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-darwin-x64@0.23.0':
+  '@boundaryml/baml-bridge-darwin-x64@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-arm64-gnu@0.23.0':
+  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-arm64-musl@0.23.0':
+  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-x64-gnu@0.23.0':
+  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-x64-musl@0.23.0':
+  '@boundaryml/baml-bridge-linux-x64-musl@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-win32-arm64-msvc@0.23.0':
+  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge-win32-x64-msvc@0.23.0':
+  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.1':
     optional: true
 
-  '@boundaryml/baml-bridge@0.23.0':
+  '@boundaryml/baml-bridge@0.25.1':
     dependencies:
       protobufjs: 7.6.6
     optionalDependencies:
-      '@boundaryml/baml-bridge-darwin-arm64': 0.23.0
-      '@boundaryml/baml-bridge-darwin-x64': 0.23.0
-      '@boundaryml/baml-bridge-linux-arm64-gnu': 0.23.0
-      '@boundaryml/baml-bridge-linux-arm64-musl': 0.23.0
-      '@boundaryml/baml-bridge-linux-x64-gnu': 0.23.0
-      '@boundaryml/baml-bridge-linux-x64-musl': 0.23.0
-      '@boundaryml/baml-bridge-win32-arm64-msvc': 0.23.0
-      '@boundaryml/baml-bridge-win32-x64-msvc': 0.23.0
+      '@boundaryml/baml-bridge-darwin-arm64': 0.25.1
+      '@boundaryml/baml-bridge-darwin-x64': 0.25.1
+      '@boundaryml/baml-bridge-linux-arm64-gnu': 0.25.1
+      '@boundaryml/baml-bridge-linux-arm64-musl': 0.25.1
+      '@boundaryml/baml-bridge-linux-x64-gnu': 0.25.1
+      '@boundaryml/baml-bridge-linux-x64-musl': 0.25.1
+      '@boundaryml/baml-bridge-win32-arm64-msvc': 0.25.1
+      '@boundaryml/baml-bridge-win32-x64-msvc': 0.25.1
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

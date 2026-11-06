@@ -2,8 +2,10 @@
 // generated Platform and Manager operation, grouped as in Alien's TypeScript
 // SDK (c.Deployments.List(ctx, params)); an operation without a group is a
 // method of the client itself (c.AcceptWorkspaceInvitation(ctx, token)). It
-// reads the generated baml_sdk/functions.go, so it holds no per-operation
-// code; scripts/generate.sh runs it after baml generate.
+// reads the generated package's functions.go, so it holds no per-operation
+// code; scripts/generate.sh runs it after baml generate. The generated
+// package is the one the facade imports (findGenerated), whatever
+// package_name in baml/baml.toml calls it.
 //
 // It also writes alien/operations_table_test.go (gitignored): the
 // conformance harness's table of every operation (`call.op` in a scenario,
@@ -25,6 +27,8 @@ import (
 	"go/token"
 	"maps"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
@@ -34,7 +38,7 @@ import (
 )
 
 const (
-	input     = "baml_sdk/functions.go"
+	facadeDir = "alien"
 	output    = "alien/operations.go"
 	tableFile = "alien/operations_table_test.go"
 
@@ -118,8 +122,18 @@ func main() {
 	}
 }
 
+// generated is the generated package, as findGenerated finds it.
+var generated struct {
+	ImportPath string // example.com/alien-baml-sdk/go/alienapi
+	Dir        string // its directory, relative to the module root: alienapi
+	Name       string // its package clause, which qualifies its names in package alien: alienapi
+}
+
 func run() error {
-	ops, err := parseOperations(input)
+	if err := findGenerated(); err != nil {
+		return err
+	}
+	ops, err := parseOperations(path.Join(generated.Dir, "functions.go"))
 	if err != nil {
 		return err
 	}
@@ -148,6 +162,57 @@ func writeGo(path string, tmpl *template.Template, data any) error {
 
 // ---------------------------------------------------------------------------
 // Reading the generated functions.
+
+// findGenerated sets generated from the one package of this module that the
+// facade's own (hand-written, non-test) files import. Its directory is the
+// rest of its import path, as for every package of the module.
+func findGenerated() error {
+	modFile, err := os.ReadFile("go.mod")
+	if err != nil {
+		return fmt.Errorf("run from the module root (sdk/go): %w", err)
+	}
+	var module string
+	for line := range strings.Lines(string(modFile)) {
+		if rest, ok := strings.CutPrefix(strings.TrimSpace(line), "module "); ok {
+			module = strings.Trim(strings.TrimSpace(rest), `"`)
+		}
+	}
+	if module == "" {
+		return fmt.Errorf("go.mod has no module line")
+	}
+	files, err := filepath.Glob(filepath.Join(facadeDir, "*.go"))
+	if err != nil {
+		return err
+	}
+	imported := map[string]bool{}
+	for _, name := range files {
+		if strings.HasSuffix(name, "_test.go") || filepath.ToSlash(name) == output {
+			continue
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), name, nil, parser.ImportsOnly)
+		if err != nil {
+			return err
+		}
+		for _, spec := range file.Imports {
+			if p, _ := strconv.Unquote(spec.Path.Value); strings.HasPrefix(p, module+"/") {
+				imported[p] = true
+			}
+		}
+	}
+	if len(imported) != 1 {
+		return fmt.Errorf("the facade (%s/) must import exactly one package of module %s, the generated one; it imports %v",
+			facadeDir, module, slices.Sorted(maps.Keys(imported)))
+	}
+	for p := range imported {
+		generated.ImportPath, generated.Dir = p, strings.TrimPrefix(p, module+"/")
+	}
+	file, err := parser.ParseFile(token.NewFileSet(), path.Join(generated.Dir, "functions.go"), nil, parser.PackageClauseOnly)
+	if err != nil {
+		return fmt.Errorf("the generated package %s (run baml generate first): %w", generated.ImportPath, err)
+	}
+	generated.Name = file.Name.Name
+	return nil
+}
 
 // parseOperations reads every Platform and Manager operation in the generated
 // functions file, with its optional arguments.
@@ -205,7 +270,7 @@ func parseOperation(fn *ast.FuncDecl) (*operation, error) {
 	}
 	a := apis[i]
 	params := fn.Type.Params.List
-	if len(params) < 3 || typeString(params[1].Type) != "baml_sdk."+a.clientType {
+	if len(params) < 3 || typeString(params[1].Type) != generated.Name+"."+a.clientType {
 		return nil, fmt.Errorf("want (ctx, client, ..., options...), got %d parameters", len(params))
 	}
 	op := &operation{api: a, function: fn.Name.Name, group: parts[2], method: parts[3]}
@@ -232,7 +297,7 @@ func parseOperation(fn *ast.FuncDecl) (*operation, error) {
 	if !ok {
 		return nil, fmt.Errorf("last parameter is not variadic")
 	}
-	op.optionType = strings.TrimPrefix(typeString(ellipsis.Elt), "baml_sdk.")
+	op.optionType = strings.TrimPrefix(typeString(ellipsis.Elt), generated.Name+".")
 	switch results := fn.Type.Results.List; len(results) {
 	case 1:
 	case 2:
@@ -413,7 +478,7 @@ func typeString(e ast.Expr) string {
 		if predeclared[t.Name] || !ast.IsExported(t.Name) {
 			return t.Name
 		}
-		return "baml_sdk." + t.Name
+		return generated.Name + "." + t.Name
 	case *ast.StarExpr:
 		return "*" + typeString(t.X)
 	case *ast.ArrayType:
@@ -627,7 +692,7 @@ func (op *operation) methodDecl() methodDecl {
 	case op.onlyBody():
 		body := op.optional[0]
 		params = append(params, "body *"+typeString(body.typ))
-		args = append(args, fmt.Sprintf("baml_sdk.%s(body)", body.option))
+		args = append(args, fmt.Sprintf("%s.%s(body)", generated.Name, body.option))
 	case len(op.optional) > 0:
 		params = append(params, "params *"+op.paramsType())
 		args = append(args, "params.options()...")
@@ -704,17 +769,20 @@ func (op *operation) tableCall() string {
 }
 
 // ---------------------------------------------------------------------------
-// The two files. gofmt aligns and indents what they print.
+// The two files. gofmt aligns and indents what they print; gen names the
+// generated package.
 
-var operationsTemplate = template.Must(template.New(output).Parse(`
-// Code generated by internal/genops from baml_sdk/functions.go. DO NOT EDIT.
+var templateFuncs = template.FuncMap{"gen": func() any { return generated }}
+
+var operationsTemplate = template.Must(template.New(output).Funcs(templateFuncs).Parse(`
+// Code generated by internal/genops from {{gen.Dir}}/functions.go. DO NOT EDIT.
 
 package alien
 
 import (
 	"context"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	{{printf "%q" gen.ImportPath}}
 )
 
 {{- range $api := .}}
@@ -756,7 +824,7 @@ type {{.Service}} struct{ client *{{$api.Facade}} }
 // {{.}}
 {{- end}}
 func (s *{{.Receiver}}) {{.Name}}({{.Params}}) {{.Results}} {
-	return {{.Wrap}}(baml_sdk.{{.Function}}({{.Args}}))
+	return {{.Wrap}}({{gen.Name}}.{{.Function}}({{.Args}}))
 }
 
 {{- with .Options}}
@@ -772,14 +840,14 @@ type {{.Type}} struct {
 	{{- end}}
 }
 
-func (p *{{.Type}}) options() []baml_sdk.{{.Function}}Option {
+func (p *{{.Type}}) options() []{{gen.Name}}.{{.Function}}Option {
 	if p == nil {
 		return nil
 	}
-	var options []baml_sdk.{{.Function}}Option
+	var options []{{gen.Name}}.{{.Function}}Option
 	{{- range .Fields}}
 	if p.{{.Name}} != nil {
-		options = append(options, baml_sdk.{{.Option}}({{.Arg}}))
+		options = append(options, {{gen.Name}}.{{.Option}}({{.Arg}}))
 	}
 	{{- end}}
 	return options
@@ -788,8 +856,8 @@ func (p *{{.Type}}) options() []baml_sdk.{{.Function}}Option {
 {{- end}}
 `))
 
-var tableTemplate = template.Must(template.New(tableFile).Parse(`
-// Code generated by internal/genops from baml_sdk/functions.go. DO NOT EDIT.
+var tableTemplate = template.Must(template.New(tableFile).Funcs(templateFuncs).Parse(`
+// Code generated by internal/genops from {{gen.Dir}}/functions.go. DO NOT EDIT.
 
 package alien
 
@@ -797,7 +865,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"example.com/alien-baml-sdk/go/baml_sdk"
+	{{printf "%q" gen.ImportPath}}
 )
 
 // operations calls each generated operation through its method, by the

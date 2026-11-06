@@ -3,12 +3,16 @@
 Every mode prints one line, then waits for stdin EOF so the driver can read RSS.
 """
 
+import importlib
 import json
 import sys
 import time
 
 import alien_sdk
-from baml_sdk import compat
+from alien_sdk import _gen
+
+# The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
+compat = importlib.import_module(f"{_gen.platform.__name__.rpartition('.')[0]}.compat")
 
 ID = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
 INPUT = alien_sdk.CloudFormationLaunch(

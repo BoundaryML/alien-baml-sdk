@@ -22,8 +22,8 @@ from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienMan
 from alien_sdk._errors import _converted
 
 # The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
-baml_sdk = importlib.import_module(_gen.platform.__name__.rpartition(".")[0])
-compat: Any = importlib.import_module(f"{baml_sdk.__name__}.compat")
+generated_sdk = importlib.import_module(_gen.platform.__name__.rpartition(".")[0])
+compat: Any = importlib.import_module(f"{generated_sdk.__name__}.compat")
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -121,7 +121,7 @@ def _host_type(service: str, baml_type: str) -> Any:
     if baml_type.startswith("(") and baml_type.endswith(")"):
         members = tuple(_host_type(service, m.strip()) for m in baml_type[1:-1].split("|"))
         return typing.Union[members]
-    return getattr(getattr(baml_sdk, service), baml_type)
+    return getattr(getattr(generated_sdk, service), baml_type)
 
 
 @functools.cache
@@ -142,7 +142,7 @@ def _bindings() -> dict[str, tuple[list[str], str, dict[str, str]]]:
     ``create_token``), and its keyword names by BAML name (``{"deploymentGroup":
     "deployment_group"}``). Read from the generated modules, which record each
     function's BAML path."""
-    root = Path(baml_sdk.__file__).parent
+    root = Path(generated_sdk.__file__).parent
     out = {}
     for service in ("platform", "manager"):
         for init in sorted((root / service).rglob("__init__.py")):
@@ -193,7 +193,7 @@ def test_every_operation_is_bound() -> None:
     for op, (groups, name, _) in bindings.items():
         service = op.split(".")[0]
         target: Any = clients[service]
-        generated: Any = getattr(baml_sdk, service)
+        generated: Any = getattr(generated_sdk, service)
         for group in groups:
             target, generated = getattr(target, group), getattr(generated, group)
         assert inspect.getdoc(getattr(target, name)) == inspect.getdoc(getattr(generated, name)), op
