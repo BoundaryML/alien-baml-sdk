@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Alien SDK for Python, generated from one BAML project (reference implementation)"
 requires-python = ">=3.10"
 dependencies = [
-    "baml-bridge==0.23.0",
+    "baml-bridge==0.25.1",
     "pydantic>=2.6",
     "typing-extensions>=4.14.0",
 ]

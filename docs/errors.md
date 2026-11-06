@@ -52,7 +52,7 @@ message keeps its first 200 and `context.decode_error` all of it. Inside an
 object the SDK decodes with its own code (a class that holds an open union,
 or has renamed or extra keys: 116 classes, which the responses of 55 of the
 332 operations contain, among them `deployments.get`, `deployments.list`,
-`events.list`, `releases.*` and the Manager's `commands.*`), BAML 0.23.0 loses
+`events.list`, `releases.*` and the Manager's `commands.*`), BAML loses
 the location of a failure: `json_path` is then absent or starts at that object
 ([gaps B21](gaps.md#b21)). `decode_error` still says what failed.
 

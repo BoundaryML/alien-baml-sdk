@@ -13,11 +13,6 @@ This is a reference repository, not a release: nothing here is published, and
 package names (`@alien-baml/sdk`, `alien_sdk`, `example.com/alien-baml-sdk/go`)
 are placeholders.
 
-> **Temporary:** the repository builds against an unreleased BAML commit,
-> built locally, which adds some developer papercuts. Read
-> [Temporary: building against BAML canary](#temporary-building-against-baml-canary)
-> before you build or run anything. It goes away before this is shared.
-
 **It covers:**
 
 - Platform and Manager API operations imported from Alien's OpenAPI specs
@@ -88,87 +83,22 @@ Tested on macOS arm64 with Node 24.22, pnpm 12.14, Python 3.14, uv 0.13,
 Go 1.27 and Rust 1.96.
 
 - `baml` on PATH: the BAML wrapper (`brew install boundaryml/baml/baml`). The
-  scripts run the CLI of the BAML build below through it
+  scripts install BAML 0.25.1 through it
 - Node and pnpm
 - Python 3.10+ and uv
 - Go 1.24+ with cgo (`CGO_ENABLED=1`, the default on macOS); `baml generate` runs `gofmt`
 - Rust 1.91+
-- A [BAML](https://github.com/BoundaryML/baml) checkout at the pinned commit,
-  built with `scripts/build_baml.sh` ([Building BAML](#building-baml))
 
-The SDKs need BAML changes that are on BAML's canary branch but in no release
-yet, so the scripts use one BAML commit, `BAML_COMMIT_PIN` in
-`scripts/lib.sh`, built locally: its CLI, and its runtime packages in place of
-the published ones. It still reports version 0.23.0, which the manifests pin
-exactly (npm `@boundaryml/baml-bridge`, PyPI `baml-bridge`, Go
+The scripts use BAML 0.25.1 (`BAML_PIN` in `scripts/lib.sh`), which the
+manifests pin exactly (npm `@boundaryml/baml-bridge`, PyPI `baml-bridge`, Go
 `github.com/boundaryml/baml-go`, crates.io `baml_bridge`). The scripts keep
 all BAML state in the repository (`.baml_home/`, `.cache/`), never in
 `~/.baml`.
-
-## Temporary: building against BAML canary
-
-> **Remove this section** once the SDKs move to a published BAML release or
-> nightly that has the changes below. This setup is for internal development
-> only, and it must be cleaned up before the SDKs are shared with Alien. The
-> steps are in the comment at `BAML_COMMIT_PIN` in `scripts/lib.sh`. Also
-> remove the canary notes in [Requirements](#requirements),
-> [Using it from another project](#using-it-from-another-project),
-> [Building BAML](#building-baml) and [docs/runtime.md](docs/runtime.md).
-
-**Why.** The SDKs need BAML changes that are on BAML's canary branch but in no
-release: `naming_convention = "language"` (BAML #5481), async functions with
-`_sync` twins (#5519), known words such as `OAuth` kept whole (#5524),
-serde_json left alone (#5509), Rust logging through `log` (#5521), and
-`package_name`, which names each generated SDK (not merged into canary yet:
-the pin is a commit of its branch, on top of canary with #5526 and #5527). So every script uses one BAML commit, `BAML_COMMIT_PIN` in
-`scripts/lib.sh`, built from a BAML checkout you point at with `BAML_SOURCE`
-([Building BAML](#building-baml)).
-
-**Papercuts, and what to do about each one:**
-
-- **You build BAML yourself.** That needs Rust, pnpm and uv (for maturin). Run
-  `scripts/build_baml.sh $BAML_SOURCE`: the first build takes a while, later
-  ones are incremental. Every script needs `BAML_SOURCE` set.
-- **The checkout must be exactly at the pin.** Otherwise every script fails
-  and prints the git commands to run. To try another BAML commit (a BAML pull
-  request, say), set `BAML_UNPINNED=1`; the `==> BAML` line then says
-  `UNPINNED`. `BAML_LOCAL_BUILD=0` (the published 0.23.0) fails: that release
-  cannot build this repository.
-- **Go and Rust programs you run by hand need `BAML_BRIDGE_PATH`.** These SDKs
-  load BAML's engine, `libbridge_cffi`, at run time. Without the variable they
-  download the published 0.23.0 library, which is too old for code generated
-  by the pinned commit. Rust then fails with `incompatible BAML C API
-  (abi_version 4 … needs ABI revision 5)`, and Go with `unsupported BAML ABI
-  version 4 (expected 5)`. Point the variable at the local build, per command
-  rather than with `export`, because the TypeScript bridge reads the same
-  variable as the path of its own addon:
-  `BAML_BRIDGE_PATH=$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib cargo run …`
-  (`.so` on Linux). The scripts, test suites, quickstarts and bench set it
-  themselves. TypeScript and Python don't need it.
-- **`pnpm install` in `sdk/typescript` undoes the local bridge.** It replaces
-  the link `generate.sh` makes to the local TypeScript bridge with npm's
-  0.23.0. Run `scripts/generate.sh` again. `verify.sh` refuses to test against
-  npm's bridge.
-- **`sdk/rust/Cargo.lock` records the local bridge.** It is a path entry, with
-  no machine path. A cargo command run in `sdk/rust` without the gitignored
-  `sdk/rust/.cargo/config.toml` (which `generate.sh` writes) resolves crates.io's
-  bridge and rewrites the lockfile. Restore it with
-  `git checkout sdk/rust/Cargo.lock`. Moving the pin also moves the lockfiles;
-  the steps are at `BAML_COMMIT_PIN`.
-- **The SDKs can't be installed elsewhere as they are.** The manifests still
-  pin the published 0.23.0 runtime packages, which code generated by the
-  pinned commit can't use. [Using it from another project](#using-it-from-another-project)
-  lists what to swap in. Don't hand the SDKs to Alien in this state.
-- **Use the Homebrew `baml` launcher.** The launcher a BAML checkout builds
-  (`target/release/baml`) fails the scripts' version check. Keep it off `PATH`,
-  or behind the Homebrew one.
 
 ## Quickstart
 
 ```sh
 git clone <this repository> alien-baml-sdk && cd alien-baml-sdk
-scripts/build_baml.sh /path/to/baml   # a BAML checkout at BAML_COMMIT_PIN (Building BAML)
-export BAML_SOURCE=/path/to/baml
 scripts/generate.sh
 ```
 
@@ -204,12 +134,9 @@ print(alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
 
 **Go.** Save as `sdk/go/cmd/quickstart/main.go`, then run
 `cd sdk/go && go run ./cmd/quickstart`.
-Go and Rust load BAML's runtime library at run time. With the BAML build,
-point `BAML_BRIDGE_PATH` at the build's library for each Go and Rust command
-(`BAML_BRIDGE_PATH=$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib go run ./cmd/quickstart`;
-`.so` on Linux). Without it, the program downloads the published 0.23.0
-library into `~/.baml/bridges/0.23.0/` and fails on its older BAML ABI
-version. [docs/runtime.md](docs/runtime.md) has how a release provides it.
+Go and Rust load BAML's runtime library at run time: the first program on a
+machine downloads it into `~/.baml/bridges/0.25.1/`, and later ones load that
+copy. [docs/runtime.md](docs/runtime.md) has how to provide it ahead of time.
 
 <!-- quickstart go sdk/go/cmd/quickstart/main.go :: cd sdk/go && go run ./cmd/quickstart -->
 ```go
@@ -370,15 +297,7 @@ repository):
 - **Rust.** A path dependency:
   `alien_sdk = { path = "/path/to/alien-baml-sdk/sdk/rust" }`.
 
-Each recipe brings the published BAML 0.23.0 runtime package, which code
-generated by the BAML build cannot use. Give your project the build's
-packages instead, as `examples/coexistence/run.sh` does (`$BAML_SOURCE` is the
-BAML checkout): TypeScript, a pnpm override
-`"@boundaryml/baml-bridge": "file:$BAML_SOURCE/baml_language/sdks/typescript/bridge_typescript"`;
-Python, the wheel in `$BAML_SOURCE/baml_language/sdks/python/dist/`, installed
-first; Go, `replace github.com/boundaryml/baml-go => $BAML_SOURCE/baml_language/sdks/go/baml_go`;
-Rust, `[patch.crates-io] baml_bridge = { path = "$BAML_SOURCE/baml_language/sdks/rust/bridge_rust" }`.
-Go and Rust programs also need `BAML_BRIDGE_PATH` ([Quickstart](#quickstart)).
+Each recipe brings the published BAML 0.25.1 runtime package.
 
 ## Telemetry
 
@@ -407,20 +326,19 @@ every conformance scenario in all four languages, runs the README quickstarts,
 the telemetry checks and a secret scan, and prints a summary table. It exits
 non-zero on the first failure.
 
-## Building BAML
+## Building against an unreleased BAML
 
-The scripts build against one BAML commit, `BAML_COMMIT_PIN` in
-`scripts/lib.sh`, because the SDKs need BAML changes that no release has yet.
-Check it out in a BAML checkout, build it once, and give every script the
-checkout as `BAML_SOURCE`; the toolchain and all four runtime packages then
-come from that build:
+The scripts use the published BAML 0.25.1. To try a BAML commit no release has
+yet (a BAML pull request, say), build it locally and run the scripts with
+`BAML_LOCAL_BUILD=1`; the toolchain and all four runtime packages then come
+from that build:
 
 ```sh
 git clone https://github.com/BoundaryML/baml /path/to/baml
-git -C /path/to/baml checkout <BAML_COMMIT_PIN>
+git -C /path/to/baml checkout <commit>
 scripts/build_baml.sh /path/to/baml
-export BAML_SOURCE=/path/to/baml
-scripts/verify.sh --phase 2    # ==> BAML 0.23.0, local build of the pinned BAML commit <sha>
+export BAML_SOURCE=/path/to/baml BAML_LOCAL_BUILD=1
+scripts/verify.sh --phase 2    # ==> BAML 0.25.1, local build of BAML commit <sha>
 ```
 
 `build_baml.sh` runs, in the checkout's `baml_language/`:
@@ -431,37 +349,28 @@ cargo build --release -p baml_cli -p bridge_cffi
 (cd sdks/python && rm -f dist/baml_bridge-*.whl && uvx --from 'maturin>=1.10,<2.0' maturin build --release --strip --out dist)
 ```
 
-- `build_baml.sh` and every script fail unless the checkout's HEAD is the
-  pinned commit; they print the git commands that check it out, and never run
-  them. They also fail unless the CLI and every bridge were built from that
-  commit, and refuse uncommitted changes under `baml_language/` (except the
-  TypeScript bridge's `dist/` and generated protobuf code, which its build
-  rewrites).
-- `BAML_LOCAL_BUILD=0`, the published BAML 0.23.0, fails: that release cannot
-  build this repository.
-- To try another BAML commit (a BAML pull request, say), check it out, then
-  run `build_baml.sh` and the scripts with `BAML_UNPINNED=1`. The `==> BAML`
-  line then says `UNPINNED`. Its `baml-cli --version` must report 0.23.0;
-  another version needs the pins moved first (see `BAML_PIN` in
-  `scripts/lib.sh`).
+- The scripts fail unless the CLI and every bridge were built from the
+  checkout's HEAD, and refuse uncommitted changes under `baml_language/`
+  (except the TypeScript bridge's `dist/` and generated protobuf code, which
+  its build rewrites).
+- The build's `baml-cli --version` must report 0.25.1; another version needs
+  the pins moved first (see `BAML_PIN` in `scripts/lib.sh`).
 - `generate.sh` links the TypeScript bridge into `node_modules`, installs the
   Python wheel into `.venv`, and points Go and Rust at the checkout's bridge
   sources with the gitignored `sdk/go/go.work` and `sdk/rust/.cargo/config.toml`.
-  `sdk/rust/Cargo.lock` and `bench/rust/Cargo.lock` record that local
-  `baml_bridge` and its dependencies (a path dependency: no path, no
-  checksum), as the pinned commit leaves them. Another commit may change them.
+  It also records that local `baml_bridge` in `sdk/rust/Cargo.lock`; don't
+  commit that, or restore it with `git checkout sdk/rust/Cargo.lock`.
 - Go and Rust programs you run yourself need
   `BAML_BRIDGE_PATH=$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib`
-  (`.so` on Linux). Set it per command, not with `export`: the TypeScript
-  bridge reads the same variable as the path of its own addon.
-- Back to a release: the comment at `BAML_COMMIT_PIN` in `scripts/lib.sh` has
-  the steps.
-- The scripts need a `baml` launcher on `PATH` whose `--version` prints
-  `baml toolchain 0.23.0 …` or `baml toolchain baml-cli 0.23.0 …`
-  (`toolchain_is_pinned` in `scripts/lib.sh`). The Homebrew wrapper (0.2.4)
-  does. The launcher a BAML checkout builds (`target/release/baml`, wrapper
-  0.2.5) prints `baml wrapper 0.2.5` and `baml-cli 0.23.0` instead, so the
-  check rejects it: keep it off `PATH`, or behind the Homebrew one.
+  (`.so` on Linux), or they download the published library. Set it per
+  command, not with `export`: the TypeScript bridge reads the same variable as
+  the path of its own addon.
+- To make every script use one BAML commit (when the SDKs need a change no
+  release has), set `BAML_COMMIT_PIN` in `scripts/lib.sh`; the comment there
+  has the steps, and the way back to a release.
+- The scripts need a `baml` launcher on `PATH` whose `--version` reports
+  0.25.1 for the selected toolchain (`toolchain_is_pinned` in
+  `scripts/lib.sh`). The Homebrew wrapper does, both 0.2.4 and 0.3.x.
 
 ## Known gaps
 
