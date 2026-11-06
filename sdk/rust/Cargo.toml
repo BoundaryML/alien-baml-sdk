@@ -15,13 +15,10 @@ exclude = ["alien_api"]
 [dependencies]
 # The generated crate (package_name in baml/baml.toml). genops finds it as this
 # manifest's one path dependency.
-alien_api = { path = "alien_api" }
+alien_api = { path = "alien_api", features = ["serde"] }
 baml_bridge = "=0.25.1"
+serde = "1"
 
 [dev-dependencies]
-# Only tests/serde.rs uses the generated crate's `serde` feature: the derived
-# impls do not follow the SDK's JSON mapping yet, so users do not get them
-# (docs/gaps.md, B26).
-alien_api = { path = "alien_api", features = ["serde"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

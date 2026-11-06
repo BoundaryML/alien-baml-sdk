@@ -190,23 +190,21 @@ testset "http helpers" {
     }
 
     test "a long decoder message is cut in the error message and kept whole in the context" {
-        // An unknown external binding: the decoder lists why each of the 29 members did not match.
-        let e = decode_error_of<root.platform.ExternalBinding>(`{"type":"storage","service":"minio"}`);
-        let whole = context_of(e)["decode_error"];
-        assert.equal(whole.starts_with("no union member matched: `platform.ExternalBindingStorageS3`: literal mismatch at `.service`;"), true);
-        assert.equal(whole.length() > 2000, true);
+        let long = "no union member matched: ";
+        while (long.length() < 2500) {
+            long = long + "`platform.ExternalBindingStorageS3`: literal mismatch at `.service`; ";
+        }
+        let e = malformed_response(200, "/v1/x", "", long);
+        assert.equal(context_of(e)["decode_error"], long);
         assert.equal(e.message.length() < 400, true);
         assert.equal(e.message.starts_with("Response from /v1/x did not match the expected shape: no union member matched: "), true);
         assert.equal(e.message.ends_with("… (the whole message is in context.decode_error)"), true);
     }
 
-    test "B21: a failure inside a class with a FromJson override loses its location (docs/gaps.md#b21)" {
-        // `items[0].name` is missing; the item class decodes itself (its open union).
-        // When BAML reports where, this test fails: update docs/gaps.md#b21 and docs/errors.md.
+    test "a failure inside a nested class says where" {
         let e = decode_error_of<root.platform.ListDeploymentsResponse>(`{"items":[{"id":"d1"}]}`);
         assert.equal(e.code, "MALFORMED_RESPONSE");
-        assert.equal(context_of(e).get("json_path"), null);
-        assert.equal(context_of(e)["decode_error"], "expected string");
+        assert.equal(context_of(e)["json_path"], ".items[0]");
     }
 
     test "an error body that is JSON of another shape says why it is not the API's error body" {

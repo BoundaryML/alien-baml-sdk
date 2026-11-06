@@ -6,18 +6,8 @@
 ///
 /// `GET /v1/whoami` (operation `whoami`).
 function whoami(client: root.platform.PlatformClient) -> root.platform.Subject throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.Subject>(
+    root.internal.platform_json<root.platform.Subject>(
         client, "GET", "/v1/whoami",
         query = { "workspace": client.workspace },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "kind"))) {
-                    "user" => baml.json.to<root.platform.UserSubject>(member),
-                    "serviceAccount" => baml.json.to<root.platform.ServiceAccountSubject>(member),
-                    _ => root.platform.SubjectOther { kind: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }

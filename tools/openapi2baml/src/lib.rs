@@ -96,13 +96,11 @@ pub fn run(root: &Path, config: &Config) -> Result<Output, Error> {
         let defs: Vec<&Def> = lowerer.defs.values().collect();
         let classes = defs.iter().filter(|d| matches!(d, Def::Class(_))).count();
         let aliases = defs.len() - classes;
-        let index = emit::Index::new(&defs);
-        let types_text = emit::types(&defs, &index);
+        let types_text = emit::types(&defs);
         let mut groups: BTreeMap<Option<String>, String> = BTreeMap::new();
         for op in &operations {
-            groups.entry(op.group.clone()).or_default().push_str(&emit::operation(&service.name, service.client, op, &index)?);
+            groups.entry(op.group.clone()).or_default().push_str(&emit::operation(&service.name, service.client, op)?);
         }
-        drop(index);
         drop(defs);
         drop(lowerer);
 

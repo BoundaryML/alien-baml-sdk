@@ -380,8 +380,8 @@ function reply(
 }
 
 /// Decodes a JSON body into `T`, throwing `MALFORMED_RESPONSE` on failure.
-/// `decode` honors `baml.FromJson` overrides (for wire names that are BAML
-/// reserved words, docs/gaps.md#b14).
+/// `decode` follows the `@json` attributes: wire names, open unions and extra
+/// keys.
 function decode_body<T>(text: string, status: int, path: string) -> T throws root.errors.AlienError {
     baml.json.decode<T>(text) catch (e) {
         baml.json.ParseError => throw malformed_response(status, path, "", e.message),
@@ -395,17 +395,6 @@ function decode_optional_body<T>(text: string, status: int, path: string) -> T? 
         return null;
     }
     decode_body<T>(text, status, path)
-}
-
-/// Decodes a reply's JSON body with `decode`, throwing `MALFORMED_RESPONSE`
-/// when it does not fit. Operations returning an open union pass a `decode`
-/// that picks the union's member by its tag (tools/openapi2baml/DESIGN.md,
-/// "Open unions").
-function decode_reply<T>(r: Reply, decode: (baml.json.json) -> T throws baml.json.DecodeError) -> T throws root.errors.AlienError {
-    let body = decode_body<baml.json.json>(r.text, r.status, r.path);
-    decode(body) catch (e) {
-        baml.json.DecodeError => throw malformed_response(r.status, r.path, e.path, e.message),
-    }
 }
 
 // Platform API operations: always authenticated with the client's API key.
@@ -466,20 +455,6 @@ function platform_empty(
     null
 }
 
-/// A Platform API request whose JSON response `decode` turns into a `T`:
-/// `decode_reply`.
-function platform_decoded<T>(
-    client: root.platform.PlatformClient,
-    method: string,
-    path: string,
-    decode: (baml.json.json) -> T throws baml.json.DecodeError,
-    query: map<string, QueryValue> = {},
-    headers: map<string, string?> = {},
-    body: string? = null,
-) -> T throws root.errors.AlienError {
-    decode_reply<T>(platform_reply(client, method, path, query, headers, body), decode)
-}
-
 // Manager API operations: authenticated with the client's token whenever it
 // is set, as `@alienplatform/commands` does, although the Manager spec declares
 // security on only some operations. Arguments as for the Platform API.
@@ -537,27 +512,13 @@ function manager_empty(
     null
 }
 
-/// A Manager API request whose JSON response `decode` turns into a `T`:
-/// `decode_reply`.
-function manager_decoded<T>(
-    client: root.manager.ManagerClient,
-    method: string,
-    path: string,
-    decode: (baml.json.json) -> T throws baml.json.DecodeError,
-    query: map<string, QueryValue> = {},
-    headers: map<string, string?> = {},
-    body: string? = null,
-) -> T throws root.errors.AlienError {
-    decode_reply<T>(manager_reply(client, method, path, query, headers, body), decode)
-}
-
 // ---------------------------------------------------------------------------
 // Request bodies
 
-/// `value` as JSON text. `baml.json.stringify` honors `baml.ToJson` overrides:
-/// request classes implement it to omit unset optional fields (as Alien's SDKs
-/// do) and to write wire names that are BAML reserved words (docs/gaps.md#b14).
-/// Values inside `json` fields are written as given, `null`s included.
+/// `value` as JSON text. `baml.json.stringify` follows the `@json` attributes:
+/// request classes leave out unset optional fields (as Alien's SDKs do) and
+/// write their wire names (docs/gaps.md#b14). Values inside `json` fields are
+/// written as given, `null`s included.
 function encode_body<T>(value: T) -> string throws root.errors.AlienError {
     baml.json.stringify(value) catch (e) {
         _ => throw invalid_request(`the request body cannot be encoded as JSON: ${e.message}`),

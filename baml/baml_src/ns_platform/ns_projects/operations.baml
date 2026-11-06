@@ -226,19 +226,9 @@ function getAiProviderHeaders(client: root.platform.PlatformClient, idOrName: st
 ///
 ///   Default: `"24h"` (applied by the server when left out).
 function getAiUsage(client: root.platform.PlatformClient, idOrName: string, range: string? = null) -> root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectAiUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectAiUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
+    root.internal.platform_json<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectAiUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
         client, "GET", `/v1/projects/${root.internal.path_segment(idOrName)}/ai-metrics`,
         query = { "workspace": client.workspace, "range": range },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "status"))) {
-                    "unavailable" => baml.json.to<root.platform.GetProjectAiUsageResponseUnavailable>(member),
-                    "available" => baml.json.to<root.platform.GetProjectAiUsageResponseAvailable>(member),
-                    _ => root.platform.GetProjectAiUsageResponseOther { status: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -285,19 +275,9 @@ function getDeploymentPortalDomain(client: root.platform.PlatformClient, idOrNam
 ///
 ///   Default: `"24h"` (applied by the server when left out).
 function getEncryptionUsage(client: root.platform.PlatformClient, idOrName: string, range: string? = null) -> root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectEncryptionUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectEncryptionUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
+    root.internal.platform_json<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectEncryptionUsageResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
         client, "GET", `/v1/projects/${root.internal.path_segment(idOrName)}/encryption-metrics`,
         query = { "workspace": client.workspace, "range": range },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "status"))) {
-                    "unavailable" => baml.json.to<root.platform.GetProjectAiUsageResponseUnavailable>(member),
-                    "available" => baml.json.to<root.platform.GetProjectEncryptionUsageResponseAvailable>(member),
-                    _ => root.platform.GetProjectAiUsageResponseOther { status: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -307,19 +287,9 @@ function getEncryptionUsage(client: root.platform.PlatformClient, idOrName: stri
 ///
 /// - `idOrName`: Project ID or name.
 function getGcpOAuthProvider(client: root.platform.PlatformClient, idOrName: string) -> root.platform.ProjectGcpOAuthProvider throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.ProjectGcpOAuthProvider>(
+    root.internal.platform_json<root.platform.ProjectGcpOAuthProvider>(
         client, "GET", `/v1/projects/${root.internal.path_segment(idOrName)}/gcp-oauth-provider`,
         query = { "workspace": client.workspace },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                    "alien-managed" => baml.json.to<root.platform.ProjectGcpOAuthProviderAlienManaged>(member),
-                    "custom" => baml.json.to<root.platform.ProjectGcpOAuthProviderCustom>(member),
-                    _ => root.platform.ProjectGcpOAuthProviderOther { mode: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -342,19 +312,9 @@ function getRemoteOperatorSummary(client: root.platform.PlatformClient, idOrName
 ///
 ///   Default: `"24h"` (applied by the server when left out).
 function getSandboxMetrics(client: root.platform.PlatformClient, idOrName: string, range: string? = null) -> root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectSandboxMetricsResponseAvailable | root.platform.GetProjectAiUsageResponseOther throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectSandboxMetricsResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
+    root.internal.platform_json<root.platform.GetProjectAiUsageResponseUnavailable | root.platform.GetProjectSandboxMetricsResponseAvailable | root.platform.GetProjectAiUsageResponseOther>(
         client, "GET", `/v1/projects/${root.internal.path_segment(idOrName)}/sandbox-metrics`,
         query = { "workspace": client.workspace, "range": range },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "status"))) {
-                    "unavailable" => baml.json.to<root.platform.GetProjectAiUsageResponseUnavailable>(member),
-                    "available" => baml.json.to<root.platform.GetProjectSandboxMetricsResponseAvailable>(member),
-                    _ => root.platform.GetProjectAiUsageResponseOther { status: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -440,19 +400,9 @@ function update(client: root.platform.PlatformClient, idOrName: string, body: ro
 ///
 /// - `idOrName`: Project ID or name.
 function updateGcpOAuthProvider(client: root.platform.PlatformClient, idOrName: string, body: root.platform.UpdateProjectGcpOAuthProvider? = null) -> root.platform.ProjectGcpOAuthProvider throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.ProjectGcpOAuthProvider>(
+    root.internal.platform_json<root.platform.ProjectGcpOAuthProvider>(
         client, "PUT", `/v1/projects/${root.internal.path_segment(idOrName)}/gcp-oauth-provider`,
         query = { "workspace": client.workspace },
         body = root.internal.json_body(body),
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                    "alien-managed" => baml.json.to<root.platform.ProjectGcpOAuthProviderAlienManaged>(member),
-                    "custom" => baml.json.to<root.platform.ProjectGcpOAuthProviderCustom>(member),
-                    _ => root.platform.ProjectGcpOAuthProviderOther { mode: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }

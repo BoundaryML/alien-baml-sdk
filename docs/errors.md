@@ -30,7 +30,7 @@ current SDKs use for the same failure. "Speakeasy" is `@alienplatform/platform-a
 | `MANAGER_HTTP_ERROR` | no | `internal.manager_http_error` | A Manager API non-2xx whose body is not an `ErrorResponse`. `context.body` holds its first 1,000 characters; a JSON body of another shape also gets `json_path` and `decode_error`, as below | commands: `MANAGER_HTTP_ERROR`, not retryable |
 | `PLATFORM_HTTP_ERROR` | on 408, 429 and 5xx | `internal.platform_http_error` | A Platform API non-2xx whose body is not an API error. `context.body` holds its first 1,000 characters; a JSON body of another shape also gets `json_path` and `decode_error`, as below | commands: `PLATFORM_HTTP_ERROR` (bootstrap, same retry rule). Rust client: `UNEXPECTED_RESPONSE` (retryable on 5xx). Speakeasy: `AlienDefaultError`, no code |
 | `COMMUNICATION_ERROR` | yes | `internal.send`, `internal.reply` | A Platform or Manager request could not be sent, timed out, or its response body could not be read (`http_status` is then the response's status). A timeout is the client's (`timeoutMs`, [api-shape decision 9](api-shape.md#decisions)) or BAML's default of 5 minutes: `... failed: timed out after 300 ms (timeout)` | Rust client: `COMMUNICATION_ERROR` (send, a timeout included) and `RESPONSE_BODY_ERROR` (body read). commands: `COMMAND_BOOTSTRAP_FAILED` (bootstrap only). Speakeasy: `ConnectionError` and `RequestTimeoutError`, no code |
-| `MALFORMED_RESPONSE` | no | `internal.decode_body`, `internal.decode_reply` | A 2xx body that is not JSON or does not match the expected shape; `http_status` is the 2xx status. `context.json_path` is where in the body decoding failed (`.items[3].status`; absent when BAML gives no location, see below), `context.decode_error` the decoder's whole message. The message gives `json_path` and the first line of `decode_error`, cut at 200 characters | commands: `MALFORMED_RESPONSE`. Rust client: `INVALID_RESPONSE_PAYLOAD`. Speakeasy: `ResponseValidationError`, no code |
+| `MALFORMED_RESPONSE` | no | `internal.decode_body` | A 2xx body that is not JSON or does not match the expected shape; `http_status` is the 2xx status. `context.json_path` is where in the body decoding failed (`.items[3].status`; absent when BAML gives no location, see below), `context.decode_error` the decoder's whole message. The message gives `json_path` and the first line of `decode_error`, cut at 200 characters | commands: `MALFORMED_RESPONSE`. Rust client: `INVALID_RESPONSE_PAYLOAD`. Speakeasy: `ResponseValidationError`, no code |
 | `INVALID_REQUEST` | no | `internal.invalid_request`, from `encode_body`, `path_segment` and `send` | A request the SDK refuses to send: a body that cannot be encoded as JSON, a path parameter that is empty, `.` or `..` (it would reach a different endpoint), a base URL without `https://` or `http://` or with a `#` fragment, or a request the HTTP client rejects. Each facade also raises it when a Platform client is created without an API key | Rust client: `INVALID_REQUEST`. A missing API key: Speakeasy sends the request without one and gets a 401 |
 | `SETUP_INVALID_TEMPLATE_URL` | no | `setup.cloudformation_launch_url` | `templateUrl` is not an `https://` URL | none (no client-side setup helper) |
 | `SETUP_REGION_UNSUPPORTED` | no | `setup.cloudformation_launch_url` | The region does not match `^[a-z]{2}-[a-z]+-[0-9]+$`, or is a China region (`cn-*`) | none |
@@ -48,13 +48,7 @@ MALFORMED_RESPONSE: Response from /v1/managers/mgr_1 did not match the expected 
 
 A value that matches no member of a union gets a message naming every
 member's mismatch, over 2,000 characters for an external binding; the error
-message keeps its first 200 and `context.decode_error` all of it. Inside an
-object the SDK decodes with its own code (a class that holds an open union,
-or has renamed or extra keys: 116 classes, which the responses of 55 of the
-332 operations contain, among them `deployments.get`, `deployments.list`,
-`events.list`, `releases.*` and the Manager's `commands.*`), BAML loses
-the location of a failure: `json_path` is then absent or starts at that object
-([gaps B21](gaps.md#b21)). `decode_error` still says what failed.
+message keeps its first 200 and `context.decode_error` all of it.
 
 The setup helper validates in this order: template URL, region, stack name,
 parameters. It reports the first problem. Regions follow the shape of the

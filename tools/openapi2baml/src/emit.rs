@@ -3,12 +3,12 @@
 //! Multi-line pieces of BAML are strings whose lines after the first are
 //! indented relative to the first; [`lines`] and [`block`] nest them.
 
-use std::{collections::BTreeMap, fmt::Write as _};
+use std::fmt::Write as _;
 
 use crate::{
     Error,
     config::ClientKind,
-    lower::{Class, Def, EXTRA_FIELD, Field, OTHER_RAW_FIELD, TagTree, Ty, UNKNOWN_TAG, optional, tag_tree},
+    lower::{Class, Def, EXTRA_FIELD, Field, OTHER_RAW_FIELD, Ty, optional},
     ops::{Location, Operation, Response},
 };
 
@@ -38,16 +38,6 @@ fn block(head: &str, items: &[String]) -> String {
     lines(&format!("{head} {{"), items, "}")
 }
 
-/// `match (subject) { … }`, one arm per item.
-fn match_expr(subject: &str, arms: &[String]) -> String {
-    block(&format!("match ({subject})"), arms)
-}
-
-/// The `_` arm that throws a `baml.json.DecodeError` saying `message`.
-fn decode_error_arm(message: &str) -> String {
-    format!("_ => throw baml.json.DecodeError {{ message: {}, path: \"\" }},", quote(message))
-}
-
 /// `"text"` as a BAML string literal.
 fn quote(text: &str) -> String {
     serde_json::to_string(text).expect("string")
@@ -56,138 +46,6 @@ fn quote(text: &str) -> String {
 /// `text` as part of a backtick string literal: `\`, `` ` `` and `${` escaped.
 fn template_text(text: &str) -> String {
     text.replace('\\', "\\\\").replace('`', "\\`").replace("${", "\\${")
-}
-
-/// A service's types by name, for decoding open unions (`open_unions`). BAML
-/// picks a union's member by shape, and an open union's `Other` member, whose
-/// tag is the literal [`UNKNOWN_TAG`], fits no value the server sends. So a
-/// class with a field holding an open union, and an operation returning one,
-/// decode it themselves: by its tags, known tags as their own class and any
-/// others as the `Other` member (DESIGN.md, "Open unions").
-pub struct Index<'a> {
-    defs: BTreeMap<&'a str, &'a Def>,
-}
-
-impl<'a> Index<'a> {
-    pub fn new(defs: &[&'a Def]) -> Self {
-        Self { defs: defs.iter().map(|d| (d.name(), *d)).collect() }
-    }
-
-    fn class(&self, name: &str) -> Option<&'a Class> {
-        match self.defs.get(name) {
-            Some(Def::Class(class)) => Some(class),
-            _ => None,
-        }
-    }
-
-    /// The `Other` member of a union with these members, if it is open.
-    fn other(&self, members: &[Ty]) -> Option<&'a Class> {
-        members.iter().find_map(|m| match m {
-            Ty::Named(name) => self.class(name).filter(|c| c.open_tag.is_some()),
-            _ => None,
-        })
-    }
-
-    /// Whether decoding `ty` meets an open union before it meets a class (a
-    /// class decodes its own fields).
-    fn has_open(&self, ty: &Ty) -> bool {
-        match ty {
-            Ty::Named(name) => match self.defs.get(name.as_str()) {
-                Some(Def::Alias { ty, .. }) => self.has_open(ty),
-                _ => false,
-            },
-            Ty::Optional(inner) | Ty::List(inner) | Ty::Map(inner) => self.has_open(inner),
-            Ty::Union(members) => self.other(members).is_some() || members.iter().any(|m| self.has_open(m)),
-            _ => false,
-        }
-    }
-
-    /// A BAML expression decoding the JSON expression `value` as `ty`, open
-    /// unions by their tags: one `match` on `value`, with a `null` arm when
-    /// `ty` is optional.
-    fn decode(&self, ty: &Ty, value: &str, qualify: &dyn Fn(&str) -> String) -> String {
-        if !self.has_open(ty) {
-            return match ty {
-                Ty::Json => value.to_string(),
-                ty => format!("baml.json.to<{}>({value})", ty.render(qualify)),
-            };
-        }
-        let mut ty = ty;
-        let mut arms = Vec::new();
-        loop {
-            match ty {
-                Ty::Named(name) => match self.defs.get(name.as_str()) {
-                    Some(Def::Alias { ty: aliased, .. }) => ty = aliased,
-                    _ => unreachable!("has_open is false for a class"),
-                },
-                Ty::Optional(inner) => {
-                    if arms.is_empty() {
-                        arms.push("null => null,".to_string());
-                    }
-                    ty = inner;
-                }
-                _ => break,
-            }
-        }
-        match ty {
-            Ty::Union(members) => {
-                let member = self.select_member(members, "member", qualify);
-                arms.push(format!("let member: map<string, baml.json.json> => {member},"));
-                arms.push(decode_error_arm("expected a JSON object"));
-            }
-            Ty::List(item) => {
-                let item = self.decode(item, "item", qualify);
-                arms.push(lines("let items: baml.json.json[] => items.map((item) -> {", &[item], "}),"));
-                arms.push(decode_error_arm("expected a JSON array"));
-            }
-            Ty::Map(item) => {
-                let item = self.decode(item, "entries[key]", qualify);
-                let entries = [
-                    format!("let out: {} = {{}};", ty.render(qualify)),
-                    block("for (let key in entries.keys())", &[format!("out[key] = {item};")]),
-                    "out".to_string(),
-                ];
-                arms.push(lines("let entries: map<string, baml.json.json> => {", &entries, "},"));
-                arms.push(decode_error_arm("expected a JSON object"));
-            }
-            _ => unreachable!("has_open is false for {}", ty.render(qualify)),
-        }
-        match_expr(value, &arms)
-    }
-
-    /// A BAML expression picking the member of the open union `members` that
-    /// the JSON object `object` is, by its tag fields.
-    fn select_member(&self, members: &[Ty], object: &str, qualify: &dyn Fn(&str) -> String) -> String {
-        let other = self.other(members).unwrap_or_else(|| {
-            unreachable!("open_tagged_unions opens a union only where it holds classes: {}", Ty::Union(members.to_vec()).render(qualify))
-        });
-        let (wires, _) = other.open_tag.as_ref().expect("an Other member");
-        let classes = members
-            .iter()
-            .filter_map(|member| {
-                let Ty::Named(name) = member else { unreachable!("an open union holds classes") };
-                (name != &other.name).then(|| self.class(name).expect("an open union holds classes"))
-            })
-            .collect::<Vec<_>>();
-        let tree = tag_tree(&classes, wires).expect("open_tagged_unions opens a union only where its tags tell the members apart");
-        let other = format!("{} {{ {}: {}, {OTHER_RAW_FIELD}: {object} }}", qualify(&other.name), other.fields[0].name, quote(UNKNOWN_TAG));
-        select(&tree, object, &other, qualify)
-    }
-}
-
-/// A BAML expression picking a member of an open union for the JSON object
-/// `object` by its tag fields (`tree`): a `match` on each tag read, with
-/// `other` for tags no member has.
-fn select(tree: &TagTree, object: &str, other: &str, qualify: &dyn Fn(&str) -> String) -> String {
-    match tree {
-        TagTree::Member(class) => format!("baml.json.to<{}>({object})", qualify(&class.name)),
-        TagTree::Read { wire, arms } => {
-            let mut lines: Vec<String> =
-                arms.iter().map(|(value, next)| format!("{} => {},", quote(value), select(next, object, other, qualify))).collect();
-            lines.push(format!("_ => {other},"));
-            match_expr(&format!("baml.json.to<string>(baml.json.field({object}, {}))", quote(wire)), &lines)
-        }
-    }
 }
 
 pub fn banner(spec_path: &str, digest: &str, overlays: &[(String, String)]) -> String {
@@ -249,7 +107,7 @@ pub fn client(kind: ClientKind) -> &'static str {
     }
 }
 
-pub fn types(defs: &[&Def], index: &Index) -> String {
+pub fn types(defs: &[&Def]) -> String {
     let mut out = String::new();
     let local = |n: &str| n.to_string();
     for def in defs {
@@ -259,13 +117,13 @@ pub fn types(defs: &[&Def], index: &Index) -> String {
                 doc(&mut out, "", text);
                 let _ = writeln!(out, "type {name} = {}", ty.render(&local));
             }
-            Def::Class(class) => class_text(&mut out, class, index),
+            Def::Class(class) => class_text(&mut out, class),
         }
     }
     out
 }
 
-fn class_text(out: &mut String, class: &Class, index: &Index) {
+fn class_text(out: &mut String, class: &Class) {
     let local = |n: &str| n.to_string();
     doc(out, "", &class.doc);
     let _ = writeln!(out, "class {} {{", class.name);
@@ -278,79 +136,42 @@ fn class_text(out: &mut String, class: &Class, index: &Index) {
             let _ = write!(text, "Wire name: `{}`.", field.wire);
         }
         doc(out, INDENT, &text);
-        let _ = writeln!(out, "    {}: {},", field.name, field.ty.render(&local));
+        // An `Other` member holds the object no member's tag matched.
+        let attribute = if class.open_tag.is_some() && field.name == OTHER_RAW_FIELD {
+            " @json.fallback".to_string()
+        } else if field.name != field.wire {
+            format!(" @json.rename({})", quote(&field.wire))
+        } else {
+            String::new()
+        };
+        let _ = writeln!(out, "    {}: {}{attribute},", field.name, field.ty.render(&local));
     }
     if let Some(extra) = &class.extra {
         doc(out, INDENT, "Keys the schema does not list, with their values.");
-        let _ = writeln!(out, "    {EXTRA_FIELD}: map<string, {}>,", extra.render(&local));
+        let _ = writeln!(out, "    {EXTRA_FIELD}: map<string, {}> @json.flatten,", extra.render(&local));
     }
-    let mut implementations = Vec::new();
-    if class.open_tag.is_some() {
-        // An open union's Other member: decoded by the classes and operations
-        // that hold its union (Index), encoded as the member it holds.
-        implementations.push(to_json(&[format!("baml.json.from(self.{OTHER_RAW_FIELD})")]));
-    } else {
-        if class.renamed || class.extra.is_some() || class.fields.iter().any(|f| index.has_open(&f.ty)) {
-            implementations.push(from_json(class, index));
-        }
-        // Default encoding writes every field under its BAML name, nulls
-        // included, and honors nested ToJson overrides; override only where
-        // that is wrong.
-        if class.renamed || class.extra.is_some() || (class.encoded && class.fields.iter().any(omittable)) {
-            implementations.push(to_json(&to_json_body(class)));
-        }
-    }
-    for implementation in implementations {
+    // Default encoding writes every field, nulls included. `@@json.omit_nulls`
+    // leaves out every unset optional field, so a required field that may be
+    // null needs an override: it has to be sent, as `null`.
+    let omits = (class.renamed || class.extra.is_some() || class.encoded) && class.fields.iter().any(omittable);
+    if omits && !class.fields.iter().any(required_nullable) {
         let _ = writeln!(out);
-        let _ = writeln!(out, "{}", nest(&implementation));
+        let _ = writeln!(out, "    @@json.omit_nulls");
+    } else if omits {
+        assert!(!class.renamed && class.extra.is_none(), "{}: `@json` attributes cannot sit beside the override", class.name);
+        let _ = writeln!(out);
+        let _ = writeln!(out, "{}", nest(&to_json(&to_json_body(class))));
     }
     let _ = writeln!(out, "}}");
 }
 
-/// `implements baml.FromJson`: every field from its wire name, open unions by
-/// their tags, and the keys the schema does not list into [`EXTRA_FIELD`].
-fn from_json(class: &Class, index: &Index) -> String {
-    let local = |n: &str| n.to_string();
-    let mut fields: Vec<String> = class
-        .fields
-        .iter()
-        .map(|f| format!("{}: {},", f.name, index.decode(&f.ty, &format!("baml.json.field(object, {})", quote(&f.wire)), &local)))
-        .collect();
-    let object = "let object: map<string, baml.json.json> =>";
-    let arm = match &class.extra {
-        None => format!("{object} {},", block(&class.name, &fields)),
-        Some(extra) => {
-            fields.push(format!("{EXTRA_FIELD}: extra,"));
-            let value = match extra {
-                Ty::Json => "object[key]".to_string(),
-                ty => format!("baml.json.to<{}>(object[key])", ty.render(&local)),
-            };
-            let statements = [
-                format!("let extra: map<string, {}> = {{}};", extra.render(&local)),
-                unlisted_keys("object.keys()", &class.fields, &format!("extra[key] = {value};")),
-                block(&class.name, &fields),
-            ];
-            lines(&format!("{object} {{"), &statements, "},")
-        }
-    };
-    let body = match_expr("j", &[arm, decode_error_arm(&format!("{} must be a JSON object", class.name))]);
-    block(
-        "implements baml.FromJson",
-        &[block("function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError", &[body])],
-    )
-}
-
-/// The statements of `ToJson.to_json`: every field under its wire name, an
-/// unset optional field left out, then the extra keys.
+/// The statements of `ToJson.to_json`: every field, an unset optional field
+/// left out.
 fn to_json_body(class: &Class) -> Vec<String> {
     let mut lines = vec!["let out: map<string, baml.json.json> = {};".to_string()];
     for field in &class.fields {
         let set = format!("out[{}] = baml.json.from(self.{});", quote(&field.wire), field.name);
         lines.push(if omittable(field) { format!("if (self.{} != null) {{ {set} }}", field.name) } else { set });
-    }
-    if class.extra.is_some() {
-        let keys = format!("self.{EXTRA_FIELD}.keys()");
-        lines.push(unlisted_keys(&keys, &class.fields, &format!("out[key] = baml.json.from(self.{EXTRA_FIELD}[key]);")));
     }
     lines.push("out".to_string());
     lines
@@ -364,27 +185,21 @@ fn to_json(body: &[String]) -> String {
     )
 }
 
-/// A loop running `statement` for every key in `keys` that is not the wire
-/// name of one of `fields`.
-fn unlisted_keys(keys: &str, fields: &[Field], statement: &str) -> String {
-    let body = if fields.is_empty() {
-        statement.to_string()
-    } else {
-        let listed = fields.iter().map(|f| quote(&f.wire)).collect::<Vec<_>>().join(" | ");
-        match_expr("key", &[format!("{listed} => {{}},"), lines("_ => {", &[statement.to_string()], "},")])
-    };
-    block(&format!("for (let key in {keys})"), &[body])
-}
-
 /// An optional field the request encoding leaves out when unset.
 fn omittable(field: &Field) -> bool {
     !field.required && field.ty.is_optional()
 }
 
+/// A field the request encoding sends even when it is `null`. `@@json.omit_nulls`
+/// leaves it out, except a `json` field, where `null` is a value.
+fn required_nullable(field: &Field) -> bool {
+    field.required && field.ty.is_optional() && !matches!(field.ty, Ty::Json)
+}
+
 /// One function per operation: its doc comment, its signature, and one call
 /// to the `root.internal` helper that sends the request and decodes the
 /// response (`baml/baml_src/ns_internal/http.baml`).
-pub fn operation(service: &str, kind: ClientKind, op: &Operation, index: &Index) -> Result<String, Error> {
+pub fn operation(service: &str, kind: ClientKind, op: &Operation) -> Result<String, Error> {
     // An operation without a group is in its service's own namespace.
     let qualify = |n: &str| match op.group {
         None => n.to_string(),
@@ -433,18 +248,6 @@ pub fn operation(service: &str, kind: ClientKind, op: &Operation, index: &Index)
         named.push(format!("body = root.internal.json_body({})", arg.name));
     }
     let helper = match &op.response {
-        // An open union decodes by its tag (Index), from the body as JSON.
-        Response::Json(ty) if index.has_open(ty) => {
-            let decode = block("(response) ->", &[index.decode(ty, "response", &qualify)]);
-            named.push(format!("decode = {decode}"));
-            format!("decoded<{}>", ty.render(&qualify))
-        }
-        Response::OptionalJson(ty) if index.has_open(ty) => {
-            return Err(Error::new(format!(
-                "{} {} (operation {}): a response that may be empty and holds an open union is not implemented",
-                op.method, op.path, op.id
-            )));
-        }
         Response::Json(ty) => format!("json<{}>", ty.render(&qualify)),
         Response::OptionalJson(ty) => format!("optional_json<{}>", ty.render(&qualify)),
         Response::Empty => "empty".to_string(),

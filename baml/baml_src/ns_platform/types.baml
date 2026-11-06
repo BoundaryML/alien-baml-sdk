@@ -114,27 +114,6 @@ class APIKeyDeploymentSetupConfigItemsItem {
     source: SetupItemStatusSourceProjectRelease | SetupItemStatusSourceBuiltIn | SetupItemStatusSourceOther,
     required: bool,
     configuration: SetupItemStatusConfiguration?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => APIKeyDeploymentSetupConfigItemsItem {
-                    item: baml.json.to<string>(baml.json.field(object, "item")),
-                    source: match (baml.json.field(object, "source")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "project-release" => baml.json.to<SetupItemStatusSourceProjectRelease>(member),
-                            "built-in" => baml.json.to<SetupItemStatusSourceBuiltIn>(member),
-                            _ => SetupItemStatusSourceOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    required: baml.json.to<bool>(baml.json.field(object, "required")),
-                    configuration: baml.json.to<SetupItemStatusConfiguration?>(baml.json.field(object, "configuration")),
-                },
-                _ => throw baml.json.DecodeError { message: "APIKeyDeploymentSetupConfigItemsItem must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class APIKeyDeploymentSetupEnvironmentVariable {
@@ -292,51 +271,13 @@ class AgentSessionEventOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class AgentSessionEventsResponse {
     events: AgentSessionEvent[],
     latestSeq: float,
     hasMore: bool,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => AgentSessionEventsResponse {
-                    events: match (baml.json.field(object, "events")) {
-                        let items: baml.json.json[] => items.map((item) -> {
-                            match (item) {
-                                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                                    "status" => baml.json.to<AgentSessionStatusEvent>(member),
-                                    "step" => baml.json.to<AgentSessionStepEvent>(member),
-                                    "tool_call" => baml.json.to<AgentSessionToolCallEvent>(member),
-                                    "tool_result" => baml.json.to<AgentSessionToolResultEvent>(member),
-                                    "markdown" => baml.json.to<AgentSessionMarkdownEvent>(member),
-                                    "approval_requested" => baml.json.to<AgentSessionApprovalRequestedEvent>(member),
-                                    "approval_granted" => baml.json.to<AgentSessionApprovalGrantedEvent>(member),
-                                    "session_restarted" => baml.json.to<AgentSessionRestartedEvent>(member),
-                                    "events_truncated" => baml.json.to<AgentSessionEventsTruncatedEvent>(member),
-                                    _ => AgentSessionEventOther { type: "UNKNOWN", raw: member },
-                                },
-                                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                            }
-                        }),
-                        _ => throw baml.json.DecodeError { message: "expected a JSON array", path: "" },
-                    },
-                    latestSeq: baml.json.to<float>(baml.json.field(object, "latestSeq")),
-                    hasMore: baml.json.to<bool>(baml.json.field(object, "hasMore")),
-                },
-                _ => throw baml.json.DecodeError { message: "AgentSessionEventsResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class AgentSessionEventsTruncatedEvent {
@@ -475,16 +416,7 @@ class AiAvailabilityObservation {
     /// Known values: `aws-bedrock`, `gcp-vertex`, `azure-foundry`, `anthropic`. Others may appear.
     source: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["catalogRevision"] = baml.json.from(self.catalogRevision);
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["models"] = baml.json.from(self.models);
-            out["source"] = baml.json.from(self.source);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class AiAvailabilityObservationModelsItem {
@@ -500,19 +432,7 @@ class AiAvailabilityObservationModelsItem {
     publicModelId: string,
     testedAt: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["accessTest"] = baml.json.from(self.accessTest);
-            out["availability"] = baml.json.from(self.availability);
-            out["blockers"] = baml.json.from(self.blockers);
-            out["clientApis"] = baml.json.from(self.clientApis);
-            if (self.errorCode != null) { out["errorCode"] = baml.json.from(self.errorCode); }
-            out["publicModelId"] = baml.json.from(self.publicModelId);
-            if (self.testedAt != null) { out["testedAt"] = baml.json.from(self.testedAt); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ApplyContainerRegistryManagerSnapshotRequestBody {
@@ -551,16 +471,7 @@ class ApproveAccessRequestRequestBody {
     source: map<string, json>?,
     approvedForMinutes: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["method"] = baml.json.from(self.method);
-            if (self.actorId != null) { out["actorId"] = baml.json.from(self.actorId); }
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            if (self.approvedForMinutes != null) { out["approvedForMinutes"] = baml.json.from(self.approvedForMinutes); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ApproveAccessRequestResponse {
@@ -601,45 +512,16 @@ class ApproveAccessRequestResponse {
 
 class BillingFeatureFlags {
     /// Wire name: `custom_domains`.
-    customDomains: bool,
+    customDomains: bool @json.rename("custom_domains"),
     /// Wire name: `private_managers`.
-    privateManagers: bool,
+    privateManagers: bool @json.rename("private_managers"),
     /// Wire name: `operations_custom_plugins`.
-    operationsCustomPlugins: bool,
+    operationsCustomPlugins: bool @json.rename("operations_custom_plugins"),
     /// Wire name: `sso_saml`.
-    ssoSaml: bool,
+    ssoSaml: bool @json.rename("sso_saml"),
     /// Wire name: `audit_logs`.
-    auditLogs: bool,
+    auditLogs: bool @json.rename("audit_logs"),
     airgapped: bool,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => BillingFeatureFlags {
-                    customDomains: baml.json.to<bool>(baml.json.field(object, "custom_domains")),
-                    privateManagers: baml.json.to<bool>(baml.json.field(object, "private_managers")),
-                    operationsCustomPlugins: baml.json.to<bool>(baml.json.field(object, "operations_custom_plugins")),
-                    ssoSaml: baml.json.to<bool>(baml.json.field(object, "sso_saml")),
-                    auditLogs: baml.json.to<bool>(baml.json.field(object, "audit_logs")),
-                    airgapped: baml.json.to<bool>(baml.json.field(object, "airgapped")),
-                },
-                _ => throw baml.json.DecodeError { message: "BillingFeatureFlags must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["custom_domains"] = baml.json.from(self.customDomains);
-            out["private_managers"] = baml.json.from(self.privateManagers);
-            out["operations_custom_plugins"] = baml.json.from(self.operationsCustomPlugins);
-            out["sso_saml"] = baml.json.from(self.ssoSaml);
-            out["audit_logs"] = baml.json.from(self.auditLogs);
-            out["airgapped"] = baml.json.from(self.airgapped);
-            out
-        }
-    }
 }
 
 class BillingLimits {
@@ -748,13 +630,7 @@ class CommandBootstrapRequestOther {
     /// Always `"UNKNOWN"`. The server's `role` is `raw["role"]`.
     role: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class CommandBootstrapRequestReceiver {
@@ -804,36 +680,6 @@ class CommandDeploymentInfo {
     managerName: string?,
     /// Whether the manager is Alien-hosted (system)
     managerIsSystem: bool?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => CommandDeploymentInfo {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    deploymentGroup: baml.json.to<CommandDeploymentGroupInfo?>(baml.json.field(object, "deploymentGroup")),
-                    platform: baml.json.to<string?>(baml.json.field(object, "platform")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    managerUrl: baml.json.to<string?>(baml.json.field(object, "managerUrl")),
-                    managerName: baml.json.to<string?>(baml.json.field(object, "managerName")),
-                    managerIsSystem: baml.json.to<bool?>(baml.json.field(object, "managerIsSystem")),
-                },
-                _ => throw baml.json.DecodeError { message: "CommandDeploymentInfo must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class CommandDeploymentInfoEnvironmentInfoAws {
@@ -879,13 +725,7 @@ class CommandDeploymentInfoEnvironmentInfoOther {
     /// Always `"UNKNOWN"`. The server's `platform` is `raw["platform"]`.
     platform: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class CommandDeploymentInfoEnvironmentInfoTest {
@@ -988,16 +828,7 @@ class CompleteCommandRequest {
     /// Error details if failed
     error: map<string, json>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["state"] = baml.json.from(self.state);
-            out["completedAt"] = baml.json.from(self.completedAt);
-            if (self.responseSizeBytes != null) { out["responseSizeBytes"] = baml.json.from(self.responseSizeBytes); }
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CompleteCommandResponse {
@@ -1012,7 +843,7 @@ class ComputePoolSelectionAutoscale {
     /// Failure-domain policy selected for a compute pool.
     ///
     /// Wire name: `failure_domains`.
-    failureDomains: ComputePoolSelectionFixedFailureDomains?,
+    failureDomains: ComputePoolSelectionFixedFailureDomains? @json.rename("failure_domains"),
     /// Provider machine type selected for this deployment.
     machine: string?,
     /// Maximum machine count.
@@ -1021,69 +852,21 @@ class ComputePoolSelectionAutoscale {
     min: int,
     mode: "autoscale",
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ComputePoolSelectionAutoscale {
-                    failureDomains: baml.json.to<ComputePoolSelectionFixedFailureDomains?>(baml.json.field(object, "failure_domains")),
-                    machine: baml.json.to<string?>(baml.json.field(object, "machine")),
-                    max: baml.json.to<int>(baml.json.field(object, "max")),
-                    min: baml.json.to<int>(baml.json.field(object, "min")),
-                    mode: baml.json.to<"autoscale">(baml.json.field(object, "mode")),
-                },
-                _ => throw baml.json.DecodeError { message: "ComputePoolSelectionAutoscale must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.failureDomains != null) { out["failure_domains"] = baml.json.from(self.failureDomains); }
-            if (self.machine != null) { out["machine"] = baml.json.from(self.machine); }
-            out["max"] = baml.json.from(self.max);
-            out["min"] = baml.json.from(self.min);
-            out["mode"] = baml.json.from(self.mode);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ComputePoolSelectionFixed {
     /// Failure-domain policy selected for a compute pool.
     ///
     /// Wire name: `failure_domains`.
-    failureDomains: ComputePoolSelectionFixedFailureDomains?,
+    failureDomains: ComputePoolSelectionFixedFailureDomains? @json.rename("failure_domains"),
     /// Provider machine type selected for this deployment.
     machine: string?,
     /// Number of machines to run.
     machines: int,
     mode: "fixed",
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ComputePoolSelectionFixed {
-                    failureDomains: baml.json.to<ComputePoolSelectionFixedFailureDomains?>(baml.json.field(object, "failure_domains")),
-                    machine: baml.json.to<string?>(baml.json.field(object, "machine")),
-                    machines: baml.json.to<int>(baml.json.field(object, "machines")),
-                    mode: baml.json.to<"fixed">(baml.json.field(object, "mode")),
-                },
-                _ => throw baml.json.DecodeError { message: "ComputePoolSelectionFixed must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.failureDomains != null) { out["failure_domains"] = baml.json.from(self.failureDomains); }
-            if (self.machine != null) { out["machine"] = baml.json.from(self.machine); }
-            out["machines"] = baml.json.from(self.machines);
-            out["mode"] = baml.json.from(self.mode);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Failure-domain policy selected for a compute pool.
@@ -1094,14 +877,7 @@ class ComputePoolSelectionFixedFailureDomains {
     /// Number of distinct failure domains across which new stateful replicas may be spread.
     spread: int,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.selectedFailureDomains != null) { out["selectedFailureDomains"] = baml.json.from(self.selectedFailureDomains); }
-            out["spread"] = baml.json.from(self.spread);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `mode` is always `"UNKNOWN"`, so code that switches on `mode` handles it like any other member; `raw` holds the member as the server sent it. A known `mode` never decodes as this class.
@@ -1109,13 +885,7 @@ class ComputePoolSelectionOther {
     /// Always `"UNKNOWN"`. The server's `mode` is `raw["mode"]`.
     mode: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class ConfigureModelsRequest {
@@ -1123,14 +893,7 @@ class ConfigureModelsRequest {
     allowedProviders: string[]?,
     requirements: ConfigureModelsRequestRequirementsItem[],
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.allowedProviders != null) { out["allowedProviders"] = baml.json.from(self.allowedProviders); }
-            out["requirements"] = baml.json.from(self.requirements);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ConfigureModelsRequestRequirementsItem {
@@ -1169,15 +932,7 @@ class ConfigureProjectSourceRequestBodyRepository {
     /// The name of a directory or relative path to the source code of your project. When null is used it will default to the project root
     rootDirectory: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["mode"] = baml.json.from(self.mode);
-            out["gitRepository"] = baml.json.from(self.gitRepository);
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ConfigureProjectSourceRequestBodyTemplate {
@@ -1190,16 +945,7 @@ class ConfigureProjectSourceRequestBodyTemplate {
     /// The name of a directory or relative path to the source code of your project. When null is used it will default to the project root
     rootDirectory: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["mode"] = baml.json.from(self.mode);
-            out["targetNamespace"] = baml.json.from(self.targetNamespace);
-            out["templatePath"] = baml.json.from(self.templatePath);
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ConfigureProjectSourceResponse {
@@ -1238,17 +984,7 @@ class ConfigureRemoteSandboxRequest {
     azureImage: string?,
     gcpImage: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.customImage != null) { out["customImage"] = baml.json.from(self.customImage); }
-            if (self.maxLifetimeSeconds != null) { out["maxLifetimeSeconds"] = baml.json.from(self.maxLifetimeSeconds); }
-            if (self.azureIdleSuspendSeconds != null) { out["azureIdleSuspendSeconds"] = baml.json.from(self.azureIdleSuspendSeconds); }
-            if (self.azureImage != null) { out["azureImage"] = baml.json.from(self.azureImage); }
-            if (self.gcpImage != null) { out["gcpImage"] = baml.json.from(self.gcpImage); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ContainerRegistryManagerSnapshot {
@@ -1339,29 +1075,6 @@ class CreateAPIKeyRequest {
     scope: Scope,
     /// Optional expiration date for the API key
     expiresAt: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => CreateAPIKeyRequest {
-                    description: baml.json.to<string?>(baml.json.field(object, "description")),
-                    scope: match (baml.json.field(object, "scope")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "workspace" => baml.json.to<WorkspaceScope>(member),
-                            "project" => baml.json.to<ProjectScope>(member),
-                            "deployment" => baml.json.to<DeploymentScope>(member),
-                            "deployment-group" => baml.json.to<DeploymentGroupScope>(member),
-                            "manager" => baml.json.to<ManagerScope>(member),
-                            _ => ScopeOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    expiresAt: baml.json.to<string?>(baml.json.field(object, "expiresAt")),
-                },
-                _ => throw baml.json.DecodeError { message: "CreateAPIKeyRequest must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// Response containing the new API key and its metadata
@@ -1422,26 +1135,7 @@ class CreateAccessRequest {
     /// Scopes an `aws`/`gcloud`/`az` debug grant to a customer-meaningful account/project/subscription string. Requires `debugTool` set to that provider.
     debugCloudScope: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.replayKey != null) { out["replayKey"] = baml.json.from(self.replayKey); }
-            if (self.requestedExpiresAt != null) { out["requestedExpiresAt"] = baml.json.from(self.requestedExpiresAt); }
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            if (self.remediationPlanId != null) { out["remediationPlanId"] = baml.json.from(self.remediationPlanId); }
-            if (self.title != null) { out["title"] = baml.json.from(self.title); }
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            if (self.commands != null) { out["commands"] = baml.json.from(self.commands); }
-            if (self.operation != null) { out["operation"] = baml.json.from(self.operation); }
-            if (self.operationPattern != null) { out["operationPattern"] = baml.json.from(self.operationPattern); }
-            if (self.params != null) { out["params"] = baml.json.from(self.params); }
-            if (self.maxRisk != null) { out["maxRisk"] = baml.json.from(self.maxRisk); }
-            if (self.debugTool != null) { out["debugTool"] = baml.json.from(self.debugTool); }
-            if (self.debugNamespace != null) { out["debugNamespace"] = baml.json.from(self.debugNamespace); }
-            if (self.debugCloudScope != null) { out["debugCloudScope"] = baml.json.from(self.debugCloudScope); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateAccessRequestCommandsItem {
@@ -1455,18 +1149,7 @@ class CreateAccessRequestCommandsItem {
     pluginVersion: string?,
     operationContractHash: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["command"] = baml.json.from(self.command);
-            out["summary"] = baml.json.from(self.summary);
-            if (self.params != null) { out["params"] = baml.json.from(self.params); }
-            if (self.tier != null) { out["tier"] = baml.json.from(self.tier); }
-            if (self.pluginVersion != null) { out["pluginVersion"] = baml.json.from(self.pluginVersion); }
-            if (self.operationContractHash != null) { out["operationContractHash"] = baml.json.from(self.operationContractHash); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateAccessRequestResponse {
@@ -1545,21 +1228,7 @@ class CreateAwsVirtualKeyRequest {
     /// Default: `{}` (applied by the server when left out).
     tags: map<string, string>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.project != null) { out["project"] = baml.json.from(self.project); }
-            out["selector"] = baml.json.from(self.selector);
-            out["awsAccountId"] = baml.json.from(self.awsAccountId);
-            out["awsRegion"] = baml.json.from(self.awsRegion);
-            out["idempotencyKey"] = baml.json.from(self.idempotencyKey);
-            if (self.alias != null) { out["alias"] = baml.json.from(self.alias); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.deletionWindowDays != null) { out["deletionWindowDays"] = baml.json.from(self.deletionWindowDays); }
-            if (self.tags != null) { out["tags"] = baml.json.from(self.tags); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateAwsVirtualKeyRequestSelector1 {
@@ -1602,21 +1271,7 @@ class CreateCommandRequest {
     /// Opaque operation result contract with an optional accessRequestId binding, forwarded by a manager and persisted atomically before dispatch
     operationResultContract: json?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            out["name"] = baml.json.from(self.name);
-            if (self.params != null) { out["params"] = baml.json.from(self.params); }
-            if (self.idempotencyKey != null) { out["idempotencyKey"] = baml.json.from(self.idempotencyKey); }
-            if (self.target != null) { out["target"] = baml.json.from(self.target); }
-            if (self.initialState != null) { out["initialState"] = baml.json.from(self.initialState); }
-            if (self.deadline != null) { out["deadline"] = baml.json.from(self.deadline); }
-            if (self.requestSizeBytes != null) { out["requestSizeBytes"] = baml.json.from(self.requestSizeBytes); }
-            if (self.operationResultContract != null) { out["operationResultContract"] = baml.json.from(self.operationResultContract); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateCommandResponse {
@@ -1645,16 +1300,7 @@ class CreateContainerRegistryCredentialRequestBody {
     repositorySubset: string[]?,
     expiresAt: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["label"] = baml.json.from(self.label);
-            out["scope"] = baml.json.from(self.scope);
-            if (self.repositorySubset != null) { out["repositorySubset"] = baml.json.from(self.repositorySubset); }
-            if (self.expiresAt != null) { out["expiresAt"] = baml.json.from(self.expiresAt); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateContainerRegistryCredentialResponse {
@@ -1704,18 +1350,7 @@ class CreateDebugSessionRequest {
     /// The caller's own access request whose debug grant authorized this session, for the same deployment.
     accessRequestId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.id != null) { out["id"] = baml.json.from(self.id); }
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            if (self.owner != null) { out["owner"] = baml.json.from(self.owner); }
-            out["expiresAt"] = baml.json.from(self.expiresAt);
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            if (self.accessRequestId != null) { out["accessRequestId"] = baml.json.from(self.accessRequestId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateDeploymentGroupRequest {
@@ -1730,16 +1365,7 @@ class CreateDeploymentGroupRequest {
     /// Default: `100` (applied by the server when left out).
     maxDeployments: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.externalId != null) { out["externalId"] = baml.json.from(self.externalId); }
-            out["project"] = baml.json.from(self.project);
-            if (self.maxDeployments != null) { out["maxDeployments"] = baml.json.from(self.maxDeployments); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateDeploymentGroupTokenRequest {
@@ -1760,20 +1386,7 @@ class CreateDeploymentGroupTokenRequest {
     /// Default: `{}` (applied by the server when left out).
     inputValues: StackInputValuesRequest?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.returnUrl != null) { out["returnUrl"] = baml.json.from(self.returnUrl); }
-            if (self.refreshUrl != null) { out["refreshUrl"] = baml.json.from(self.refreshUrl); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.expiresAt != null) { out["expiresAt"] = baml.json.from(self.expiresAt); }
-            if (self.deploymentSetupConfig != null) { out["deploymentSetupConfig"] = baml.json.from(self.deploymentSetupConfig); }
-            if (self.setupItems != null) { out["setupItems"] = baml.json.from(self.setupItems); }
-            if (self.entryPoint != null) { out["entryPoint"] = baml.json.from(self.entryPoint); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateDeploymentGroupTokenResponse {
@@ -1824,28 +1437,14 @@ class CreateDomainEndpointRequestBody {
     kind: string,
     owner: DomainEndpointOwner?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["kind"] = baml.json.from(self.kind);
-            if (self.owner != null) { out["owner"] = baml.json.from(self.owner); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateDomainRequest {
     domain: string,
     setup: CreateDomainRequestSetup?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["domain"] = baml.json.from(self.domain);
-            if (self.setup != null) { out["setup"] = baml.json.from(self.setup); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateDomainRequestSetup {
@@ -1855,16 +1454,7 @@ class CreateDomainRequestSetup {
     deploymentUrlProjectId: string?,
     managerIds: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.deploymentPortal != null) { out["deploymentPortal"] = baml.json.from(self.deploymentPortal); }
-            if (self.packages != null) { out["packages"] = baml.json.from(self.packages); }
-            if (self.deploymentUrlProjectId != null) { out["deploymentUrlProjectId"] = baml.json.from(self.deploymentUrlProjectId); }
-            if (self.managerIds != null) { out["managerIds"] = baml.json.from(self.managerIds); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateFirstPartyDeploymentSessionResponse {
@@ -1893,31 +1483,6 @@ class CreateManagerResponse {
     deploymentLink: string,
     setupConfig: CreateManagerResponseSetupConfig,
     setup: CreateManagerResponseSetupCloudformation | CreateManagerResponseSetupGoogleOauth | CreateManagerResponseSetupTerraform | CreateManagerResponseSetupOther,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => CreateManagerResponse {
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    setupStatus: baml.json.to<string>(baml.json.field(object, "setupStatus")),
-                    setupToken: baml.json.to<string>(baml.json.field(object, "setupToken")),
-                    setupTokenId: baml.json.to<string>(baml.json.field(object, "setupTokenId")),
-                    deploymentLink: baml.json.to<string>(baml.json.field(object, "deploymentLink")),
-                    setupConfig: baml.json.to<CreateManagerResponseSetupConfig>(baml.json.field(object, "setupConfig")),
-                    setup: match (baml.json.field(object, "setup")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "method"))) {
-                            "cloudformation" => baml.json.to<CreateManagerResponseSetupCloudformation>(member),
-                            "google-oauth" => baml.json.to<CreateManagerResponseSetupGoogleOauth>(member),
-                            "terraform" => baml.json.to<CreateManagerResponseSetupTerraform>(member),
-                            _ => CreateManagerResponseSetupOther { method: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "CreateManagerResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class CreateManagerResponseSetupCloudformation {
@@ -1978,13 +1543,7 @@ class CreateManagerResponseSetupOther {
     /// Always `"UNKNOWN"`. The server's `method` is `raw["method"]`.
     method: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class CreateManagerResponseSetupTerraform {
@@ -2023,17 +1582,7 @@ class CreateProjectFromTemplateRequest {
     /// Configuration for embedded packages (CLI, CloudFormation, Helm, Terraform)
     packagesConfig: ProjectPackagesConfig?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["targetNamespace"] = baml.json.from(self.targetNamespace);
-            out["templatePath"] = baml.json.from(self.templatePath);
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            if (self.packagesConfig != null) { out["packagesConfig"] = baml.json.from(self.packagesConfig); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateProjectFromTemplateResponse {
@@ -2089,17 +1638,7 @@ class CreateProjectRequest {
     /// Known values: `deployments`, `models`, `keys`, `buckets`, `registry`. Others may appear.
     enabledCapabilities: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.gitRepository != null) { out["gitRepository"] = baml.json.from(self.gitRepository); }
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            if (self.packagesConfig != null) { out["packagesConfig"] = baml.json.from(self.packagesConfig); }
-            if (self.enabledCapabilities != null) { out["enabledCapabilities"] = baml.json.from(self.enabledCapabilities); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateProjectResponse {
@@ -2142,14 +1681,7 @@ class CreateReleaseChannelRequestBody {
     /// Unique identifier for the release.
     releaseId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.releaseId != null) { out["releaseId"] = baml.json.from(self.releaseId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateReleaseRequest {
@@ -2166,20 +1698,7 @@ class CreateReleaseRequest {
     /// Release channel to advance. Defaults to production. Omit when promote is false.
     channel: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["project"] = baml.json.from(self.project);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            if (self.title != null) { out["title"] = baml.json.from(self.title); }
-            if (self.gitMetadata != null) { out["gitMetadata"] = baml.json.from(self.gitMetadata); }
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            if (self.promote != null) { out["promote"] = baml.json.from(self.promote); }
-            if (self.channel != null) { out["channel"] = baml.json.from(self.channel); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateSetupLinkRequest {
@@ -2212,25 +1731,7 @@ class CreateSetupLinkRequest {
     /// Recover Remote Operator bootstrap values for this exact existing group only if it has no deployments. Serialized with registration; never creates or rebinds a group.
     recoveryDeploymentGroupId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["externalId"] = baml.json.from(self.externalId);
-            out["name"] = baml.json.from(self.name);
-            out["project"] = baml.json.from(self.project);
-            if (self.maxDeployments != null) { out["maxDeployments"] = baml.json.from(self.maxDeployments); }
-            if (self.returnUrl != null) { out["returnUrl"] = baml.json.from(self.returnUrl); }
-            if (self.refreshUrl != null) { out["refreshUrl"] = baml.json.from(self.refreshUrl); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.expiresAt != null) { out["expiresAt"] = baml.json.from(self.expiresAt); }
-            if (self.deploymentSetupConfig != null) { out["deploymentSetupConfig"] = baml.json.from(self.deploymentSetupConfig); }
-            if (self.setupItems != null) { out["setupItems"] = baml.json.from(self.setupItems); }
-            if (self.entryPoint != null) { out["entryPoint"] = baml.json.from(self.entryPoint); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            if (self.recoveryDeploymentGroupId != null) { out["recoveryDeploymentGroupId"] = baml.json.from(self.recoveryDeploymentGroupId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateSetupLinkResponse {
@@ -2258,20 +1759,7 @@ class CreateSetupRegistrationOperationRequest {
     /// ManagementExternalId the stack was created or updated with. Absent when the template predates the parameter; empty when the installer left it blank. Compared with the deployment group's value and never stored.
     managementExternalId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["action"] = baml.json.from(self.action);
-            out["sourceKind"] = baml.json.from(self.sourceKind);
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            if (self.idempotencyKey != null) { out["idempotencyKey"] = baml.json.from(self.idempotencyKey); }
-            if (self.cloudFormation != null) { out["cloudFormation"] = baml.json.from(self.cloudFormation); }
-            if (self.managementExternalId != null) { out["managementExternalId"] = baml.json.from(self.managementExternalId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateVolumeRestoreRequest {
@@ -2295,17 +1783,7 @@ class CreateWebhookEndpointRequestBody {
     disabled: bool?,
     projectIds: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["url"] = baml.json.from(self.url);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.filterTypes != null) { out["filterTypes"] = baml.json.from(self.filterTypes); }
-            if (self.disabled != null) { out["disabled"] = baml.json.from(self.disabled); }
-            if (self.projectIds != null) { out["projectIds"] = baml.json.from(self.projectIds); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class CreateWorkspaceInvitationRequestBody {
@@ -2325,14 +1803,7 @@ class CreateWorkspaceRequest {
     /// Optional workspace logo URL
     logoUrl: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.logoUrl != null) { out["logoUrl"] = baml.json.from(self.logoUrl); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DebugPackagePresignedURLs {
@@ -2458,15 +1929,7 @@ class DenyAccessRequestRequestBody {
     actorId: string?,
     source: map<string, json>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["method"] = baml.json.from(self.method);
-            if (self.actorId != null) { out["actorId"] = baml.json.from(self.actorId); }
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DenyAccessRequestResponse {
@@ -2600,69 +2063,6 @@ class Deployment {
     workspaceId: string,
     /// A customer encryption key is unavailable. Dependent resources are preserved until access returns.
     customerKeyUnavailable: bool?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => Deployment {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    publicSubdomain: baml.json.to<string?>(baml.json.field(object, "publicSubdomain")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    region: baml.json.to<string?>(baml.json.field(object, "region")),
-                    deploymentProtocolVersion: baml.json.to<int>(baml.json.field(object, "deploymentProtocolVersion")),
-                    deploymentGroupId: baml.json.to<string>(baml.json.field(object, "deploymentGroupId")),
-                    membershipRevision: baml.json.to<int?>(baml.json.field(object, "membershipRevision")),
-                    membershipProjectionRevision: baml.json.to<int?>(baml.json.field(object, "membershipProjectionRevision")),
-                    purpose: baml.json.to<string>(baml.json.field(object, "purpose")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    stackSettings: baml.json.to<StackSettings>(baml.json.field(object, "stackSettings")),
-                    stackState: baml.json.to<DeploymentStackState?>(baml.json.field(object, "stackState")),
-                    runtimeMetadata: baml.json.to<DeploymentRuntimeMetadata?>(baml.json.field(object, "runtimeMetadata")),
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    releaseChannel: baml.json.to<string>(baml.json.field(object, "releaseChannel")),
-                    importSource: baml.json.to<string?>(baml.json.field(object, "importSource")),
-                    setupMethod: baml.json.to<string?>(baml.json.field(object, "setupMethod")),
-                    setupMetadata: baml.json.to<map<string, json>?>(baml.json.field(object, "setupMetadata")),
-                    setupTarget: baml.json.to<string?>(baml.json.field(object, "setupTarget")),
-                    setupFingerprint: baml.json.to<string?>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int?>(baml.json.field(object, "setupFingerprintVersion")),
-                    operatorScope: baml.json.to<string?>(baml.json.field(object, "operatorScope")),
-                    operatorPermission: baml.json.to<string?>(baml.json.field(object, "operatorPermission")),
-                    operatorVersion: baml.json.to<string?>(baml.json.field(object, "operatorVersion")),
-                    capabilities: baml.json.to<OperatorCapabilityReport[]?>(baml.json.field(object, "capabilities")),
-                    observedOperationsBundleHash: baml.json.to<string?>(baml.json.field(object, "observedOperationsBundleHash")),
-                    observedOperations: baml.json.to<ReportedOperation[]?>(baml.json.field(object, "observedOperations")),
-                    retryRequested: baml.json.to<bool>(baml.json.field(object, "retryRequested")),
-                    lastHeartbeatAt: baml.json.to<string?>(baml.json.field(object, "lastHeartbeatAt")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    updateState: baml.json.to<DeploymentUpdateState?>(baml.json.field(object, "updateState")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    customerKeyUnavailable: baml.json.to<bool?>(baml.json.field(object, "customerKeyUnavailable")),
-                },
-                _ => throw baml.json.DecodeError { message: "Deployment must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class DeploymentCheckRequestedEvent {
@@ -2719,45 +2119,6 @@ class DeploymentComputePlanPoolsItem {
     recommended: ComputePoolSelection,
     machines: DeploymentComputePlanPoolsItemMachinesItem[],
     errors: string[]?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentComputePlanPoolsItem {
-                    poolId: baml.json.to<string>(baml.json.field(object, "poolId")),
-                    workloads: baml.json.to<string[]>(baml.json.field(object, "workloads")),
-                    requirements: baml.json.to<DeploymentComputePlanPoolsItemRequirements>(baml.json.field(object, "requirements")),
-                    scale: match (baml.json.field(object, "scale")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "fixed" => baml.json.to<DeploymentComputePlanPoolsItemScaleFixed>(member),
-                            "autoscale" => baml.json.to<DeploymentComputePlanPoolsItemScaleAutoscale>(member),
-                            _ => DeploymentComputePlanPoolsItemScaleOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    selected: match (baml.json.field(object, "selected")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "fixed" => baml.json.to<ComputePoolSelectionFixed>(member),
-                            "autoscale" => baml.json.to<ComputePoolSelectionAutoscale>(member),
-                            _ => ComputePoolSelectionOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    recommended: match (baml.json.field(object, "recommended")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "fixed" => baml.json.to<ComputePoolSelectionFixed>(member),
-                            "autoscale" => baml.json.to<ComputePoolSelectionAutoscale>(member),
-                            _ => ComputePoolSelectionOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    machines: baml.json.to<DeploymentComputePlanPoolsItemMachinesItem[]>(baml.json.field(object, "machines")),
-                    errors: baml.json.to<string[]?>(baml.json.field(object, "errors")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentComputePlanPoolsItem must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class DeploymentComputePlanPoolsItemMachinesItem {
@@ -2802,13 +2163,7 @@ class DeploymentComputePlanPoolsItemScaleOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Deployment configuration
@@ -2927,111 +2282,6 @@ class DeploymentConfig {
     /// `ContainerOutputs.volumes`. Only a volume that a controller reports in
     /// `ContainerOutputs.volumes` can be the target of a request.
     volumeRestores: DeploymentConfigVolumeRestoresItem[]?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentConfig {
-                    allowFrozenChanges: baml.json.to<bool?>(baml.json.field(object, "allowFrozenChanges")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    computeBackend: baml.json.to<DeploymentConfigComputeBackend?>(baml.json.field(object, "computeBackend")),
-                    deploymentName: baml.json.to<string?>(baml.json.field(object, "deploymentName")),
-                    deploymentToken: baml.json.to<string?>(baml.json.field(object, "deploymentToken")),
-                    domainMetadata: baml.json.to<DeploymentConfigDomainMetadata?>(baml.json.field(object, "domainMetadata")),
-                    environmentVariables: baml.json.to<DeploymentConfigEnvironmentVariables>(baml.json.field(object, "environmentVariables")),
-                    externalBindings: match (baml.json.field(object, "externalBindings")) {
-                        null => null,
-                        let entries: map<string, baml.json.json> => {
-                            let out: map<string, ExternalBinding> = {};
-                            for (let key in entries.keys()) {
-                                out[key] = match (entries[key]) {
-                                    let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                                        "storage" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "s3" => baml.json.to<ExternalBindingStorageS3>(member),
-                                            "blob" => baml.json.to<ExternalBindingStorageBlob>(member),
-                                            "gcs" => baml.json.to<ExternalBindingStorageGcs>(member),
-                                            "local-storage" => baml.json.to<ExternalBindingStorageLocalStorage>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "queue" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "sqs" => baml.json.to<ExternalBindingQueueSqs>(member),
-                                            "pubsub" => baml.json.to<ExternalBindingQueuePubsub>(member),
-                                            "servicebus" => baml.json.to<ExternalBindingQueueServicebus>(member),
-                                            "local-queue" => baml.json.to<ExternalBindingQueueLocalQueue>(member),
-                                            "local-queue-http" => baml.json.to<ExternalBindingQueueLocalQueueHttp>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "kv" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "dynamodb" => baml.json.to<ExternalBindingKvDynamodb>(member),
-                                            "firestore" => baml.json.to<ExternalBindingKvFirestore>(member),
-                                            "tablestorage" => baml.json.to<ExternalBindingKvTablestorage>(member),
-                                            "redis" => baml.json.to<ExternalBindingKvRedis>(member),
-                                            "local-kv" => baml.json.to<ExternalBindingKvLocalKv>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "artifact_registry" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "ecr" => baml.json.to<ExternalBindingArtifactRegistryEcr>(member),
-                                            "acr" => baml.json.to<ExternalBindingArtifactRegistryAcr>(member),
-                                            "gar" => baml.json.to<ExternalBindingArtifactRegistryGar>(member),
-                                            "local" => baml.json.to<ExternalBindingArtifactRegistryLocal>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "vault" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "parameter-store" => baml.json.to<ExternalBindingVaultParameterStore>(member),
-                                            "secret-manager" => baml.json.to<ExternalBindingVaultSecretManager>(member),
-                                            "key-vault" => baml.json.to<ExternalBindingVaultKeyVault>(member),
-                                            "kubernetes-secret" => baml.json.to<ExternalBindingVaultKubernetesSecret>(member),
-                                            "local-vault" => baml.json.to<ExternalBindingVaultLocalVault>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "container_apps_environment" => baml.json.to<ExternalBindingContainerAppsEnvironment>(member),
-                                        "postgres" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "aurora" => baml.json.to<ExternalBindingPostgresAurora>(member),
-                                            "aurora-managed" => baml.json.to<ExternalBindingPostgresAuroraManaged>(member),
-                                            "cloud-sql" => baml.json.to<ExternalBindingPostgresCloudSql>(member),
-                                            "flexible-server" => baml.json.to<ExternalBindingPostgresFlexibleServer>(member),
-                                            "external" => baml.json.to<ExternalBindingPostgresExternal>(member),
-                                            "local-postgres" => baml.json.to<ExternalBindingPostgresLocalPostgres>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "ai" => baml.json.to<ExternalBindingAi>(member),
-                                        _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                    },
-                                    _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                                };
-                            }
-                            out
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    gcpFederationScope: baml.json.to<DeploymentConfigGcpFederationScope?>(baml.json.field(object, "gcpFederationScope")),
-                    inputValues: baml.json.to<map<string, json>?>(baml.json.field(object, "inputValues")),
-                    labelDomain: baml.json.to<string?>(baml.json.field(object, "labelDomain")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    managerUrl: baml.json.to<string?>(baml.json.field(object, "managerUrl")),
-                    monitoring: baml.json.to<DeploymentConfigMonitoring?>(baml.json.field(object, "monitoring")),
-                    nativeImageHost: baml.json.to<string?>(baml.json.field(object, "nativeImageHost")),
-                    observeAllNamespaces: baml.json.to<bool?>(baml.json.field(object, "observeAllNamespaces")),
-                    observeLabelSelector: baml.json.to<string?>(baml.json.field(object, "observeLabelSelector")),
-                    publicEndpoints: baml.json.to<map<string, map<string, string>>?>(baml.json.field(object, "publicEndpoints")),
-                    stackSettings: baml.json.to<StackSettings?>(baml.json.field(object, "stackSettings")),
-                    storedSecretInputIds: baml.json.to<string[]?>(baml.json.field(object, "storedSecretInputIds")),
-                    volumeRestores: baml.json.to<DeploymentConfigVolumeRestoresItem[]?>(baml.json.field(object, "volumeRestores")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentConfig must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// Compute backend for Container and Worker resources.
@@ -3269,15 +2519,7 @@ class DeploymentConfigManagementConfigGcp {
     serviceAccountEmail: string,
     platform: "gcp",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.federationTrust != null) { out["federationTrust"] = baml.json.from(self.federationTrust); }
-            out["serviceAccountEmail"] = baml.json.from(self.serviceAccountEmail);
-            out["platform"] = baml.json.from(self.platform);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentConfigManagementConfigKubernetes {
@@ -3289,13 +2531,7 @@ class DeploymentConfigManagementConfigOther {
     /// Always `"UNKNOWN"`. The server's `platform` is `raw["platform"]`.
     platform: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// OTLP log export configuration for a deployment.
@@ -3536,76 +2772,6 @@ class DeploymentDetailResponse {
     project: DeploymentProjectInfo?,
     /// Plugin/operations-bundle sync status for this deployment's Operator. Null for non-pull deployments.
     operatorSync: DeploymentDetailResponseOperatorSync?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentDetailResponse {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    publicSubdomain: baml.json.to<string?>(baml.json.field(object, "publicSubdomain")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    region: baml.json.to<string?>(baml.json.field(object, "region")),
-                    deploymentProtocolVersion: baml.json.to<int>(baml.json.field(object, "deploymentProtocolVersion")),
-                    deploymentGroupId: baml.json.to<string>(baml.json.field(object, "deploymentGroupId")),
-                    membershipRevision: baml.json.to<int?>(baml.json.field(object, "membershipRevision")),
-                    membershipProjectionRevision: baml.json.to<int?>(baml.json.field(object, "membershipProjectionRevision")),
-                    purpose: baml.json.to<string>(baml.json.field(object, "purpose")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    stackSettings: baml.json.to<StackSettings>(baml.json.field(object, "stackSettings")),
-                    stackState: baml.json.to<DeploymentStackState?>(baml.json.field(object, "stackState")),
-                    runtimeMetadata: baml.json.to<DeploymentRuntimeMetadata?>(baml.json.field(object, "runtimeMetadata")),
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    releaseChannel: baml.json.to<string>(baml.json.field(object, "releaseChannel")),
-                    importSource: baml.json.to<string?>(baml.json.field(object, "importSource")),
-                    setupMethod: baml.json.to<string?>(baml.json.field(object, "setupMethod")),
-                    setupMetadata: baml.json.to<map<string, json>?>(baml.json.field(object, "setupMetadata")),
-                    setupTarget: baml.json.to<string?>(baml.json.field(object, "setupTarget")),
-                    setupFingerprint: baml.json.to<string?>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int?>(baml.json.field(object, "setupFingerprintVersion")),
-                    operatorScope: baml.json.to<string?>(baml.json.field(object, "operatorScope")),
-                    operatorPermission: baml.json.to<string?>(baml.json.field(object, "operatorPermission")),
-                    operatorVersion: baml.json.to<string?>(baml.json.field(object, "operatorVersion")),
-                    capabilities: baml.json.to<OperatorCapabilityReport[]?>(baml.json.field(object, "capabilities")),
-                    observedOperationsBundleHash: baml.json.to<string?>(baml.json.field(object, "observedOperationsBundleHash")),
-                    observedOperations: baml.json.to<ReportedOperation[]?>(baml.json.field(object, "observedOperations")),
-                    retryRequested: baml.json.to<bool>(baml.json.field(object, "retryRequested")),
-                    lastHeartbeatAt: baml.json.to<string?>(baml.json.field(object, "lastHeartbeatAt")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    updateState: baml.json.to<DeploymentUpdateState?>(baml.json.field(object, "updateState")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    customerKeyUnavailable: baml.json.to<bool?>(baml.json.field(object, "customerKeyUnavailable")),
-                    resources: baml.json.to<DeploymentResource[]?>(baml.json.field(object, "resources")),
-                    resourceObservedAt: baml.json.to<string?>(baml.json.field(object, "resourceObservedAt")),
-                    release: baml.json.to<DeploymentReleaseInfo?>(baml.json.field(object, "release")),
-                    desiredRelease: baml.json.to<DeploymentReleaseInfo?>(baml.json.field(object, "desiredRelease")),
-                    deploymentGroup: baml.json.to<DeploymentGroupInfo?>(baml.json.field(object, "deploymentGroup")),
-                    project: baml.json.to<DeploymentProjectInfo?>(baml.json.field(object, "project")),
-                    operatorSync: baml.json.to<DeploymentDetailResponseOperatorSync?>(baml.json.field(object, "operatorSync")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentDetailResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// Plugin/operations-bundle sync status for this deployment's Operator. Null for non-pull deployments.
@@ -3693,20 +2859,7 @@ class DeploymentError {
     /// of an application.
     source: json?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["code"] = baml.json.from(self.code);
-            if (self.context != null) { out["context"] = baml.json.from(self.context); }
-            if (self.hint != null) { out["hint"] = baml.json.from(self.hint); }
-            if (self.httpStatusCode != null) { out["httpStatusCode"] = baml.json.from(self.httpStatusCode); }
-            out["internal"] = baml.json.from(self.internal);
-            out["message"] = baml.json.from(self.message);
-            if (self.retryable != null) { out["retryable"] = baml.json.from(self.retryable); }
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentGroup {
@@ -3820,31 +2973,6 @@ class DeploymentInfoInstallContextTargetsValue {
     awsManagingAccountId: string?,
     /// AWS only: the ExternalId to enter as the ManagementExternalId setup parameter. Issued per deployment group; the management roles require it on every AssumeRole.
     managementExternalId: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentInfoInstallContextTargetsValue {
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    managerUrl: baml.json.to<string>(baml.json.field(object, "managerUrl")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    awsManagingAccountId: baml.json.to<string?>(baml.json.field(object, "awsManagingAccountId")),
-                    managementExternalId: baml.json.to<string?>(baml.json.field(object, "managementExternalId")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentInfoInstallContextTargetsValue must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class DeploymentInfoModelAvailabilitySourcesItem {
@@ -4087,56 +3215,7 @@ class DeploymentInfoSetupConfigInputsItem {
     /// Portable stack input validation constraints.
     validation: DeploymentInfoSetupConfigInputsItemValidation?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentInfoSetupConfigInputsItem {
-                    default: match (baml.json.field(object, "default")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "string" => baml.json.to<DeploymentInfoSetupConfigInputsItemDefaultString>(member),
-                            "number" => baml.json.to<DeploymentInfoSetupConfigInputsItemDefaultNumber>(member),
-                            "boolean" => baml.json.to<DeploymentInfoSetupConfigInputsItemDefaultBoolean>(member),
-                            "stringList" => baml.json.to<DeploymentInfoSetupConfigInputsItemDefaultStringList>(member),
-                            _ => DeploymentInfoSetupConfigInputsItemDefaultOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    description: baml.json.to<string>(baml.json.field(object, "description")),
-                    env: baml.json.to<DeploymentInfoSetupConfigInputsItemEnvItem[]?>(baml.json.field(object, "env")),
-                    generate: baml.json.to<DeploymentInfoSetupConfigInputsItemGenerate?>(baml.json.field(object, "generate")),
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    kind: baml.json.to<string>(baml.json.field(object, "kind")),
-                    label: baml.json.to<string>(baml.json.field(object, "label")),
-                    placeholder: baml.json.to<string?>(baml.json.field(object, "placeholder")),
-                    platforms: baml.json.to<string[]?>(baml.json.field(object, "platforms")),
-                    providedBy: baml.json.to<string[]>(baml.json.field(object, "providedBy")),
-                    required: baml.json.to<bool>(baml.json.field(object, "required")),
-                    validation: baml.json.to<DeploymentInfoSetupConfigInputsItemValidation?>(baml.json.field(object, "validation")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentInfoSetupConfigInputsItem must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.default != null) { out["default"] = baml.json.from(self.default); }
-            out["description"] = baml.json.from(self.description);
-            if (self.env != null) { out["env"] = baml.json.from(self.env); }
-            if (self.generate != null) { out["generate"] = baml.json.from(self.generate); }
-            out["id"] = baml.json.from(self.id);
-            out["kind"] = baml.json.from(self.kind);
-            out["label"] = baml.json.from(self.label);
-            if (self.placeholder != null) { out["placeholder"] = baml.json.from(self.placeholder); }
-            if (self.platforms != null) { out["platforms"] = baml.json.from(self.platforms); }
-            out["providedBy"] = baml.json.from(self.providedBy);
-            out["required"] = baml.json.from(self.required);
-            if (self.validation != null) { out["validation"] = baml.json.from(self.validation); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentInfoSetupConfigInputsItemDefaultBoolean {
@@ -4156,13 +3235,7 @@ class DeploymentInfoSetupConfigInputsItemDefaultOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class DeploymentInfoSetupConfigInputsItemDefaultString {
@@ -4188,15 +3261,7 @@ class DeploymentInfoSetupConfigInputsItemEnvItem {
     /// Known values: `plain`, `secret`. Others may appear.
     type: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.targetResources != null) { out["targetResources"] = baml.json.from(self.targetResources); }
-            if (self.type != null) { out["type"] = baml.json.from(self.type); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Asks Alien to generate a secret input's value.
@@ -4231,21 +3296,7 @@ class DeploymentInfoSetupConfigInputsItemValidation {
     /// Allowed string enum values.
     values: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.format != null) { out["format"] = baml.json.from(self.format); }
-            if (self.max != null) { out["max"] = baml.json.from(self.max); }
-            if (self.maxItems != null) { out["maxItems"] = baml.json.from(self.maxItems); }
-            if (self.maxLength != null) { out["maxLength"] = baml.json.from(self.maxLength); }
-            if (self.min != null) { out["min"] = baml.json.from(self.min); }
-            if (self.minItems != null) { out["minItems"] = baml.json.from(self.minItems); }
-            if (self.minLength != null) { out["minLength"] = baml.json.from(self.minLength); }
-            if (self.pattern != null) { out["pattern"] = baml.json.from(self.pattern); }
-            if (self.values != null) { out["values"] = baml.json.from(self.values); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentInfoSetupUpdate {
@@ -4349,20 +3400,7 @@ class DeploymentInstallationOptions {
     chartInstallMode: string?,
     namespace: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.publicEndpoints != null) { out["publicEndpoints"] = baml.json.from(self.publicEndpoints); }
-            if (self.customerKeyConnection != null) { out["customerKeyConnection"] = baml.json.from(self.customerKeyConnection); }
-            if (self.gcpProjectId != null) { out["gcpProjectId"] = baml.json.from(self.gcpProjectId); }
-            if (self.stackName != null) { out["stackName"] = baml.json.from(self.stackName); }
-            if (self.clusterSource != null) { out["clusterSource"] = baml.json.from(self.clusterSource); }
-            if (self.chartInstallMode != null) { out["chartInstallMode"] = baml.json.from(self.chartInstallMode); }
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentInstallationTerraform {
@@ -4471,62 +3509,6 @@ class DeploymentListItemResponse {
     release: DeploymentReleaseInfo?,
     deploymentGroup: DeploymentGroupInfo?,
     project: DeploymentProjectInfo?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentListItemResponse {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    customerKeyUnavailable: baml.json.to<bool?>(baml.json.field(object, "customerKeyUnavailable")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    deploymentProtocolVersion: baml.json.to<int>(baml.json.field(object, "deploymentProtocolVersion")),
-                    deploymentGroupId: baml.json.to<string>(baml.json.field(object, "deploymentGroupId")),
-                    purpose: baml.json.to<string>(baml.json.field(object, "purpose")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    releaseChannel: baml.json.to<string>(baml.json.field(object, "releaseChannel")),
-                    importSource: baml.json.to<string?>(baml.json.field(object, "importSource")),
-                    setupMethod: baml.json.to<string?>(baml.json.field(object, "setupMethod")),
-                    setupMetadata: baml.json.to<map<string, json>?>(baml.json.field(object, "setupMetadata")),
-                    setupTarget: baml.json.to<string?>(baml.json.field(object, "setupTarget")),
-                    setupFingerprint: baml.json.to<string?>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int?>(baml.json.field(object, "setupFingerprintVersion")),
-                    operatorScope: baml.json.to<string?>(baml.json.field(object, "operatorScope")),
-                    operatorPermission: baml.json.to<string?>(baml.json.field(object, "operatorPermission")),
-                    operatorVersion: baml.json.to<string?>(baml.json.field(object, "operatorVersion")),
-                    capabilities: baml.json.to<OperatorCapabilityReport[]?>(baml.json.field(object, "capabilities")),
-                    lastHeartbeatAt: baml.json.to<string?>(baml.json.field(object, "lastHeartbeatAt")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    retryRequested: baml.json.to<bool>(baml.json.field(object, "retryRequested")),
-                    updateBlocked: baml.json.to<bool>(baml.json.field(object, "updateBlocked")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    release: baml.json.to<DeploymentReleaseInfo?>(baml.json.field(object, "release")),
-                    deploymentGroup: baml.json.to<DeploymentGroupInfo?>(baml.json.field(object, "deploymentGroup")),
-                    project: baml.json.to<DeploymentProjectInfo?>(baml.json.field(object, "project")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentListItemResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class DeploymentMachine {
@@ -4662,21 +3644,7 @@ class DeploymentPortalAppearanceInput {
     /// Default: `"comfortable"` (applied by the server when left out).
     density: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.avatarUrl != null) { out["avatarUrl"] = baml.json.from(self.avatarUrl); }
-            if (self.faviconUrl != null) { out["faviconUrl"] = baml.json.from(self.faviconUrl); }
-            if (self.preset != null) { out["preset"] = baml.json.from(self.preset); }
-            if (self.accentColor != null) { out["accentColor"] = baml.json.from(self.accentColor); }
-            if (self.title != null) { out["title"] = baml.json.from(self.title); }
-            if (self.subtitle != null) { out["subtitle"] = baml.json.from(self.subtitle); }
-            if (self.supportUrl != null) { out["supportUrl"] = baml.json.from(self.supportUrl); }
-            if (self.docsUrl != null) { out["docsUrl"] = baml.json.from(self.docsUrl); }
-            if (self.density != null) { out["density"] = baml.json.from(self.density); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentPortalDomainResponse {
@@ -4829,32 +3797,7 @@ class DeploymentRuntimeMetadata {
     /// clears it before a deployment can write runtime credentials again.
     vaultCredentialsRevoked: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.automaticSetup != null) { out["automaticSetup"] = baml.json.from(self.automaticSetup); }
-            if (self.credentialRetry != null) { out["credentialRetry"] = baml.json.from(self.credentialRetry); }
-            if (self.deletionPolicy != null) { out["deletionPolicy"] = baml.json.from(self.deletionPolicy); }
-            if (self.deployerSecrets != null) { out["deployerSecrets"] = baml.json.from(self.deployerSecrets); }
-            if (self.directSetupRevision != null) { out["directSetupRevision"] = baml.json.from(self.directSetupRevision); }
-            if (self.initialSetupAuthority != null) { out["initialSetupAuthority"] = baml.json.from(self.initialSetupAuthority); }
-            if (self.lastSyncedEnvVarsHash != null) { out["lastSyncedEnvVarsHash"] = baml.json.from(self.lastSyncedEnvVarsHash); }
-            if (self.lastSyncedSecretNames != null) { out["lastSyncedSecretNames"] = baml.json.from(self.lastSyncedSecretNames); }
-            if (self.pendingPreparedReleaseId != null) { out["pendingPreparedReleaseId"] = baml.json.from(self.pendingPreparedReleaseId); }
-            if (self.pendingPreparedStack != null) { out["pendingPreparedStack"] = baml.json.from(self.pendingPreparedStack); }
-            if (self.persistedGateAnswers != null) { out["persistedGateAnswers"] = baml.json.from(self.persistedGateAnswers); }
-            if (self.preparedStack != null) { out["preparedStack"] = baml.json.from(self.preparedStack); }
-            if (self.registryAccess != null) { out["registryAccess"] = baml.json.from(self.registryAccess); }
-            if (self.registryAccessGranted != null) { out["registryAccessGranted"] = baml.json.from(self.registryAccessGranted); }
-            if (self.retainedDataProtectionStartedAt != null) { out["retainedDataProtectionStartedAt"] = baml.json.from(self.retainedDataProtectionStartedAt); }
-            if (self.retainedStorageProtectionConfirmedAt != null) { out["retainedStorageProtectionConfirmedAt"] = baml.json.from(self.retainedStorageProtectionConfirmedAt); }
-            if (self.retainedStorageProtectionHash != null) { out["retainedStorageProtectionHash"] = baml.json.from(self.retainedStorageProtectionHash); }
-            if (self.setupScaffolding != null) { out["setupScaffolding"] = baml.json.from(self.setupScaffolding); }
-            if (self.setupUpdateAuthorization != null) { out["setupUpdateAuthorization"] = baml.json.from(self.setupUpdateAuthorization); }
-            if (self.vaultCredentialsRevoked != null) { out["vaultCredentialsRevoked"] = baml.json.from(self.vaultCredentialsRevoked); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A credential outage's durable retry window, scoped to its deployment phase.
@@ -4888,19 +3831,7 @@ class DeploymentRuntimeMetadataDeployerSecretsItem {
     /// hash of it). A new version reaches workloads with the next update.
     version: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["inputId"] = baml.json.from(self.inputId);
-            out["label"] = baml.json.from(self.label);
-            out["location"] = baml.json.from(self.location);
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            out["required"] = baml.json.from(self.required);
-            out["status"] = baml.json.from(self.status);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Where a deployer writes a vault-native secret.
@@ -4924,19 +3855,7 @@ class DeploymentRuntimeMetadataDeployerSecretsItemLocation {
     /// in the stack's own account or project.
     vaultName: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["cliCommand"] = baml.json.from(self.cliCommand);
-            if (self.commands != null) { out["commands"] = baml.json.from(self.commands); }
-            if (self.consoleUrl != null) { out["consoleUrl"] = baml.json.from(self.consoleUrl); }
-            if (self.deleteCommand != null) { out["deleteCommand"] = baml.json.from(self.deleteCommand); }
-            out["name"] = baml.json.from(self.name);
-            out["store"] = baml.json.from(self.store);
-            if (self.vaultName != null) { out["vaultName"] = baml.json.from(self.vaultName); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Shell-specific instructions generated beside the secret location.
@@ -4950,16 +3869,7 @@ class DeploymentRuntimeMetadataDeployerSecretsItemLocationCommands {
     /// Commands for a shell family. Values are never sent to the control plane.
     windows: DeploymentRuntimeMetadataDeployerSecretsItemLocationCommandsUnix,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.checkCommand != null) { out["checkCommand"] = baml.json.from(self.checkCommand); }
-            if (self.target != null) { out["target"] = baml.json.from(self.target); }
-            out["unix"] = baml.json.from(self.unix);
-            out["windows"] = baml.json.from(self.windows);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Commands for a shell family. Values are never sent to the control plane.
@@ -4978,14 +3888,7 @@ class DeploymentRuntimeMetadataRegistryAccess {
     /// added later needs the policy rewritten.
     serviceTypes: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.repositories != null) { out["repositories"] = baml.json.from(self.repositories); }
-            if (self.serviceTypes != null) { out["serviceTypes"] = baml.json.from(self.serviceTypes); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Cloud objects a direct setup created so a runtime-owned resource can run.
@@ -5001,16 +3904,7 @@ class DeploymentRuntimeMetadataSetupScaffoldingValue {
     /// Known values: `awsSandbox`. Others may appear.
     type: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["buildRoleName"] = baml.json.from(self.buildRoleName);
-            if (self.egress != null) { out["egress"] = baml.json.from(self.egress); }
-            if (self.imageArn != null) { out["imageArn"] = baml.json.from(self.imageArn); }
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// The objects that keep an AWS deny sandbox's sessions inside the VPC. Each id is recorded as
@@ -5026,16 +3920,7 @@ class DeploymentRuntimeMetadataSetupScaffoldingValueEgress {
     /// Security group permitting egress to loopback only.
     securityGroupId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.connectorArn != null) { out["connectorArn"] = baml.json.from(self.connectorArn); }
-            if (self.connectorRequest != null) { out["connectorRequest"] = baml.json.from(self.connectorRequest); }
-            out["operatorRoleName"] = baml.json.from(self.operatorRoleName);
-            if (self.securityGroupId != null) { out["securityGroupId"] = baml.json.from(self.securityGroupId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// One-shot authority for a setup re-import to replace setup-owned resources.
@@ -5078,17 +3963,7 @@ class DeploymentSetupConfigInput {
     /// Operator-pinned deployment subdomain for this setup token.
     publicSubdomain: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.metadata != null) { out["metadata"] = baml.json.from(self.metadata); }
-            if (self.policy != null) { out["policy"] = baml.json.from(self.policy); }
-            if (self.environmentVariables != null) { out["environmentVariables"] = baml.json.from(self.environmentVariables); }
-            if (self.validatedReleaseSelection != null) { out["validatedReleaseSelection"] = baml.json.from(self.validatedReleaseSelection); }
-            if (self.publicSubdomain != null) { out["publicSubdomain"] = baml.json.from(self.publicSubdomain); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentSetupConfigInputPolicy {
@@ -5115,20 +3990,7 @@ class DeploymentSetupConfigInputPolicy {
     allowReleasePinning: bool?,
     stackSettings: DeploymentSetupStackSettingsPolicy?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.allowedPlatforms != null) { out["allowedPlatforms"] = baml.json.from(self.allowedPlatforms); }
-            if (self.allowedAIProviders != null) { out["allowedAIProviders"] = baml.json.from(self.allowedAIProviders); }
-            if (self.allowedKubernetesBasePlatforms != null) { out["allowedKubernetesBasePlatforms"] = baml.json.from(self.allowedKubernetesBasePlatforms); }
-            if (self.allowedKubernetesClusterSources != null) { out["allowedKubernetesClusterSources"] = baml.json.from(self.allowedKubernetesClusterSources); }
-            if (self.allowedSetupMethods != null) { out["allowedSetupMethods"] = baml.json.from(self.allowedSetupMethods); }
-            if (self.configurationProfile != null) { out["configurationProfile"] = baml.json.from(self.configurationProfile); }
-            if (self.allowReleasePinning != null) { out["allowReleasePinning"] = baml.json.from(self.allowReleasePinning); }
-            if (self.stackSettings != null) { out["stackSettings"] = baml.json.from(self.stackSettings); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Immutable Release whose schema validated first-party inputs for this platform and channel.
@@ -5152,16 +4014,7 @@ class DeploymentSetupItemSelection {
     /// Known values: `aws-bedrock`, `gcp-vertex`, `azure-foundry`, `anthropic`, `databricks`, `openai`. Others may appear.
     providerAllowlist: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["item"] = baml.json.from(self.item);
-            out["required"] = baml.json.from(self.required);
-            if (self.releaseChannel != null) { out["releaseChannel"] = baml.json.from(self.releaseChannel); }
-            if (self.providerAllowlist != null) { out["providerAllowlist"] = baml.json.from(self.providerAllowlist); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type DeploymentSetupMetadata = map<string, json>
@@ -5190,20 +4043,7 @@ class DeploymentSetupPolicy {
     allowReleasePinning: bool?,
     stackSettings: DeploymentSetupStackSettingsPolicy?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["allowedPlatforms"] = baml.json.from(self.allowedPlatforms);
-            if (self.allowedAIProviders != null) { out["allowedAIProviders"] = baml.json.from(self.allowedAIProviders); }
-            if (self.allowedKubernetesBasePlatforms != null) { out["allowedKubernetesBasePlatforms"] = baml.json.from(self.allowedKubernetesBasePlatforms); }
-            if (self.allowedKubernetesClusterSources != null) { out["allowedKubernetesClusterSources"] = baml.json.from(self.allowedKubernetesClusterSources); }
-            out["allowedSetupMethods"] = baml.json.from(self.allowedSetupMethods);
-            if (self.configurationProfile != null) { out["configurationProfile"] = baml.json.from(self.configurationProfile); }
-            if (self.allowReleasePinning != null) { out["allowReleasePinning"] = baml.json.from(self.allowReleasePinning); }
-            if (self.stackSettings != null) { out["stackSettings"] = baml.json.from(self.stackSettings); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentSetupProgressRequest {
@@ -5241,20 +4081,7 @@ class DeploymentSetupStackSettingsPolicy {
     allowExternalBindings: bool?,
     allowCustomRegistry: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.defaults != null) { out["defaults"] = baml.json.from(self.defaults); }
-            if (self.allowedDeploymentModels != null) { out["allowedDeploymentModels"] = baml.json.from(self.allowedDeploymentModels); }
-            if (self.allowedNetworkModes != null) { out["allowedNetworkModes"] = baml.json.from(self.allowedNetworkModes); }
-            if (self.allowedUpdatesModes != null) { out["allowedUpdatesModes"] = baml.json.from(self.allowedUpdatesModes); }
-            if (self.allowedTelemetryModes != null) { out["allowedTelemetryModes"] = baml.json.from(self.allowedTelemetryModes); }
-            if (self.allowedHeartbeatsModes != null) { out["allowedHeartbeatsModes"] = baml.json.from(self.allowedHeartbeatsModes); }
-            if (self.allowExternalBindings != null) { out["allowExternalBindings"] = baml.json.from(self.allowExternalBindings); }
-            if (self.allowCustomRegistry != null) { out["allowCustomRegistry"] = baml.json.from(self.allowCustomRegistry); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Raw engine state for installers and the CLI to resume, update, and destroy deployments. UIs should read resources[] for resource status and errors.
@@ -5276,7 +4103,7 @@ class DeploymentStackStateResourcesValue {
     /// Stored as JSON to make the struct serializable and movable to alien-core.
     ///
     /// Wire name: `_internal`.
-    internal: json?,
+    internal: json? @json.rename("_internal"),
     /// Resource that can hold any resource type in the Alien system. All resources share common 'type' and 'id' fields with additional type-specific properties.
     config: DeploymentStackStateResourcesValueConfig,
     /// Represents the target cloud platform.
@@ -5325,54 +4152,7 @@ class DeploymentStackStateResourcesValue {
     /// The high-level type of the resource (e.g., Worker::RESOURCE_TYPE, Storage::RESOURCE_TYPE).
     type: string,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentStackStateResourcesValue {
-                    internal: baml.json.to<json?>(baml.json.field(object, "_internal")),
-                    config: baml.json.to<DeploymentStackStateResourcesValueConfig>(baml.json.field(object, "config")),
-                    controllerPlatform: baml.json.to<string?>(baml.json.field(object, "controllerPlatform")),
-                    dependencies: baml.json.to<DeploymentStackStateResourcesValueDependenciesItem[]?>(baml.json.field(object, "dependencies")),
-                    description: baml.json.to<string?>(baml.json.field(object, "description")),
-                    displayName: baml.json.to<string?>(baml.json.field(object, "displayName")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    lastFailedState: baml.json.to<json?>(baml.json.field(object, "lastFailedState")),
-                    lifecycle: baml.json.to<string?>(baml.json.field(object, "lifecycle")),
-                    outputs: baml.json.to<DeploymentStackStateResourcesValueOutputs?>(baml.json.field(object, "outputs")),
-                    previousConfig: baml.json.to<DeploymentStackStateResourcesValueConfig?>(baml.json.field(object, "previousConfig")),
-                    progress: baml.json.to<string?>(baml.json.field(object, "progress")),
-                    remoteBindingParams: baml.json.to<json?>(baml.json.field(object, "remoteBindingParams")),
-                    retryAttempt: baml.json.to<int?>(baml.json.field(object, "retryAttempt")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    type: baml.json.to<string>(baml.json.field(object, "type")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentStackStateResourcesValue must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.internal != null) { out["_internal"] = baml.json.from(self.internal); }
-            out["config"] = baml.json.from(self.config);
-            if (self.controllerPlatform != null) { out["controllerPlatform"] = baml.json.from(self.controllerPlatform); }
-            if (self.dependencies != null) { out["dependencies"] = baml.json.from(self.dependencies); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            if (self.lastFailedState != null) { out["lastFailedState"] = baml.json.from(self.lastFailedState); }
-            if (self.lifecycle != null) { out["lifecycle"] = baml.json.from(self.lifecycle); }
-            if (self.outputs != null) { out["outputs"] = baml.json.from(self.outputs); }
-            if (self.previousConfig != null) { out["previousConfig"] = baml.json.from(self.previousConfig); }
-            if (self.progress != null) { out["progress"] = baml.json.from(self.progress); }
-            if (self.remoteBindingParams != null) { out["remoteBindingParams"] = baml.json.from(self.remoteBindingParams); }
-            if (self.retryAttempt != null) { out["retryAttempt"] = baml.json.from(self.retryAttempt); }
-            out["status"] = baml.json.from(self.status);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Resource that can hold any resource type in the Alien system. All resources share common 'type' and 'id' fields with additional type-specific properties.
@@ -5382,48 +4162,7 @@ class DeploymentStackStateResourcesValueConfig {
     /// Resource type identifier that determines the specific kind of resource. This field is used for polymorphic deserialization and resource-specific behavior.
     type: string,
     /// Keys the schema does not list, with their values.
-    additionalProperties: map<string, json>,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => {
-                    let extra: map<string, json> = {};
-                    for (let key in object.keys()) {
-                        match (key) {
-                            "id" | "type" => {},
-                            _ => {
-                                extra[key] = object[key];
-                            },
-                        }
-                    }
-                    DeploymentStackStateResourcesValueConfig {
-                        id: baml.json.to<string>(baml.json.field(object, "id")),
-                        type: baml.json.to<string>(baml.json.field(object, "type")),
-                        additionalProperties: extra,
-                    }
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentStackStateResourcesValueConfig must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["id"] = baml.json.from(self.id);
-            out["type"] = baml.json.from(self.type);
-            for (let key in self.additionalProperties.keys()) {
-                match (key) {
-                    "id" | "type" => {},
-                    _ => {
-                        out[key] = baml.json.from(self.additionalProperties[key]);
-                    },
-                }
-            }
-            out
-        }
-    }
+    additionalProperties: map<string, json> @json.flatten,
 }
 
 /// Reference to a resource by its stable id and resource type.
@@ -5438,46 +4177,7 @@ class DeploymentStackStateResourcesValueOutputs {
     /// Resource type identifier that determines the specific kind of resource. This field is used for polymorphic deserialization and resource-specific behavior.
     type: string,
     /// Keys the schema does not list, with their values.
-    additionalProperties: map<string, json>,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => {
-                    let extra: map<string, json> = {};
-                    for (let key in object.keys()) {
-                        match (key) {
-                            "type" => {},
-                            _ => {
-                                extra[key] = object[key];
-                            },
-                        }
-                    }
-                    DeploymentStackStateResourcesValueOutputs {
-                        type: baml.json.to<string>(baml.json.field(object, "type")),
-                        additionalProperties: extra,
-                    }
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentStackStateResourcesValueOutputs must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["type"] = baml.json.from(self.type);
-            for (let key in self.additionalProperties.keys()) {
-                match (key) {
-                    "type" => {},
-                    _ => {
-                        out[key] = baml.json.from(self.additionalProperties[key]);
-                    },
-                }
-            }
-            out
-        }
-    }
+    additionalProperties: map<string, json> @json.flatten,
 }
 
 /// Current deployment state (includes releases)
@@ -5530,53 +4230,7 @@ class DeploymentState {
     /// and which is the target.
     targetRelease: TargetDeploymentReleaseInfo?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => DeploymentState {
-                    currentRelease: baml.json.to<TargetDeploymentReleaseInfo?>(baml.json.field(object, "currentRelease")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    protocolVersion: baml.json.to<int>(baml.json.field(object, "protocolVersion")),
-                    retryRequested: baml.json.to<bool?>(baml.json.field(object, "retryRequested")),
-                    runtimeMetadata: baml.json.to<DeploymentRuntimeMetadata?>(baml.json.field(object, "runtimeMetadata")),
-                    stackState: baml.json.to<DeploymentStackState?>(baml.json.field(object, "stackState")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    targetRelease: baml.json.to<TargetDeploymentReleaseInfo?>(baml.json.field(object, "targetRelease")),
-                },
-                _ => throw baml.json.DecodeError { message: "DeploymentState must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.currentRelease != null) { out["currentRelease"] = baml.json.from(self.currentRelease); }
-            if (self.environmentInfo != null) { out["environmentInfo"] = baml.json.from(self.environmentInfo); }
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            out["platform"] = baml.json.from(self.platform);
-            out["protocolVersion"] = baml.json.from(self.protocolVersion);
-            if (self.retryRequested != null) { out["retryRequested"] = baml.json.from(self.retryRequested); }
-            if (self.runtimeMetadata != null) { out["runtimeMetadata"] = baml.json.from(self.runtimeMetadata); }
-            if (self.stackState != null) { out["stackState"] = baml.json.from(self.stackState); }
-            out["status"] = baml.json.from(self.status);
-            if (self.targetRelease != null) { out["targetRelease"] = baml.json.from(self.targetRelease); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DeploymentStats {
@@ -5750,14 +4404,7 @@ class DrainMachinesMachineRequest {
     deadlineSeconds: int?,
     force: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.deadlineSeconds != null) { out["deadlineSeconds"] = baml.json.from(self.deadlineSeconds); }
-            if (self.force != null) { out["force"] = baml.json.from(self.force); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DrainMachinesMachineResponse {
@@ -5793,18 +4440,7 @@ class DynamicContainerSpec {
     env: map<string, string>?,
     healthCheck: DynamicContainerSpecHealthCheck?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["image"] = baml.json.from(self.image);
-            out["resources"] = baml.json.from(self.resources);
-            out["replicas"] = baml.json.from(self.replicas);
-            out["ports"] = baml.json.from(self.ports);
-            if (self.env != null) { out["env"] = baml.json.from(self.env); }
-            if (self.healthCheck != null) { out["healthCheck"] = baml.json.from(self.healthCheck); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class DynamicContainerSpecHealthCheck {
@@ -5850,16 +4486,7 @@ class EnsureDeploymentGroupByExternalIdRequest {
     /// Default: `100` (applied by the server when left out).
     maxDeployments: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["externalId"] = baml.json.from(self.externalId);
-            out["name"] = baml.json.from(self.name);
-            out["project"] = baml.json.from(self.project);
-            if (self.maxDeployments != null) { out["maxDeployments"] = baml.json.from(self.maxDeployments); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class EnsureDeploymentGroupByNameRequest {
@@ -5872,15 +4499,7 @@ class EnsureDeploymentGroupByNameRequest {
     /// Default: `100` (applied by the server when left out).
     maxDeployments: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["project"] = baml.json.from(self.project);
-            if (self.maxDeployments != null) { out["maxDeployments"] = baml.json.from(self.maxDeployments); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class EnvironmentVariableConfig {
@@ -5913,81 +4532,6 @@ class Event {
     createdAt: string,
     /// Unique identifier for the workspace.
     workspaceId: string,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => Event {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    deploymentId: baml.json.to<string?>(baml.json.field(object, "deploymentId")),
-                    releaseId: baml.json.to<string?>(baml.json.field(object, "releaseId")),
-                    debugSessionId: baml.json.to<string?>(baml.json.field(object, "debugSessionId")),
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "DeploymentCheckRequested" => baml.json.to<DeploymentCheckRequestedEvent>(member),
-                            "DeploymentEndpointHealthChanged" => baml.json.to<DeploymentEndpointHealthChangedEvent>(member),
-                            "DeploymentGroupMoved" => baml.json.to<DeploymentGroupMovedEvent>(member),
-                            "LoadingConfiguration" => baml.json.to<EventDataLoadingConfiguration>(member),
-                            "Finished" => baml.json.to<EventDataFinished>(member),
-                            "BuildingStack" => baml.json.to<EventDataBuildingStack>(member),
-                            "RunningPreflights" => baml.json.to<EventDataRunningPreflights>(member),
-                            "DownloadingAlienRuntime" => baml.json.to<EventDataDownloadingAlienRuntime>(member),
-                            "BuildingResource" => baml.json.to<EventDataBuildingResource>(member),
-                            "BuildingImage" => baml.json.to<EventDataBuildingImage>(member),
-                            "PushingImage" => baml.json.to<EventDataPushingImage>(member),
-                            "PushingStack" => baml.json.to<EventDataPushingStack>(member),
-                            "PushingResource" => baml.json.to<EventDataPushingResource>(member),
-                            "CreatingRelease" => baml.json.to<EventDataCreatingRelease>(member),
-                            "CompilingCode" => baml.json.to<EventDataCompilingCode>(member),
-                            "StackStep" => baml.json.to<EventDataStackStep>(member),
-                            "GeneratingCloudFormationTemplate" => baml.json.to<EventDataGeneratingCloudFormationTemplate>(member),
-                            "GeneratingTemplate" => baml.json.to<EventDataGeneratingTemplate>(member),
-                            "ProvisioningAgent" => baml.json.to<EventDataProvisioningAgent>(member),
-                            "UpdatingAgent" => baml.json.to<EventDataUpdatingAgent>(member),
-                            "DeletingAgent" => baml.json.to<EventDataDeletingAgent>(member),
-                            "DebuggingAgent" => baml.json.to<EventDataDebuggingAgent>(member),
-                            "PreparingEnvironment" => baml.json.to<EventDataPreparingEnvironment>(member),
-                            "DeployingStack" => baml.json.to<EventDataDeployingStack>(member),
-                            "RunningTestWorker" => baml.json.to<EventDataRunningTestWorker>(member),
-                            "CleaningUpStack" => baml.json.to<EventDataCleaningUpStack>(member),
-                            "CleaningUpEnvironment" => baml.json.to<EventDataCleaningUpEnvironment>(member),
-                            "SettingUpPlatformContext" => baml.json.to<EventDataSettingUpPlatformContext>(member),
-                            "EnsuringDockerRepository" => baml.json.to<EventDataEnsuringDockerRepository>(member),
-                            "DeployingCloudFormationStack" => baml.json.to<EventDataDeployingCloudFormationStack>(member),
-                            "AssumingRole" => baml.json.to<EventDataAssumingRole>(member),
-                            "ImportingStackStateFromCloudFormation" => baml.json.to<EventDataImportingStackStateFromCloudFormation>(member),
-                            "DeletingCloudFormationStack" => baml.json.to<EventDataDeletingCloudFormationStack>(member),
-                            "EmptyingBuckets" => baml.json.to<EventDataEmptyingBuckets>(member),
-                            "DeploymentCreated" => baml.json.to<EventDataDeploymentCreated>(member),
-                            "DeploymentReleased" => baml.json.to<EventDataDeploymentReleased>(member),
-                            "DeploymentFailed" => baml.json.to<EventDataDeploymentFailed>(member),
-                            "DeploymentDegraded" => baml.json.to<EventDataDeploymentDegraded>(member),
-                            "DeploymentRecovered" => baml.json.to<EventDataDeploymentRecovered>(member),
-                            "DeploymentDeleted" => baml.json.to<EventDataDeploymentDeleted>(member),
-                            "ReleaseChannelUpdated" => baml.json.to<EventDataReleaseChannelUpdated>(member),
-                            "DeploymentReleaseChannelChanged" => baml.json.to<EventDataDeploymentReleaseChannelChanged>(member),
-                            "DeploymentRetryRequested" => baml.json.to<EventDataDeploymentRetryRequested>(member),
-                            "DeploymentRedeployRequested" => baml.json.to<EventDataDeploymentRedeployRequested>(member),
-                            "DeploymentReleasePinned" => baml.json.to<EventDataDeploymentReleasePinned>(member),
-                            "DeploymentReleaseUnpinned" => baml.json.to<EventDataDeploymentReleaseUnpinned>(member),
-                            "DeploymentEnvironmentUpdated" => baml.json.to<EventDataDeploymentEnvironmentUpdated>(member),
-                            "DeploymentVolumeRestoreRequested" => baml.json.to<EventDataDeploymentVolumeRestoreRequested>(member),
-                            "DeploymentVolumeRestoreCancelled" => baml.json.to<EventDataDeploymentVolumeRestoreCancelled>(member),
-                            "DeploymentDeletionRequested" => baml.json.to<EventDataDeploymentDeletionRequested>(member),
-                            "DeploymentCredentialRotation" => baml.json.to<DeploymentCredentialRotationEvent>(member),
-                            _ => EventDataOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    state: baml.json.to<EventStateFailed | string>(baml.json.field(object, "state")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                },
-                _ => throw baml.json.DecodeError { message: "Event must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class EventDataAssumingRole {
@@ -6316,13 +4860,7 @@ class EventDataOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class EventDataPreparingEnvironment {
@@ -6450,82 +4988,6 @@ class EventListItemResponse {
     workspaceId: string,
     /// createdAt of the event's referenced release, included when ?include=releaseCreatedAt is used
     releaseCreatedAt: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => EventListItemResponse {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    deploymentId: baml.json.to<string?>(baml.json.field(object, "deploymentId")),
-                    releaseId: baml.json.to<string?>(baml.json.field(object, "releaseId")),
-                    debugSessionId: baml.json.to<string?>(baml.json.field(object, "debugSessionId")),
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "DeploymentCheckRequested" => baml.json.to<DeploymentCheckRequestedEvent>(member),
-                            "DeploymentEndpointHealthChanged" => baml.json.to<DeploymentEndpointHealthChangedEvent>(member),
-                            "DeploymentGroupMoved" => baml.json.to<DeploymentGroupMovedEvent>(member),
-                            "LoadingConfiguration" => baml.json.to<EventDataLoadingConfiguration>(member),
-                            "Finished" => baml.json.to<EventDataFinished>(member),
-                            "BuildingStack" => baml.json.to<EventDataBuildingStack>(member),
-                            "RunningPreflights" => baml.json.to<EventDataRunningPreflights>(member),
-                            "DownloadingAlienRuntime" => baml.json.to<EventDataDownloadingAlienRuntime>(member),
-                            "BuildingResource" => baml.json.to<EventDataBuildingResource>(member),
-                            "BuildingImage" => baml.json.to<EventDataBuildingImage>(member),
-                            "PushingImage" => baml.json.to<EventDataPushingImage>(member),
-                            "PushingStack" => baml.json.to<EventDataPushingStack>(member),
-                            "PushingResource" => baml.json.to<EventDataPushingResource>(member),
-                            "CreatingRelease" => baml.json.to<EventDataCreatingRelease>(member),
-                            "CompilingCode" => baml.json.to<EventDataCompilingCode>(member),
-                            "StackStep" => baml.json.to<EventDataStackStep>(member),
-                            "GeneratingCloudFormationTemplate" => baml.json.to<EventDataGeneratingCloudFormationTemplate>(member),
-                            "GeneratingTemplate" => baml.json.to<EventDataGeneratingTemplate>(member),
-                            "ProvisioningAgent" => baml.json.to<EventDataProvisioningAgent>(member),
-                            "UpdatingAgent" => baml.json.to<EventDataUpdatingAgent>(member),
-                            "DeletingAgent" => baml.json.to<EventDataDeletingAgent>(member),
-                            "DebuggingAgent" => baml.json.to<EventDataDebuggingAgent>(member),
-                            "PreparingEnvironment" => baml.json.to<EventDataPreparingEnvironment>(member),
-                            "DeployingStack" => baml.json.to<EventDataDeployingStack>(member),
-                            "RunningTestWorker" => baml.json.to<EventDataRunningTestWorker>(member),
-                            "CleaningUpStack" => baml.json.to<EventDataCleaningUpStack>(member),
-                            "CleaningUpEnvironment" => baml.json.to<EventDataCleaningUpEnvironment>(member),
-                            "SettingUpPlatformContext" => baml.json.to<EventDataSettingUpPlatformContext>(member),
-                            "EnsuringDockerRepository" => baml.json.to<EventDataEnsuringDockerRepository>(member),
-                            "DeployingCloudFormationStack" => baml.json.to<EventDataDeployingCloudFormationStack>(member),
-                            "AssumingRole" => baml.json.to<EventDataAssumingRole>(member),
-                            "ImportingStackStateFromCloudFormation" => baml.json.to<EventDataImportingStackStateFromCloudFormation>(member),
-                            "DeletingCloudFormationStack" => baml.json.to<EventDataDeletingCloudFormationStack>(member),
-                            "EmptyingBuckets" => baml.json.to<EventDataEmptyingBuckets>(member),
-                            "DeploymentCreated" => baml.json.to<EventDataDeploymentCreated>(member),
-                            "DeploymentReleased" => baml.json.to<EventDataDeploymentReleased>(member),
-                            "DeploymentFailed" => baml.json.to<EventDataDeploymentFailed>(member),
-                            "DeploymentDegraded" => baml.json.to<EventDataDeploymentDegraded>(member),
-                            "DeploymentRecovered" => baml.json.to<EventDataDeploymentRecovered>(member),
-                            "DeploymentDeleted" => baml.json.to<EventDataDeploymentDeleted>(member),
-                            "ReleaseChannelUpdated" => baml.json.to<EventDataReleaseChannelUpdated>(member),
-                            "DeploymentReleaseChannelChanged" => baml.json.to<EventDataDeploymentReleaseChannelChanged>(member),
-                            "DeploymentRetryRequested" => baml.json.to<EventDataDeploymentRetryRequested>(member),
-                            "DeploymentRedeployRequested" => baml.json.to<EventDataDeploymentRedeployRequested>(member),
-                            "DeploymentReleasePinned" => baml.json.to<EventDataDeploymentReleasePinned>(member),
-                            "DeploymentReleaseUnpinned" => baml.json.to<EventDataDeploymentReleaseUnpinned>(member),
-                            "DeploymentEnvironmentUpdated" => baml.json.to<EventDataDeploymentEnvironmentUpdated>(member),
-                            "DeploymentVolumeRestoreRequested" => baml.json.to<EventDataDeploymentVolumeRestoreRequested>(member),
-                            "DeploymentVolumeRestoreCancelled" => baml.json.to<EventDataDeploymentVolumeRestoreCancelled>(member),
-                            "DeploymentDeletionRequested" => baml.json.to<EventDataDeploymentDeletionRequested>(member),
-                            "DeploymentCredentialRotation" => baml.json.to<DeploymentCredentialRotationEvent>(member),
-                            _ => EventDataOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    state: baml.json.to<EventStateFailed | string>(baml.json.field(object, "state")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    releaseCreatedAt: baml.json.to<string?>(baml.json.field(object, "releaseCreatedAt")),
-                },
-                _ => throw baml.json.DecodeError { message: "EventListItemResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class EventStateFailed {
@@ -6618,17 +5080,7 @@ class ExternalBindingArtifactRegistryAcr {
     service: "acr",
     type: "artifact_registry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["registryName"] = baml.json.from(self.registryName);
-            if (self.repositoryPrefix != null) { out["repositoryPrefix"] = baml.json.from(self.repositoryPrefix); }
-            out["resourceGroupName"] = baml.json.from(self.resourceGroupName);
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Service-type based artifact registry binding that supports multiple registry providers
@@ -6647,20 +5099,7 @@ class ExternalBindingArtifactRegistryEcr {
     service: "ecr",
     type: "artifact_registry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.legacyRepositoryPrefixes != null) { out["legacyRepositoryPrefixes"] = baml.json.from(self.legacyRepositoryPrefixes); }
-            if (self.legacySandboxRepositoryPrefixes != null) { out["legacySandboxRepositoryPrefixes"] = baml.json.from(self.legacySandboxRepositoryPrefixes); }
-            if (self.pullRoleArn != null) { out["pullRoleArn"] = baml.json.from(self.pullRoleArn); }
-            if (self.pushRoleArn != null) { out["pushRoleArn"] = baml.json.from(self.pushRoleArn); }
-            out["repositoryPrefix"] = baml.json.from(self.repositoryPrefix);
-            if (self.sandboxRepositoryPrefix != null) { out["sandboxRepositoryPrefix"] = baml.json.from(self.sandboxRepositoryPrefix); }
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Service-type based artifact registry binding that supports multiple registry providers
@@ -6673,17 +5112,7 @@ class ExternalBindingArtifactRegistryGar {
     service: "gar",
     type: "artifact_registry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.pullServiceAccountEmail != null) { out["pullServiceAccountEmail"] = baml.json.from(self.pullServiceAccountEmail); }
-            if (self.pushServiceAccountEmail != null) { out["pushServiceAccountEmail"] = baml.json.from(self.pushServiceAccountEmail); }
-            out["repositoryName"] = baml.json.from(self.repositoryName);
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Service-type based artifact registry binding that supports multiple registry providers
@@ -6719,18 +5148,7 @@ class ExternalBindingContainerAppsEnvironment {
     staticIp: json?,
     type: "container_apps_environment",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["defaultDomain"] = baml.json.from(self.defaultDomain);
-            out["environmentName"] = baml.json.from(self.environmentName);
-            out["resourceGroupName"] = baml.json.from(self.resourceGroupName);
-            out["resourceId"] = baml.json.from(self.resourceId);
-            if (self.staticIp != null) { out["staticIp"] = baml.json.from(self.staticIp); }
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Represents a KV binding for key-value storage across platforms
@@ -6745,17 +5163,7 @@ class ExternalBindingKvDynamodb {
     service: "dynamodb",
     type: "kv",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.endpointUrl != null) { out["endpointUrl"] = baml.json.from(self.endpointUrl); }
-            out["region"] = baml.json.from(self.region);
-            out["tableName"] = baml.json.from(self.tableName);
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Represents a KV binding for key-value storage across platforms
@@ -6782,16 +5190,7 @@ class ExternalBindingKvLocalKv {
     service: "local-kv",
     type: "kv",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["dataDir"] = baml.json.from(self.dataDir);
-            if (self.keyPrefix != null) { out["keyPrefix"] = baml.json.from(self.keyPrefix); }
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Represents a KV binding for key-value storage across platforms
@@ -6804,17 +5203,7 @@ class ExternalBindingKvRedis {
     service: "redis",
     type: "kv",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["connectionUrl"] = baml.json.from(self.connectionUrl);
-            if (self.database != null) { out["database"] = baml.json.from(self.database); }
-            if (self.keyPrefix != null) { out["keyPrefix"] = baml.json.from(self.keyPrefix); }
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Represents a KV binding for key-value storage across platforms
@@ -6837,13 +5226,7 @@ class ExternalBindingOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`, its `service` `raw["service"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Connection details for a Postgres database, one variant per backend.
@@ -6940,20 +5323,7 @@ class ExternalBindingPostgresExternal {
     service: "external",
     type: "postgres",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["database"] = baml.json.from(self.database);
-            out["host"] = baml.json.from(self.host);
-            out["password"] = baml.json.from(self.password);
-            out["port"] = baml.json.from(self.port);
-            if (self.sslMode != null) { out["sslMode"] = baml.json.from(self.sslMode); }
-            out["username"] = baml.json.from(self.username);
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Connection details for a Postgres database, one variant per backend.
@@ -7015,16 +5385,7 @@ class ExternalBindingQueueLocalQueueHttp {
     service: "local-queue-http",
     type: "queue",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["endpoint"] = baml.json.from(self.endpoint);
-            if (self.token != null) { out["token"] = baml.json.from(self.token); }
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Binding parameters for Queue at runtime or in templates.
@@ -7106,20 +5467,7 @@ class ExternalBindingStorageS3 {
     service: "s3",
     type: "storage",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.accessKeyId != null) { out["accessKeyId"] = baml.json.from(self.accessKeyId); }
-            out["bucketName"] = baml.json.from(self.bucketName);
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.forcePathStyle != null) { out["forcePathStyle"] = baml.json.from(self.forcePathStyle); }
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.secretAccessKey != null) { out["secretAccessKey"] = baml.json.from(self.secretAccessKey); }
-            out["service"] = baml.json.from(self.service);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Represents a vault binding for secure secret management
@@ -7221,19 +5569,7 @@ class ForwardImportRequest {
     /// Default: `{}` (applied by the server when left out).
     inputValues: StackInputValuesRequest?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.mode != null) { out["mode"] = baml.json.from(self.mode); }
-            if (self.project != null) { out["project"] = baml.json.from(self.project); }
-            if (self.deploymentGroupId != null) { out["deploymentGroupId"] = baml.json.from(self.deploymentGroupId); }
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            out["source"] = baml.json.from(self.source);
-            if (self.setupItem != null) { out["setupItem"] = baml.json.from(self.setupItem); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class GatewayProjectOverview {
@@ -7255,14 +5591,7 @@ class GenerateManagerBindingTokenRequest {
     /// Known values: `data`, `sandbox`. Others may appear.
     kind: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            if (self.kind != null) { out["kind"] = baml.json.from(self.kind); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class GenerateManagerBindingTokenResponse {
@@ -7277,13 +5606,7 @@ class GenerateManagerTokenRequest {
     /// Project ID or name. Omit to query all projects you can read in this workspace.
     project: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.project != null) { out["project"] = baml.json.from(self.project); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class GenerateManagerTokenResponse {
@@ -7582,13 +5905,7 @@ class GetProjectAiUsageResponseOther {
     /// Always `"UNKNOWN"`. The server's `status` is `raw["status"]`.
     status: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class GetProjectAiUsageResponseUnavailable {
@@ -7784,41 +6101,6 @@ class GetRemoteOperatorProjectSummaryResponseActivityDataLastVerifiedOperation {
     resultAvailable: bool,
     result: json?,
     completedAt: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => GetRemoteOperatorProjectSummaryResponseActivityDataLastVerifiedOperation {
-                    invocationId: baml.json.to<string?>(baml.json.field(object, "invocationId")),
-                    deploymentId: baml.json.to<string>(baml.json.field(object, "deploymentId")),
-                    commandId: baml.json.to<string>(baml.json.field(object, "commandId")),
-                    plugin: baml.json.to<string>(baml.json.field(object, "plugin")),
-                    pluginVersion: baml.json.to<string>(baml.json.field(object, "pluginVersion")),
-                    operation: baml.json.to<string>(baml.json.field(object, "operation")),
-                    tier: baml.json.to<string?>(baml.json.field(object, "tier")),
-                    accessRequestId: baml.json.to<string?>(baml.json.field(object, "accessRequestId")),
-                    commandState: baml.json.to<string>(baml.json.field(object, "commandState")),
-                    verificationState: baml.json.to<string>(baml.json.field(object, "verificationState")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    verification: baml.json.to<GetRemoteOperatorProjectSummaryResponseActivityDataLastVerifiedOperationVerification>(baml.json.field(object, "verification")),
-                    sensitiveOutput: match (baml.json.field(object, "sensitiveOutput")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "kind"))) {
-                            "none" => baml.json.to<OperationsPluginOperationSensitiveOutputNone>(member),
-                            "redact" => baml.json.to<OperationsPluginOperationSensitiveOutputRedact>(member),
-                            "requireConfirmation" => baml.json.to<OperationsPluginOperationSensitiveOutputRequireConfirmation>(member),
-                            _ => OperationsPluginOperationSensitiveOutputOther { kind: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resultAvailable: baml.json.to<bool>(baml.json.field(object, "resultAvailable")),
-                    result: baml.json.to<json?>(baml.json.field(object, "result")),
-                    completedAt: baml.json.to<string?>(baml.json.field(object, "completedAt")),
-                },
-                _ => throw baml.json.DecodeError { message: "GetRemoteOperatorProjectSummaryResponseActivityDataLastVerifiedOperation must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class GetRemoteOperatorProjectSummaryResponseActivityDataLastVerifiedOperationVerification {
@@ -8071,26 +6353,6 @@ class GetResourceDeploymentDetailResponse {
     deployment: GetResourceDeploymentDetailResponseDeployment,
     heartbeat: GetResourceDeploymentDetailResponseHeartbeatAvailable | GetResourceDeploymentDetailResponseHeartbeatMissing | GetResourceDeploymentDetailResponseHeartbeatOther,
     replicaReleases: GetResourceDeploymentDetailResponseReplicaReleasesItem[],
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => GetResourceDeploymentDetailResponse {
-                    deployment: baml.json.to<GetResourceDeploymentDetailResponseDeployment>(baml.json.field(object, "deployment")),
-                    heartbeat: match (baml.json.field(object, "heartbeat")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "status"))) {
-                            "available" => baml.json.to<GetResourceDeploymentDetailResponseHeartbeatAvailable>(member),
-                            "missing" => baml.json.to<GetResourceDeploymentDetailResponseHeartbeatMissing>(member),
-                            _ => GetResourceDeploymentDetailResponseHeartbeatOther { status: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    replicaReleases: baml.json.to<GetResourceDeploymentDetailResponseReplicaReleasesItem[]>(baml.json.field(object, "replicaReleases")),
-                },
-                _ => throw baml.json.DecodeError { message: "GetResourceDeploymentDetailResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class GetResourceDeploymentDetailResponseDeployment {
@@ -8141,13 +6403,7 @@ class GetResourceDeploymentDetailResponseHeartbeatOther {
     /// Always `"UNKNOWN"`. The server's `status` is `raw["status"]`.
     status: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// The release a running replica's image belongs to.
@@ -8219,52 +6475,7 @@ class GitMetadata {
     commitAuthorAvatarUrl: string?,
     provider: GitProvider?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => GitMetadata {
-                    commitSha: baml.json.to<string?>(baml.json.field(object, "commitSha")),
-                    commitMessage: baml.json.to<string?>(baml.json.field(object, "commitMessage")),
-                    commitRef: baml.json.to<string?>(baml.json.field(object, "commitRef")),
-                    commitDate: baml.json.to<string?>(baml.json.field(object, "commitDate")),
-                    dirty: baml.json.to<bool?>(baml.json.field(object, "dirty")),
-                    remoteUrl: baml.json.to<string?>(baml.json.field(object, "remoteUrl")),
-                    commitAuthorName: baml.json.to<string?>(baml.json.field(object, "commitAuthorName")),
-                    commitAuthorEmail: baml.json.to<string?>(baml.json.field(object, "commitAuthorEmail")),
-                    commitAuthorLogin: baml.json.to<string?>(baml.json.field(object, "commitAuthorLogin")),
-                    commitAuthorAvatarUrl: baml.json.to<string?>(baml.json.field(object, "commitAuthorAvatarUrl")),
-                    provider: match (baml.json.field(object, "provider")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "github" => baml.json.to<GitHubProvider>(member),
-                            "gitlab" => baml.json.to<GitLabProvider>(member),
-                            _ => GitProviderOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "GitMetadata must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.commitSha != null) { out["commitSha"] = baml.json.from(self.commitSha); }
-            if (self.commitMessage != null) { out["commitMessage"] = baml.json.from(self.commitMessage); }
-            if (self.commitRef != null) { out["commitRef"] = baml.json.from(self.commitRef); }
-            if (self.commitDate != null) { out["commitDate"] = baml.json.from(self.commitDate); }
-            if (self.dirty != null) { out["dirty"] = baml.json.from(self.dirty); }
-            if (self.remoteUrl != null) { out["remoteUrl"] = baml.json.from(self.remoteUrl); }
-            if (self.commitAuthorName != null) { out["commitAuthorName"] = baml.json.from(self.commitAuthorName); }
-            if (self.commitAuthorEmail != null) { out["commitAuthorEmail"] = baml.json.from(self.commitAuthorEmail); }
-            if (self.commitAuthorLogin != null) { out["commitAuthorLogin"] = baml.json.from(self.commitAuthorLogin); }
-            if (self.commitAuthorAvatarUrl != null) { out["commitAuthorAvatarUrl"] = baml.json.from(self.commitAuthorAvatarUrl); }
-            if (self.provider != null) { out["provider"] = baml.json.from(self.provider); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class GitNamespace {
@@ -8287,13 +6498,7 @@ class GitProviderOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class GitRepository {
@@ -8349,62 +6554,7 @@ class ImportSource {
     managementConfig: (DeploymentConfigManagementConfigAws | DeploymentConfigManagementConfigGcp | DeploymentConfigManagementConfigAzure | DeploymentConfigManagementConfigKubernetes | DeploymentConfigManagementConfigOther)?,
     resources: ImportedResource[],
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ImportSource {
-                    deploymentName: baml.json.to<string>(baml.json.field(object, "deploymentName")),
-                    resourcePrefix: baml.json.to<string>(baml.json.field(object, "resourcePrefix")),
-                    sourceKind: baml.json.to<string?>(baml.json.field(object, "sourceKind")),
-                    setupMetadata: baml.json.to<DeploymentSetupMetadata?>(baml.json.field(object, "setupMetadata")),
-                    releaseId: baml.json.to<string?>(baml.json.field(object, "releaseId")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    region: baml.json.to<string>(baml.json.field(object, "region")),
-                    setupTarget: baml.json.to<string>(baml.json.field(object, "setupTarget")),
-                    setupImportFormatVersion: baml.json.to<int>(baml.json.field(object, "setupImportFormatVersion")),
-                    setupFingerprint: baml.json.to<string>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int>(baml.json.field(object, "setupFingerprintVersion")),
-                    stackSettings: baml.json.to<StackSettings>(baml.json.field(object, "stackSettings")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resources: baml.json.to<ImportedResource[]>(baml.json.field(object, "resources")),
-                },
-                _ => throw baml.json.DecodeError { message: "ImportSource must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentName"] = baml.json.from(self.deploymentName);
-            out["resourcePrefix"] = baml.json.from(self.resourcePrefix);
-            if (self.sourceKind != null) { out["sourceKind"] = baml.json.from(self.sourceKind); }
-            if (self.setupMetadata != null) { out["setupMetadata"] = baml.json.from(self.setupMetadata); }
-            if (self.releaseId != null) { out["releaseId"] = baml.json.from(self.releaseId); }
-            out["platform"] = baml.json.from(self.platform);
-            if (self.basePlatform != null) { out["basePlatform"] = baml.json.from(self.basePlatform); }
-            out["region"] = baml.json.from(self.region);
-            out["setupTarget"] = baml.json.from(self.setupTarget);
-            out["setupImportFormatVersion"] = baml.json.from(self.setupImportFormatVersion);
-            out["setupFingerprint"] = baml.json.from(self.setupFingerprint);
-            out["setupFingerprintVersion"] = baml.json.from(self.setupFingerprintVersion);
-            out["stackSettings"] = baml.json.from(self.stackSettings);
-            if (self.managementConfig != null) { out["managementConfig"] = baml.json.from(self.managementConfig); }
-            out["resources"] = baml.json.from(self.resources);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ImportedResource {
@@ -8467,19 +6617,7 @@ class InvokeOperationRequest {
     /// A CLI-originated access request (`accessRequest_…`, no remediation plan) the caller created and the customer has already approved covering this exact command — either an exact match or a resolved, frozen wildcard entry. Same bypass semantics as `remediationPlanId`, for requests with no investigation behind them. Set exactly one of `remediationPlanId` or `accessRequestId`, not both. With neither, any approved request the caller created covering this exact command is used.
     accessRequestId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            out["plugin"] = baml.json.from(self.plugin);
-            out["operation"] = baml.json.from(self.operation);
-            if (self.params != null) { out["params"] = baml.json.from(self.params); }
-            if (self.idempotencyKey != null) { out["idempotencyKey"] = baml.json.from(self.idempotencyKey); }
-            if (self.remediationPlanId != null) { out["remediationPlanId"] = baml.json.from(self.remediationPlanId); }
-            if (self.accessRequestId != null) { out["accessRequestId"] = baml.json.from(self.accessRequestId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class InvokeOperationResponse {
@@ -8644,29 +6782,6 @@ class ListGitNamespacesResponse {
 
 class ListInventoryResponse {
     resources: (ListInventoryResponseResourcesItemManaged | ListInventoryResponseResourcesItemObserved | ListInventoryResponseResourcesOther)[],
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ListInventoryResponse {
-                    resources: match (baml.json.field(object, "resources")) {
-                        let items: baml.json.json[] => items.map((item) -> {
-                            match (item) {
-                                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "source"))) {
-                                    "managed" => baml.json.to<ListInventoryResponseResourcesItemManaged>(member),
-                                    "observed" => baml.json.to<ListInventoryResponseResourcesItemObserved>(member),
-                                    _ => ListInventoryResponseResourcesOther { source: "UNKNOWN", raw: member },
-                                },
-                                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                            }
-                        }),
-                        _ => throw baml.json.DecodeError { message: "expected a JSON array", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "ListInventoryResponse must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class ListInventoryResponseResourcesItemManaged {
@@ -8726,13 +6841,7 @@ class ListInventoryResponseResourcesOther {
     /// Always `"UNKNOWN"`. The server's `source` is `raw["source"]`.
     source: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class ListMachinesJoinTokensResponse {
@@ -8965,17 +7074,7 @@ class ManagerHeartbeatRequest {
     /// Optional runtime metrics
     metrics: ManagerMetrics?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["status"] = baml.json.from(self.status);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out["url"] = baml.json.from(self.url);
-            out["managementConfigs"] = baml.json.from(self.managementConfigs);
-            if (self.metrics != null) { out["metrics"] = baml.json.from(self.metrics); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ManagerHeartbeatResponse {
@@ -8990,16 +7089,7 @@ class ManagerManagementConfigs {
     azure: ManagerManagementConfigsAzure?,
     kubernetes: ManagerManagementConfigsKubernetes?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            if (self.kubernetes != null) { out["kubernetes"] = baml.json.from(self.kubernetes); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ManagerManagementConfigsAws {
@@ -9028,15 +7118,7 @@ class ManagerManagementConfigsGcp {
     /// Known values: `gcp`. Others may appear.
     platform: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.federationTrust != null) { out["federationTrust"] = baml.json.from(self.federationTrust); }
-            out["serviceAccountEmail"] = baml.json.from(self.serviceAccountEmail);
-            out["platform"] = baml.json.from(self.platform);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// The exact manager identity trusted by a deployment-owned identity pool.
@@ -9063,16 +7145,7 @@ class ManagerMetrics {
     /// CPU usage percentage
     cpuUsagePercent: float?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.activeDeployments != null) { out["activeDeployments"] = baml.json.from(self.activeDeployments); }
-            if (self.pendingDeployments != null) { out["pendingDeployments"] = baml.json.from(self.pendingDeployments); }
-            if (self.memoryUsageMb != null) { out["memoryUsageMb"] = baml.json.from(self.memoryUsageMb); }
-            if (self.cpuUsagePercent != null) { out["cpuUsagePercent"] = baml.json.from(self.cpuUsagePercent); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ManagerRetryDeploymentResponse {
@@ -9091,13 +7164,7 @@ class ManagerRetryResponseOther {
     /// Always `"UNKNOWN"`. The server's `setupStatus` is `raw["setupStatus"]`.
     setupStatus: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class ManagerRetryResponseSetup {
@@ -9110,32 +7177,6 @@ class ManagerRetryResponseSetup {
     setupConfig: CreateManagerResponseSetupConfig,
     setup: CreateManagerResponseSetupCloudformation | CreateManagerResponseSetupGoogleOauth | CreateManagerResponseSetupTerraform | CreateManagerResponseSetupOther,
     mode: "setup",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ManagerRetryResponseSetup {
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    setupStatus: baml.json.to<"pending">(baml.json.field(object, "setupStatus")),
-                    setupToken: baml.json.to<string>(baml.json.field(object, "setupToken")),
-                    setupTokenId: baml.json.to<string>(baml.json.field(object, "setupTokenId")),
-                    deploymentLink: baml.json.to<string>(baml.json.field(object, "deploymentLink")),
-                    setupConfig: baml.json.to<CreateManagerResponseSetupConfig>(baml.json.field(object, "setupConfig")),
-                    setup: match (baml.json.field(object, "setup")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "method"))) {
-                            "cloudformation" => baml.json.to<CreateManagerResponseSetupCloudformation>(member),
-                            "google-oauth" => baml.json.to<CreateManagerResponseSetupGoogleOauth>(member),
-                            "terraform" => baml.json.to<CreateManagerResponseSetupTerraform>(member),
-                            _ => CreateManagerResponseSetupOther { method: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    mode: baml.json.to<"setup">(baml.json.field(object, "mode")),
-                },
-                _ => throw baml.json.DecodeError { message: "ManagerRetryResponseSetup must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// Manager-scoped configuration
@@ -9162,15 +7203,7 @@ class MoveDeploymentRequest {
     /// Default: `false` (applied by the server when left out).
     dryRun: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentGroupId"] = baml.json.from(self.deploymentGroupId);
-            if (self.expectedMembershipRevision != null) { out["expectedMembershipRevision"] = baml.json.from(self.expectedMembershipRevision); }
-            if (self.dryRun != null) { out["dryRun"] = baml.json.from(self.dryRun); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class MoveDeploymentResponse {
@@ -9253,79 +7286,7 @@ class NewDeploymentRequest {
     /// Default: `"immediate"` (applied by the server when left out).
     setupHandoff: string?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => NewDeploymentRequest {
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    deploymentGroupId: baml.json.to<string?>(baml.json.field(object, "deploymentGroupId")),
-                    managerId: baml.json.to<string?>(baml.json.field(object, "managerId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    environmentVariables: baml.json.to<EnvironmentVariableConfig[]?>(baml.json.field(object, "environmentVariables")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    project: baml.json.to<string>(baml.json.field(object, "project")),
-                    deploymentGroupExternalId: baml.json.to<string?>(baml.json.field(object, "deploymentGroupExternalId")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    stackSettings: baml.json.to<StackSettings?>(baml.json.field(object, "stackSettings")),
-                    resourcePrefix: baml.json.to<string?>(baml.json.field(object, "resourcePrefix")),
-                    publicSubdomain: baml.json.to<string?>(baml.json.field(object, "publicSubdomain")),
-                    setupMethod: baml.json.to<string?>(baml.json.field(object, "setupMethod")),
-                    setupMetadata: baml.json.to<DeploymentSetupMetadata?>(baml.json.field(object, "setupMetadata")),
-                    inputValues: baml.json.to<map<string, StackInputValueRequest>?>(baml.json.field(object, "inputValues")),
-                    operatorScope: baml.json.to<string?>(baml.json.field(object, "operatorScope")),
-                    operatorPermission: baml.json.to<string?>(baml.json.field(object, "operatorPermission")),
-                    initialDesiredRelease: baml.json.to<string?>(baml.json.field(object, "initialDesiredRelease")),
-                    releaseChannel: baml.json.to<string?>(baml.json.field(object, "releaseChannel")),
-                    setupItem: baml.json.to<string?>(baml.json.field(object, "setupItem")),
-                    installation: baml.json.to<DeploymentInstallationOptions?>(baml.json.field(object, "installation")),
-                    setupHandoff: baml.json.to<string?>(baml.json.field(object, "setupHandoff")),
-                },
-                _ => throw baml.json.DecodeError { message: "NewDeploymentRequest must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["platform"] = baml.json.from(self.platform);
-            if (self.deploymentGroupId != null) { out["deploymentGroupId"] = baml.json.from(self.deploymentGroupId); }
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            if (self.pinnedReleaseId != null) { out["pinnedReleaseId"] = baml.json.from(self.pinnedReleaseId); }
-            if (self.environmentVariables != null) { out["environmentVariables"] = baml.json.from(self.environmentVariables); }
-            if (self.environmentInfo != null) { out["environmentInfo"] = baml.json.from(self.environmentInfo); }
-            out["project"] = baml.json.from(self.project);
-            if (self.deploymentGroupExternalId != null) { out["deploymentGroupExternalId"] = baml.json.from(self.deploymentGroupExternalId); }
-            if (self.basePlatform != null) { out["basePlatform"] = baml.json.from(self.basePlatform); }
-            if (self.stackSettings != null) { out["stackSettings"] = baml.json.from(self.stackSettings); }
-            if (self.resourcePrefix != null) { out["resourcePrefix"] = baml.json.from(self.resourcePrefix); }
-            if (self.publicSubdomain != null) { out["publicSubdomain"] = baml.json.from(self.publicSubdomain); }
-            if (self.setupMethod != null) { out["setupMethod"] = baml.json.from(self.setupMethod); }
-            if (self.setupMetadata != null) { out["setupMetadata"] = baml.json.from(self.setupMetadata); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            if (self.operatorScope != null) { out["operatorScope"] = baml.json.from(self.operatorScope); }
-            if (self.operatorPermission != null) { out["operatorPermission"] = baml.json.from(self.operatorPermission); }
-            if (self.initialDesiredRelease != null) { out["initialDesiredRelease"] = baml.json.from(self.initialDesiredRelease); }
-            if (self.releaseChannel != null) { out["releaseChannel"] = baml.json.from(self.releaseChannel); }
-            if (self.setupItem != null) { out["setupItem"] = baml.json.from(self.setupItem); }
-            if (self.installation != null) { out["installation"] = baml.json.from(self.installation); }
-            if (self.setupHandoff != null) { out["setupHandoff"] = baml.json.from(self.setupHandoff); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class NewManagerRequest {
@@ -9343,18 +7304,7 @@ class NewManagerRequest {
     /// Optional external OTLP config for forwarding logs to Axiom, Datadog, etc. Falls back to built-in log ingestion when not set.
     otlpConfig: NewManagerRequestOtlpConfig?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["cloud"] = baml.json.from(self.cloud);
-            out["region"] = baml.json.from(self.region);
-            if (self.setupMethod != null) { out["setupMethod"] = baml.json.from(self.setupMethod); }
-            if (self.network != null) { out["network"] = baml.json.from(self.network); }
-            if (self.otlpConfig != null) { out["otlpConfig"] = baml.json.from(self.otlpConfig); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Optional external OTLP config for forwarding logs to Axiom, Datadog, etc. Falls back to built-in log ingestion when not set.
@@ -9422,33 +7372,7 @@ class ObservedInventoryBatchResourcesItem {
     /// Release/version identity observed from the provider resource, when available.
     version: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.alienResourceId != null) { out["alienResourceId"] = baml.json.from(self.alienResourceId); }
-            if (self.attributes != null) { out["attributes"] = baml.json.from(self.attributes); }
-            if (self.collectionIssues != null) { out["collectionIssues"] = baml.json.from(self.collectionIssues); }
-            if (self.counts != null) { out["counts"] = baml.json.from(self.counts); }
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            out["displayName"] = baml.json.from(self.displayName);
-            out["health"] = baml.json.from(self.health);
-            if (self.images != null) { out["images"] = baml.json.from(self.images); }
-            if (self.labels != null) { out["labels"] = baml.json.from(self.labels); }
-            out["lifecycle"] = baml.json.from(self.lifecycle);
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out["partial"] = baml.json.from(self.partial);
-            out["providerKind"] = baml.json.from(self.providerKind);
-            out["providerStale"] = baml.json.from(self.providerStale);
-            if (self.raw != null) { out["raw"] = baml.json.from(self.raw); }
-            out["rawIdentity"] = baml.json.from(self.rawIdentity);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.resourceTypeHint != null) { out["resourceTypeHint"] = baml.json.from(self.resourceTypeHint); }
-            if (self.scope != null) { out["scope"] = baml.json.from(self.scope); }
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ObservedInventoryBatchResourcesItemCollectionIssuesItem {
@@ -9465,15 +7389,7 @@ class ObservedInventoryBatchResourcesItemCounts {
     desired: int?,
     ready: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.current != null) { out["current"] = baml.json.from(self.current); }
-            if (self.desired != null) { out["desired"] = baml.json.from(self.desired); }
-            if (self.ready != null) { out["ready"] = baml.json.from(self.ready); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Image a running container reports.
@@ -9486,15 +7402,7 @@ class ObservedInventoryBatchResourcesItemImagesItem {
     /// Container name.
     name: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.digest != null) { out["digest"] = baml.json.from(self.digest); }
-            out["image"] = baml.json.from(self.image);
-            out["name"] = baml.json.from(self.name);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ObservedInventoryBatchResourcesItemRawItem {
@@ -9564,17 +7472,7 @@ class OperationsCatalogKubernetesPermissionsRule {
     resourceNames: string[]?,
     reason: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["apiGroup"] = baml.json.from(self.apiGroup);
-            out["resource"] = baml.json.from(self.resource);
-            out["verbs"] = baml.json.from(self.verbs);
-            if (self.resourceNames != null) { out["resourceNames"] = baml.json.from(self.resourceNames); }
-            out["reason"] = baml.json.from(self.reason);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class OperationsGcpPermissionDiffGrant {
@@ -9667,36 +7565,6 @@ class OperationsPluginOperation {
     /// Cloud permissions required to execute this operation.
     permissions: OperationsPluginOperationPermissions,
     kubernetesPermissions: OperationsCatalogKubernetesPermissions?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => OperationsPluginOperation {
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    tier: baml.json.to<string>(baml.json.field(object, "tier")),
-                    description: baml.json.to<string?>(baml.json.field(object, "description")),
-                    inputSchema: baml.json.to<map<string, json>?>(baml.json.field(object, "inputSchema")),
-                    outputSchema: baml.json.to<map<string, json>?>(baml.json.field(object, "outputSchema")),
-                    timeoutSeconds: baml.json.to<int?>(baml.json.field(object, "timeoutSeconds")),
-                    retries: baml.json.to<OperationsPluginOperationRetries?>(baml.json.field(object, "retries")),
-                    verification: baml.json.to<OperationsPluginOperationVerification?>(baml.json.field(object, "verification")),
-                    sensitiveOutput: match (baml.json.field(object, "sensitiveOutput")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "kind"))) {
-                            "none" => baml.json.to<OperationsPluginOperationSensitiveOutputNone>(member),
-                            "redact" => baml.json.to<OperationsPluginOperationSensitiveOutputRedact>(member),
-                            "requireConfirmation" => baml.json.to<OperationsPluginOperationSensitiveOutputRequireConfirmation>(member),
-                            _ => OperationsPluginOperationSensitiveOutputOther { kind: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    requiredPermissions: baml.json.to<string[]>(baml.json.field(object, "requiredPermissions")),
-                    permissions: baml.json.to<OperationsPluginOperationPermissions>(baml.json.field(object, "permissions")),
-                    kubernetesPermissions: baml.json.to<OperationsCatalogKubernetesPermissions?>(baml.json.field(object, "kubernetesPermissions")),
-                },
-                _ => throw baml.json.DecodeError { message: "OperationsPluginOperation must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// Cloud permissions required to execute this operation.
@@ -9737,13 +7605,7 @@ class OperationsPluginOperationSensitiveOutputOther {
     /// Always `"UNKNOWN"`. The server's `kind` is `raw["kind"]`.
     kind: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class OperationsPluginOperationSensitiveOutputRedact {
@@ -9771,14 +7633,7 @@ class OperationsReport {
     /// Default: `[]` (applied by the server when left out).
     operations: ReportedOperation[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.loadedBundleHash != null) { out["loadedBundleHash"] = baml.json.from(self.loadedBundleHash); }
-            if (self.operations != null) { out["operations"] = baml.json.from(self.operations); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class OperatorCapabilityReport {
@@ -9787,15 +7642,7 @@ class OperatorCapabilityReport {
     state: string,
     detail: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["key"] = baml.json.from(self.key);
-            out["state"] = baml.json.from(self.state);
-            if (self.detail != null) { out["detail"] = baml.json.from(self.detail); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Rollup of this project's pull-mode installations by operations-bundle sync status, reflecting the currently enabled plugin set.
@@ -9855,64 +7702,6 @@ class Package {
     createdAt: string,
     updatedAt: string,
     completedAt: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => Package {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    type: baml.json.to<string>(baml.json.field(object, "type")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    version: baml.json.to<string>(baml.json.field(object, "version")),
-                    sourceReleaseId: baml.json.to<string?>(baml.json.field(object, "sourceReleaseId")),
-                    dependsOnPackageId: baml.json.to<string?>(baml.json.field(object, "dependsOnPackageId")),
-                    setupFingerprints: baml.json.to<SetupFingerprintMap>(baml.json.field(object, "setupFingerprints")),
-                    packageBuildInputHash: baml.json.to<string>(baml.json.field(object, "packageBuildInputHash")),
-                    config: match (baml.json.field(object, "config")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "cli" => baml.json.to<PackageConfigCli>(member),
-                            "cloudformation" => baml.json.to<PackageConfigCloudformation>(member),
-                            "gcp-sandbox-image" => baml.json.to<PackageConfigGcpSandboxImage>(member),
-                            "helm" => baml.json.to<PackageConfigHelm>(member),
-                            "operator-image" => baml.json.to<PackageConfigOperatorImage>(member),
-                            "sandbox-bundle" => baml.json.to<PackageConfigSandboxBundle>(member),
-                            "terraform" => baml.json.to<PackageConfigTerraform>(member),
-                            _ => PackageConfigOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    outputs: match (baml.json.field(object, "outputs")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "cli" => baml.json.to<PackageOutputsCli>(member),
-                            "operator-image" => baml.json.to<PackageOutputsOperatorImage>(member),
-                            "helm" => baml.json.to<PackageOutputsHelm>(member),
-                            "cloudformation" => baml.json.to<PackageOutputsCloudformation>(member),
-                            "gcp-sandbox-image" => baml.json.to<PackageOutputsGcpSandboxImage>(member),
-                            "sandbox-bundle" => baml.json.to<PackageOutputsSandboxBundle>(member),
-                            "terraform" => baml.json.to<PackageOutputsTerraform>(member),
-                            _ => PackageOutputsOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    error: baml.json.to<json?>(baml.json.field(object, "error")),
-                    sourceBinarySha256: baml.json.to<string?>(baml.json.field(object, "sourceBinarySha256")),
-                    retries: baml.json.to<int>(baml.json.field(object, "retries")),
-                    lockedAt: baml.json.to<string?>(baml.json.field(object, "lockedAt")),
-                    lockedBy: baml.json.to<string?>(baml.json.field(object, "lockedBy")),
-                    leaseExpiresAt: baml.json.to<string?>(baml.json.field(object, "leaseExpiresAt")),
-                    buildPhase: baml.json.to<string?>(baml.json.field(object, "buildPhase")),
-                    lastProgressAt: baml.json.to<string?>(baml.json.field(object, "lastProgressAt")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    completedAt: baml.json.to<string?>(baml.json.field(object, "completedAt")),
-                },
-                _ => throw baml.json.DecodeError { message: "Package must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class PackageConfigCli {
@@ -10095,13 +7884,7 @@ class PackageConfigOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class PackageConfigSandboxBundle {
@@ -10271,13 +8054,7 @@ class PackageOutputsOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class PackageOutputsSandboxBundle {
@@ -10421,91 +8198,7 @@ class PersistImportedDeploymentRequest {
     /// Default: `{}` (applied by the server when left out).
     inputValues: StackInputValuesRequest?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => PersistImportedDeploymentRequest {
-                    mode: baml.json.to<"persist">(baml.json.field(object, "mode")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    deploymentGroupId: baml.json.to<string>(baml.json.field(object, "deploymentGroupId")),
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    publicSubdomain: baml.json.to<string?>(baml.json.field(object, "publicSubdomain")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    stackSettings: baml.json.to<StackSettings>(baml.json.field(object, "stackSettings")),
-                    stackState: baml.json.to<json?>(baml.json.field(object, "stackState")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    runtimeMetadata: baml.json.to<DeploymentRuntimeMetadata>(baml.json.field(object, "runtimeMetadata")),
-                    scheduleReconciliation: baml.json.to<bool?>(baml.json.field(object, "scheduleReconciliation")),
-                    deploymentProtocolVersion: baml.json.to<int>(baml.json.field(object, "deploymentProtocolVersion")),
-                    status: baml.json.to<string?>(baml.json.field(object, "status")),
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    importSource: baml.json.to<string?>(baml.json.field(object, "importSource")),
-                    setupMetadata: baml.json.to<DeploymentSetupMetadata?>(baml.json.field(object, "setupMetadata")),
-                    setupTarget: baml.json.to<string>(baml.json.field(object, "setupTarget")),
-                    setupFingerprint: baml.json.to<string>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int>(baml.json.field(object, "setupFingerprintVersion")),
-                    deploymentToken: baml.json.to<string?>(baml.json.field(object, "deploymentToken")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    inputValues: baml.json.to<StackInputValuesRequest?>(baml.json.field(object, "inputValues")),
-                },
-                _ => throw baml.json.DecodeError { message: "PersistImportedDeploymentRequest must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["mode"] = baml.json.from(self.mode);
-            out["name"] = baml.json.from(self.name);
-            out["deploymentGroupId"] = baml.json.from(self.deploymentGroupId);
-            out["managerId"] = baml.json.from(self.managerId);
-            if (self.publicSubdomain != null) { out["publicSubdomain"] = baml.json.from(self.publicSubdomain); }
-            out["platform"] = baml.json.from(self.platform);
-            if (self.basePlatform != null) { out["basePlatform"] = baml.json.from(self.basePlatform); }
-            out["stackSettings"] = baml.json.from(self.stackSettings);
-            if (self.stackState != null) { out["stackState"] = baml.json.from(self.stackState); }
-            if (self.environmentInfo != null) { out["environmentInfo"] = baml.json.from(self.environmentInfo); }
-            out["runtimeMetadata"] = baml.json.from(self.runtimeMetadata);
-            if (self.scheduleReconciliation != null) { out["scheduleReconciliation"] = baml.json.from(self.scheduleReconciliation); }
-            out["deploymentProtocolVersion"] = baml.json.from(self.deploymentProtocolVersion);
-            if (self.status != null) { out["status"] = baml.json.from(self.status); }
-            if (self.currentReleaseId != null) { out["currentReleaseId"] = baml.json.from(self.currentReleaseId); }
-            if (self.desiredReleaseId != null) { out["desiredReleaseId"] = baml.json.from(self.desiredReleaseId); }
-            if (self.importSource != null) { out["importSource"] = baml.json.from(self.importSource); }
-            if (self.setupMetadata != null) { out["setupMetadata"] = baml.json.from(self.setupMetadata); }
-            out["setupTarget"] = baml.json.from(self.setupTarget);
-            out["setupFingerprint"] = baml.json.from(self.setupFingerprint);
-            out["setupFingerprintVersion"] = baml.json.from(self.setupFingerprintVersion);
-            if (self.deploymentToken != null) { out["deploymentToken"] = baml.json.from(self.deploymentToken); }
-            if (self.managementConfig != null) { out["managementConfig"] = baml.json.from(self.managementConfig); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PinDeploymentReleaseResponse {
@@ -10517,13 +8210,7 @@ class PinReleaseRequest {
     /// Release ID to pin the deployment to. Set to null to resume its followed channel.
     releaseId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.releaseId != null) { out["releaseId"] = baml.json.from(self.releaseId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PlanDeploymentComputeRequest {
@@ -10546,19 +8233,7 @@ class PlanDeploymentComputeRequest {
     /// is platform-derived (from the Manager's ServiceAccount).
     stackSettings: StackSettings,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.setupItem != null) { out["setupItem"] = baml.json.from(self.setupItem); }
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            if (self.updateOperationId != null) { out["updateOperationId"] = baml.json.from(self.updateOperationId); }
-            out["platform"] = baml.json.from(self.platform);
-            out["setupMethod"] = baml.json.from(self.setupMethod);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["stackSettings"] = baml.json.from(self.stackSettings);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PrepareDeploymentCredentialRotationRequestBody {
@@ -10581,21 +8256,7 @@ class PrepareDeploymentInstallationRequestBody {
     /// Known values: `deployment`, `models`, `keys`, `bucket`, `registry`, `sandbox`. Others may appear.
     setupItem: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["platform"] = baml.json.from(self.platform);
-            out["method"] = baml.json.from(self.method);
-            out["configuration"] = baml.json.from(self.configuration);
-            out["command"] = baml.json.from(self.command);
-            if (self.installCommand != null) { out["installCommand"] = baml.json.from(self.installCommand); }
-            if (self.commandVariants != null) { out["commandVariants"] = baml.json.from(self.commandVariants); }
-            if (self.managerUrl != null) { out["managerUrl"] = baml.json.from(self.managerUrl); }
-            if (self.setupItem != null) { out["setupItem"] = baml.json.from(self.setupItem); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PrepareDeploymentStackRequest {
@@ -10620,20 +8281,7 @@ class PrepareDeploymentStackRequest {
     /// is platform-derived (from the Manager's ServiceAccount).
     stackSettings: StackSettings,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.saveForSetup != null) { out["saveForSetup"] = baml.json.from(self.saveForSetup); }
-            if (self.setupItem != null) { out["setupItem"] = baml.json.from(self.setupItem); }
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            if (self.updateOperationId != null) { out["updateOperationId"] = baml.json.from(self.updateOperationId); }
-            out["platform"] = baml.json.from(self.platform);
-            out["setupMethod"] = baml.json.from(self.setupMethod);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["stackSettings"] = baml.json.from(self.stackSettings);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PrepareOperatorManifestPackageRequest {
@@ -10676,20 +8324,7 @@ class PreparedDeploymentStackStack {
     /// Known values: `aws`, `gcp`, `azure`, `kubernetes`, `machines`, `local`, `test`. Others may appear.
     supportedPlatforms: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.dynamicContainerImageResources != null) { out["dynamicContainerImageResources"] = baml.json.from(self.dynamicContainerImageResources); }
-            if (self.dynamicContainerRepositories != null) { out["dynamicContainerRepositories"] = baml.json.from(self.dynamicContainerRepositories); }
-            out["id"] = baml.json.from(self.id);
-            if (self.inputs != null) { out["inputs"] = baml.json.from(self.inputs); }
-            if (self.operations != null) { out["operations"] = baml.json.from(self.operations); }
-            if (self.permissions != null) { out["permissions"] = baml.json.from(self.permissions); }
-            out["resources"] = baml.json.from(self.resources);
-            if (self.supportedPlatforms != null) { out["supportedPlatforms"] = baml.json.from(self.supportedPlatforms); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Combined permissions configuration that contains both profiles and management
@@ -10702,14 +8337,7 @@ class PreparedDeploymentStackStackPermissions {
     /// Key is the profile name, value is the permission configuration
     profiles: map<string, map<string, (PreparedDeploymentStackStackPermissionsProfilesValueValueItem1 | string)[]>>,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.management != null) { out["management"] = baml.json.from(self.management); }
-            out["profiles"] = baml.json.from(self.profiles);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PreparedDeploymentStackStackPermissionsManagementExtend {
@@ -10743,15 +8371,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1Platforms {
     /// GCP permission configurations
     gcp: PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsGcpItem[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// AWS-specific platform permission configuration
@@ -10769,17 +8389,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAws
     /// Stable admin-facing label for this permission entry.
     label: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["binding"] = baml.json.from(self.binding);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.effect != null) { out["effect"] = baml.json.from(self.effect); }
-            out["grant"] = baml.json.from(self.grant);
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Generic binding configuration for permissions
@@ -10789,14 +8399,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAws
     /// AWS-specific binding specification
     stack: PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAwsItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// AWS-specific binding specification
@@ -10810,15 +8413,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAws
     /// Resource ARNs to bind to
     resources: string[],
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.condition != null) { out["condition"] = baml.json.from(self.condition); }
-            if (self.notResources != null) { out["notResources"] = baml.json.from(self.notResources); }
-            out["resources"] = baml.json.from(self.resources);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Grant permissions for a specific cloud platform
@@ -10834,17 +8429,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAws
     /// GCP residual custom permissions to pair with predefined roles.
     residualPermissions: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.actions != null) { out["actions"] = baml.json.from(self.actions); }
-            if (self.dataActions != null) { out["dataActions"] = baml.json.from(self.dataActions); }
-            if (self.permissions != null) { out["permissions"] = baml.json.from(self.permissions); }
-            if (self.predefinedRoles != null) { out["predefinedRoles"] = baml.json.from(self.predefinedRoles); }
-            if (self.residualPermissions != null) { out["residualPermissions"] = baml.json.from(self.residualPermissions); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Azure-specific platform permission configuration
@@ -10858,16 +8443,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAzu
     /// Stable admin-facing label for this permission entry.
     label: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["binding"] = baml.json.from(self.binding);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["grant"] = baml.json.from(self.grant);
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Generic binding configuration for permissions
@@ -10877,14 +8453,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsAzu
     /// Azure-specific binding specification
     stack: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// GCP-specific platform permission configuration
@@ -10898,16 +8467,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsGcp
     /// Stable admin-facing label for this permission entry.
     label: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["binding"] = baml.json.from(self.binding);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["grant"] = baml.json.from(self.grant);
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Generic binding configuration for permissions
@@ -10917,14 +8477,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsGcp
     /// GCP-specific binding specification
     stack: PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsGcpItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// GCP-specific binding specification
@@ -10934,14 +8487,7 @@ class PreparedDeploymentStackStackPermissionsProfilesValueValueItem1PlatformsGcp
     /// Scope (project/resource level)
     scope: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.condition != null) { out["condition"] = baml.json.from(self.condition); }
-            out["scope"] = baml.json.from(self.scope);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// GCP IAM condition
@@ -10976,19 +8522,7 @@ class PreparedDeploymentStackStackResourcesValue {
     /// Default: false (prevents sensitive data in synced state).
     remoteAccess: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["config"] = baml.json.from(self.config);
-            out["dependencies"] = baml.json.from(self.dependencies);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.enabledWhen != null) { out["enabledWhen"] = baml.json.from(self.enabledWhen); }
-            out["lifecycle"] = baml.json.from(self.lifecycle);
-            if (self.remoteAccess != null) { out["remoteAccess"] = baml.json.from(self.remoteAccess); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PreviewProjectModelsImpactResponse {
@@ -11240,18 +8774,7 @@ class ProjectDefaultManagers {
     /// Unique identifier for a default private manager.
     local: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            if (self.kubernetes != null) { out["kubernetes"] = baml.json.from(self.kubernetes); }
-            if (self.machines != null) { out["machines"] = baml.json.from(self.machines); }
-            if (self.local != null) { out["local"] = baml.json.from(self.local); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type ProjectGcpOAuthProvider = ProjectGcpOAuthProviderAlienManaged | ProjectGcpOAuthProviderCustom | ProjectGcpOAuthProviderOther
@@ -11275,13 +8798,7 @@ class ProjectGcpOAuthProviderOther {
     /// Always `"UNKNOWN"`. The server's `mode` is `raw["mode"]`.
     mode: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Verified source repository connected to the project. Alien uses this for GitHub Actions setup and source-aware features; releases are still created explicitly by CI or `alien release`.
@@ -11335,17 +8852,7 @@ class ProjectPackagesConfig {
     /// Terraform package configuration. If null, Terraform packages will not be generated.
     terraform: ProjectPackagesConfigTerraform?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cli != null) { out["cli"] = baml.json.from(self.cli); }
-            if (self.cloudformation != null) { out["cloudformation"] = baml.json.from(self.cloudformation); }
-            if (self.operatorImage != null) { out["operatorImage"] = baml.json.from(self.operatorImage); }
-            if (self.helm != null) { out["helm"] = baml.json.from(self.helm); }
-            if (self.terraform != null) { out["terraform"] = baml.json.from(self.terraform); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// CLI package configuration. If null, CLI packages will not be generated.
@@ -11364,16 +8871,7 @@ class ProjectPackagesConfigCli {
     /// Whether CLI package generation is enabled
     enabled: bool,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.binaryTargets != null) { out["binaryTargets"] = baml.json.from(self.binaryTargets); }
-            out["displayName"] = baml.json.from(self.displayName);
-            out["name"] = baml.json.from(self.name);
-            out["enabled"] = baml.json.from(self.enabled);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// CloudFormation package configuration. If null, CloudFormation packages will not be generated.
@@ -11385,15 +8883,7 @@ class ProjectPackagesConfigCloudformation {
     /// Require AWS External ID. When true, AWS setup templates require the ManagementExternalId parameter (every install and update must enter the deployment group's ExternalId) and, on a hosted manager, accept only its management roles as ManagingRoleArn. Applies to packages built after the change. Missing means false; new projects are created with true.
     requireManagementExternalId: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["enabled"] = baml.json.from(self.enabled);
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.requireManagementExternalId != null) { out["requireManagementExternalId"] = baml.json.from(self.requireManagementExternalId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Helm chart package configuration. If null, Helm packages will not be generated.
@@ -11409,18 +8899,7 @@ class ProjectPackagesConfigHelm {
     setupResources: PackageConfigHelmSetupResources?,
     runtimePersistence: PackageConfigHelmRuntimePersistence?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["chartName"] = baml.json.from(self.chartName);
-            out["description"] = baml.json.from(self.description);
-            if (self.logCollector != null) { out["logCollector"] = baml.json.from(self.logCollector); }
-            out["enabled"] = baml.json.from(self.enabled);
-            if (self.setupResources != null) { out["setupResources"] = baml.json.from(self.setupResources); }
-            if (self.runtimePersistence != null) { out["runtimePersistence"] = baml.json.from(self.runtimePersistence); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Operator image package configuration. Required when Helm is enabled. If null, Operator image packages will not be generated.
@@ -11438,18 +8917,7 @@ class ProjectPackagesConfigOperatorImage {
     /// Whether Operator image package generation is enabled
     enabled: bool,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.brand != null) { out["brand"] = baml.json.from(self.brand); }
-            out["displayName"] = baml.json.from(self.displayName);
-            if (self.envPrefix != null) { out["envPrefix"] = baml.json.from(self.envPrefix); }
-            if (self.labelDomain != null) { out["labelDomain"] = baml.json.from(self.labelDomain); }
-            out["name"] = baml.json.from(self.name);
-            out["enabled"] = baml.json.from(self.enabled);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Terraform package configuration. If null, Terraform packages will not be generated.
@@ -11459,14 +8927,7 @@ class ProjectPackagesConfigTerraform {
     /// Human-friendly application name shown in generated install artifacts
     displayName: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["enabled"] = baml.json.from(self.enabled);
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class ProjectReleaseInfo {
@@ -11493,14 +8954,7 @@ class PromoteReleaseRequestBody {
     /// Unique identifier for the release.
     expectedReleaseId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["releaseId"] = baml.json.from(self.releaseId);
-            if (self.expectedReleaseId != null) { out["expectedReleaseId"] = baml.json.from(self.expectedReleaseId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PromotionEffectCounts {
@@ -11508,55 +8962,18 @@ class PromotionEffectCounts {
     unconfirmed: int,
     retries: int,
     /// Wire name: `already-on`.
-    alreadyOn: int,
+    alreadyOn: int @json.rename("already-on"),
     pinned: int,
     /// Wire name: `customer-applies`.
-    customerApplies: int,
+    customerApplies: int @json.rename("customer-applies"),
     /// Wire name: `waits-for-approval`.
-    waitsForApproval: int,
+    waitsForApproval: int @json.rename("waits-for-approval"),
     /// Wire name: `waits-for-owner`.
-    waitsForOwner: int,
+    waitsForOwner: int @json.rename("waits-for-owner"),
     /// Wire name: `waits-for-inputs`.
-    waitsForInputs: int,
+    waitsForInputs: int @json.rename("waits-for-inputs"),
     /// Wire name: `not-affected`.
-    notAffected: int,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => PromotionEffectCounts {
-                    updates: baml.json.to<int>(baml.json.field(object, "updates")),
-                    unconfirmed: baml.json.to<int>(baml.json.field(object, "unconfirmed")),
-                    retries: baml.json.to<int>(baml.json.field(object, "retries")),
-                    alreadyOn: baml.json.to<int>(baml.json.field(object, "already-on")),
-                    pinned: baml.json.to<int>(baml.json.field(object, "pinned")),
-                    customerApplies: baml.json.to<int>(baml.json.field(object, "customer-applies")),
-                    waitsForApproval: baml.json.to<int>(baml.json.field(object, "waits-for-approval")),
-                    waitsForOwner: baml.json.to<int>(baml.json.field(object, "waits-for-owner")),
-                    waitsForInputs: baml.json.to<int>(baml.json.field(object, "waits-for-inputs")),
-                    notAffected: baml.json.to<int>(baml.json.field(object, "not-affected")),
-                },
-                _ => throw baml.json.DecodeError { message: "PromotionEffectCounts must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["updates"] = baml.json.from(self.updates);
-            out["unconfirmed"] = baml.json.from(self.unconfirmed);
-            out["retries"] = baml.json.from(self.retries);
-            out["already-on"] = baml.json.from(self.alreadyOn);
-            out["pinned"] = baml.json.from(self.pinned);
-            out["customer-applies"] = baml.json.from(self.customerApplies);
-            out["waits-for-approval"] = baml.json.from(self.waitsForApproval);
-            out["waits-for-owner"] = baml.json.from(self.waitsForOwner);
-            out["waits-for-inputs"] = baml.json.from(self.waitsForInputs);
-            out["not-affected"] = baml.json.from(self.notAffected);
-            out
-        }
-    }
+    notAffected: int @json.rename("not-affected"),
 }
 
 class ProvisionManagerResponse {
@@ -11592,46 +9009,21 @@ class PublishOperationsPluginRequestMetadata {
     /// Default: `{}` (applied by the server when left out).
     settings: map<string, PublishOperationsPluginRequestMetadataSettingsValue>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["version"] = baml.json.from(self.version);
-            if (self.tier != null) { out["tier"] = baml.json.from(self.tier); }
-            out["binaries"] = baml.json.from(self.binaries);
-            if (self.operations != null) { out["operations"] = baml.json.from(self.operations); }
-            if (self.settings != null) { out["settings"] = baml.json.from(self.settings); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataBinaries1 {
     amd64: string,
     arm64: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["amd64"] = baml.json.from(self.amd64);
-            if (self.arm64 != null) { out["arm64"] = baml.json.from(self.arm64); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataBinaries2 {
     amd64: string?,
     arm64: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.amd64 != null) { out["amd64"] = baml.json.from(self.amd64); }
-            out["arm64"] = baml.json.from(self.arm64);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItem {
@@ -11650,57 +9042,7 @@ class PublishOperationsPluginRequestMetadataOperationsItem {
     sensitiveOutput: (OperationsPluginOperationSensitiveOutputNone | OperationsPluginOperationSensitiveOutputRedact | OperationsPluginOperationSensitiveOutputRequireConfirmation | OperationsPluginOperationSensitiveOutputOther)?,
     kubernetesPermissions: KubernetesPermissions?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => PublishOperationsPluginRequestMetadataOperationsItem {
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    tier: baml.json.to<string?>(baml.json.field(object, "tier")),
-                    description: baml.json.to<string?>(baml.json.field(object, "description")),
-                    inputSchema: baml.json.to<map<string, json>?>(baml.json.field(object, "inputSchema")),
-                    paramsSchema: baml.json.to<map<string, json>?>(baml.json.field(object, "paramsSchema")),
-                    outputSchema: baml.json.to<map<string, json>?>(baml.json.field(object, "outputSchema")),
-                    permissions: baml.json.to<(string | PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2)[]>(baml.json.field(object, "permissions")),
-                    requiredPermissions: baml.json.to<(string | PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2)[]?>(baml.json.field(object, "requiredPermissions")),
-                    timeoutSeconds: baml.json.to<int?>(baml.json.field(object, "timeoutSeconds")),
-                    retries: baml.json.to<OperationsPluginOperationRetries?>(baml.json.field(object, "retries")),
-                    verification: baml.json.to<PublishOperationsPluginRequestMetadataOperationsItemVerification?>(baml.json.field(object, "verification")),
-                    sensitiveOutput: match (baml.json.field(object, "sensitiveOutput")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "kind"))) {
-                            "none" => baml.json.to<OperationsPluginOperationSensitiveOutputNone>(member),
-                            "redact" => baml.json.to<OperationsPluginOperationSensitiveOutputRedact>(member),
-                            "requireConfirmation" => baml.json.to<OperationsPluginOperationSensitiveOutputRequireConfirmation>(member),
-                            _ => OperationsPluginOperationSensitiveOutputOther { kind: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    kubernetesPermissions: baml.json.to<KubernetesPermissions?>(baml.json.field(object, "kubernetesPermissions")),
-                },
-                _ => throw baml.json.DecodeError { message: "PublishOperationsPluginRequestMetadataOperationsItem must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.tier != null) { out["tier"] = baml.json.from(self.tier); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.inputSchema != null) { out["inputSchema"] = baml.json.from(self.inputSchema); }
-            if (self.paramsSchema != null) { out["paramsSchema"] = baml.json.from(self.paramsSchema); }
-            if (self.outputSchema != null) { out["outputSchema"] = baml.json.from(self.outputSchema); }
-            out["permissions"] = baml.json.from(self.permissions);
-            if (self.requiredPermissions != null) { out["requiredPermissions"] = baml.json.from(self.requiredPermissions); }
-            if (self.timeoutSeconds != null) { out["timeoutSeconds"] = baml.json.from(self.timeoutSeconds); }
-            if (self.retries != null) { out["retries"] = baml.json.from(self.retries); }
-            if (self.verification != null) { out["verification"] = baml.json.from(self.verification); }
-            if (self.sensitiveOutput != null) { out["sensitiveOutput"] = baml.json.from(self.sensitiveOutput); }
-            if (self.kubernetesPermissions != null) { out["kubernetesPermissions"] = baml.json.from(self.kubernetesPermissions); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2 {
@@ -11714,15 +9056,7 @@ class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2Platfo
     gcp: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItem[]?,
     azure: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItem[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItem {
@@ -11733,45 +9067,21 @@ class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2Platfo
     grant: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemGrant,
     binding: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemBinding,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.effect != null) { out["effect"] = baml.json.from(self.effect); }
-            out["grant"] = baml.json.from(self.grant);
-            out["binding"] = baml.json.from(self.binding);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemBinding {
     stack: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemBindingResource?,
     resource: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemBindingResource {
     resources: string[],
     condition: map<string, map<string, string>>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["resources"] = baml.json.from(self.resources);
-            if (self.condition != null) { out["condition"] = baml.json.from(self.condition); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemGrant {
@@ -11781,17 +9091,7 @@ class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2Platfo
     residualPermissions: string[]?,
     dataActions: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.actions != null) { out["actions"] = baml.json.from(self.actions); }
-            if (self.permissions != null) { out["permissions"] = baml.json.from(self.permissions); }
-            if (self.predefinedRoles != null) { out["predefinedRoles"] = baml.json.from(self.predefinedRoles); }
-            if (self.residualPermissions != null) { out["residualPermissions"] = baml.json.from(self.residualPermissions); }
-            if (self.dataActions != null) { out["dataActions"] = baml.json.from(self.dataActions); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItem {
@@ -11800,30 +9100,14 @@ class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2Platfo
     grant: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemGrant,
     binding: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBinding,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["grant"] = baml.json.from(self.grant);
-            out["binding"] = baml.json.from(self.binding);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBinding {
     stack: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBindingResource?,
     resource: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAzureItemBindingResource {
@@ -11836,44 +9120,21 @@ class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2Platfo
     grant: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsAwsItemGrant,
     binding: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBinding,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.label != null) { out["label"] = baml.json.from(self.label); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["grant"] = baml.json.from(self.grant);
-            out["binding"] = baml.json.from(self.binding);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBinding {
     stack: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBindingResource?,
     resource: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBindingResource?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.stack != null) { out["stack"] = baml.json.from(self.stack); }
-            if (self.resource != null) { out["resource"] = baml.json.from(self.resource); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBindingResource {
     scope: string,
     condition: PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBindingResourceCondition?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["scope"] = baml.json.from(self.scope);
-            if (self.condition != null) { out["condition"] = baml.json.from(self.condition); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataOperationsItemPermissionsItem2PlatformsGcpItemBindingResourceCondition {
@@ -11897,19 +9158,7 @@ class PublishOperationsPluginRequestMetadataOperationsItemVerification {
     retry: OperationsPluginOperationRetries?,
     timeoutSeconds: int,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["changes"] = baml.json.from(self.changes);
-            out["pollOperation"] = baml.json.from(self.pollOperation);
-            if (self.pollParamsFromResult != null) { out["pollParamsFromResult"] = baml.json.from(self.pollParamsFromResult); }
-            out["successField"] = baml.json.from(self.successField);
-            out["successValue"] = baml.json.from(self.successValue);
-            if (self.retry != null) { out["retry"] = baml.json.from(self.retry); }
-            out["timeoutSeconds"] = baml.json.from(self.timeoutSeconds);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginRequestMetadataSettingsValue {
@@ -11921,17 +9170,7 @@ class PublishOperationsPluginRequestMetadataSettingsValue {
     /// Default: `false` (applied by the server when left out).
     required: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["description"] = baml.json.from(self.description);
-            out["kind"] = baml.json.from(self.kind);
-            if (self.env != null) { out["env"] = baml.json.from(self.env); }
-            if (self.resourceType != null) { out["resourceType"] = baml.json.from(self.resourceType); }
-            if (self.required != null) { out["required"] = baml.json.from(self.required); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class PublishOperationsPluginResponse {
@@ -11971,14 +9210,7 @@ class PutDynamicContainerRequest {
     spec: DynamicContainerSpec,
     secretEnv: map<string, string>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["spec"] = baml.json.from(self.spec);
-            if (self.secretEnv != null) { out["secretEnv"] = baml.json.from(self.secretEnv); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type PutExternalAIBindingRequest = PutExternalAIBindingRequest1 | PutExternalAIBindingRequestDatabricks
@@ -12144,42 +9376,6 @@ class ReleaseDeploymentItem {
     ///
     /// Known values: `updates`, `unconfirmed`, `retries`, `already-on`, `pinned`, `customer-applies`, `waits-for-approval`, `waits-for-owner`, `waits-for-inputs`, `not-affected`. Others may appear.
     promotionEffect: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ReleaseDeploymentItem {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    deploymentGroup: baml.json.to<DeploymentGroupInfo?>(baml.json.field(object, "deploymentGroup")),
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    lastHeartbeatAt: baml.json.to<string?>(baml.json.field(object, "lastHeartbeatAt")),
-                    rolloutState: baml.json.to<string>(baml.json.field(object, "rolloutState")),
-                    releasedAt: baml.json.to<string?>(baml.json.field(object, "releasedAt")),
-                    durationMs: baml.json.to<int?>(baml.json.field(object, "durationMs")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    promotionEffect: baml.json.to<string?>(baml.json.field(object, "promotionEffect")),
-                },
-                _ => throw baml.json.DecodeError { message: "ReleaseDeploymentItem must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class ReleaseDeploymentsResponse {
@@ -12246,49 +9442,14 @@ class ReleaseRolloutStateCounts {
     failed: int,
     pending: int,
     /// Wire name: `waiting-on-owner`.
-    waitingOnOwner: int,
+    waitingOnOwner: int @json.rename("waiting-on-owner"),
     /// Wire name: `waiting-on-inputs`.
-    waitingOnInputs: int,
+    waitingOnInputs: int @json.rename("waiting-on-inputs"),
     /// Wire name: `pinned-other`.
-    pinnedOther: int,
+    pinnedOther: int @json.rename("pinned-other"),
     superseded: int,
     /// Wire name: `on-other`.
-    onOther: int,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ReleaseRolloutStateCounts {
-                    updated: baml.json.to<int>(baml.json.field(object, "updated")),
-                    updating: baml.json.to<int>(baml.json.field(object, "updating")),
-                    failed: baml.json.to<int>(baml.json.field(object, "failed")),
-                    pending: baml.json.to<int>(baml.json.field(object, "pending")),
-                    waitingOnOwner: baml.json.to<int>(baml.json.field(object, "waiting-on-owner")),
-                    waitingOnInputs: baml.json.to<int>(baml.json.field(object, "waiting-on-inputs")),
-                    pinnedOther: baml.json.to<int>(baml.json.field(object, "pinned-other")),
-                    superseded: baml.json.to<int>(baml.json.field(object, "superseded")),
-                    onOther: baml.json.to<int>(baml.json.field(object, "on-other")),
-                },
-                _ => throw baml.json.DecodeError { message: "ReleaseRolloutStateCounts must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["updated"] = baml.json.from(self.updated);
-            out["updating"] = baml.json.from(self.updating);
-            out["failed"] = baml.json.from(self.failed);
-            out["pending"] = baml.json.from(self.pending);
-            out["waiting-on-owner"] = baml.json.from(self.waitingOnOwner);
-            out["waiting-on-inputs"] = baml.json.from(self.waitingOnInputs);
-            out["pinned-other"] = baml.json.from(self.pinnedOther);
-            out["superseded"] = baml.json.from(self.superseded);
-            out["on-other"] = baml.json.from(self.onOther);
-            out
-        }
-    }
+    onOther: int @json.rename("on-other"),
 }
 
 class RemoteBindingsExternalAccessRequest {
@@ -12339,15 +9500,7 @@ class RemoteOperatorPermissionPluginOperationsItem {
     permissions: RemoteOperatorPermissionPluginOperationsItemPermissions,
     kubernetesPermissions: RemoteOperatorPermissionPluginOperationsItemKubernetesPermissions?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["permissions"] = baml.json.from(self.permissions);
-            if (self.kubernetesPermissions != null) { out["kubernetesPermissions"] = baml.json.from(self.kubernetesPermissions); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class RemoteOperatorPermissionPluginOperationsItemKubernetesPermissions {
@@ -12401,26 +9554,7 @@ class RenderOperatorEcsCloudFormationRequest {
     /// Default: `[]` (applied by the server when left out).
     sqsQueueArns: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["project"] = baml.json.from(self.project);
-            out["environmentName"] = baml.json.from(self.environmentName);
-            if (self.permission != null) { out["permission"] = baml.json.from(self.permission); }
-            out["accountId"] = baml.json.from(self.accountId);
-            out["region"] = baml.json.from(self.region);
-            out["clusterArn"] = baml.json.from(self.clusterArn);
-            out["subnetIds"] = baml.json.from(self.subnetIds);
-            out["securityGroupIds"] = baml.json.from(self.securityGroupIds);
-            if (self.assignPublicIp != null) { out["assignPublicIp"] = baml.json.from(self.assignPublicIp); }
-            if (self.efsFileSystemId != null) { out["efsFileSystemId"] = baml.json.from(self.efsFileSystemId); }
-            if (self.efsAccessPointId != null) { out["efsAccessPointId"] = baml.json.from(self.efsAccessPointId); }
-            if (self.operatorImagePackageId != null) { out["operatorImagePackageId"] = baml.json.from(self.operatorImagePackageId); }
-            if (self.s3BucketArns != null) { out["s3BucketArns"] = baml.json.from(self.s3BucketArns); }
-            if (self.sqsQueueArns != null) { out["sqsQueueArns"] = baml.json.from(self.sqsQueueArns); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class RenderOperatorEcsCloudFormationResponse {
@@ -12475,23 +9609,7 @@ class RenderOperatorManifestRequest {
     logCollector: RenderOperatorManifestRequestLogCollector?,
     stackSettings: StackSettings?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["project"] = baml.json.from(self.project);
-            if (self.format != null) { out["format"] = baml.json.from(self.format); }
-            if (self.environmentName != null) { out["environmentName"] = baml.json.from(self.environmentName); }
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            if (self.scope != null) { out["scope"] = baml.json.from(self.scope); }
-            if (self.labelSelector != null) { out["labelSelector"] = baml.json.from(self.labelSelector); }
-            if (self.permission != null) { out["permission"] = baml.json.from(self.permission); }
-            if (self.operatorImagePackageId != null) { out["operatorImagePackageId"] = baml.json.from(self.operatorImagePackageId); }
-            out["deploymentGroupToken"] = baml.json.from(self.deploymentGroupToken);
-            if (self.logCollector != null) { out["logCollector"] = baml.json.from(self.logCollector); }
-            if (self.stackSettings != null) { out["stackSettings"] = baml.json.from(self.stackSettings); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Enable the node log collector DaemonSet for raw pod logs.
@@ -12503,15 +9621,7 @@ class RenderOperatorManifestRequestLogCollector {
     /// Existing Pod label value to collect logs from. Set with podLabelKey.
     podLabelValue: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.podLabelKey != null) { out["podLabelKey"] = baml.json.from(self.podLabelKey); }
-            if (self.podLabelValue != null) { out["podLabelValue"] = baml.json.from(self.podLabelValue); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class RenderOperatorManifestResponse {
@@ -12567,14 +9677,7 @@ class ResolveManagerGcpOAuthProviderRequest {
     /// Browser origin that will receive the Google OAuth callback result. Must be a first-party dashboard origin or the active portal origin for the deployment group's project.
     returnOrigin: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentGroupToken"] = baml.json.from(self.deploymentGroupToken);
-            if (self.returnOrigin != null) { out["returnOrigin"] = baml.json.from(self.returnOrigin); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type ResolveManagerGcpOAuthProviderResponse = ResolveManagerGcpOAuthProviderResponseAlienManaged | ResolveManagerGcpOAuthProviderResponseCustom | ProjectGcpOAuthProviderOther
@@ -12619,27 +9722,6 @@ class ResolveResponseInstallContext {
     /// Platform-derived configuration for cross-account/cross-tenant access.
     /// This is NOT user-specified - it's derived from the Manager's ServiceAccount.
     managementConfig: DeploymentConfigManagementConfigAws | DeploymentConfigManagementConfigGcp | DeploymentConfigManagementConfigAzure | DeploymentConfigManagementConfigKubernetes | DeploymentConfigManagementConfigOther,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ResolveResponseInstallContext {
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "ResolveResponseInstallContext must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class ResolvedCommandTarget {
@@ -12715,13 +9797,7 @@ class RevokeAccessRequest {
     /// Why the grant is withdrawn, for the audit trail.
     reason: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class RevokeAccessRequestResponse {
@@ -12809,17 +9885,7 @@ class Rule {
     resourceNames: string[]?,
     reason: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["apiGroup"] = baml.json.from(self.apiGroup);
-            out["resource"] = baml.json.from(self.resource);
-            out["verbs"] = baml.json.from(self.verbs);
-            if (self.resourceNames != null) { out["resourceNames"] = baml.json.from(self.resourceNames); }
-            out["reason"] = baml.json.from(self.reason);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SandboxBaseImageRepository {
@@ -12837,13 +9903,7 @@ class ScopeOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Authenticated service account subject with scoped permissions (workspace, project, or deployment level)
@@ -12858,32 +9918,6 @@ class ServiceAccountSubject {
     workspaceName: string?,
     scope: SubjectScope,
     role: string,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => ServiceAccountSubject {
-                    kind: baml.json.to<"serviceAccount">(baml.json.field(object, "kind")),
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    workspaceName: baml.json.to<string?>(baml.json.field(object, "workspaceName")),
-                    scope: match (baml.json.field(object, "scope")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "workspace" => baml.json.to<SubjectScopeWorkspace>(member),
-                            "project" => baml.json.to<SubjectScopeProject>(member),
-                            "deployment" => baml.json.to<SubjectScopeDeployment>(member),
-                            "deployment-group" => baml.json.to<SubjectScopeDeploymentGroup>(member),
-                            "manager" => baml.json.to<SubjectScopeManager>(member),
-                            _ => ScopeOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    role: baml.json.to<string>(baml.json.field(object, "role")),
-                },
-                _ => throw baml.json.DecodeError { message: "ServiceAccountSubject must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SetDeploymentGroupExternalIdRequest {
@@ -12904,15 +9938,7 @@ class SetFirstPartyDeploymentInputsRequest {
     inputValues: StackInputValuesRequest?,
     releaseChannel: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["platform"] = baml.json.from(self.platform);
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            if (self.releaseChannel != null) { out["releaseChannel"] = baml.json.from(self.releaseChannel); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SetFirstPartyDeploymentInputsResponse {
@@ -12943,30 +9969,6 @@ class SetupItemStatus {
     status: string,
     deploymentIds: string[],
     blocker: SetupItemStatusBlocker?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SetupItemStatus {
-                    item: baml.json.to<string>(baml.json.field(object, "item")),
-                    source: match (baml.json.field(object, "source")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "project-release" => baml.json.to<SetupItemStatusSourceProjectRelease>(member),
-                            "built-in" => baml.json.to<SetupItemStatusSourceBuiltIn>(member),
-                            _ => SetupItemStatusSourceOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    required: baml.json.to<bool>(baml.json.field(object, "required")),
-                    configuration: baml.json.to<SetupItemStatusConfiguration?>(baml.json.field(object, "configuration")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    deploymentIds: baml.json.to<string[]>(baml.json.field(object, "deploymentIds")),
-                    blocker: baml.json.to<SetupItemStatusBlocker?>(baml.json.field(object, "blocker")),
-                },
-                _ => throw baml.json.DecodeError { message: "SetupItemStatus must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SetupItemStatusBlocker {
@@ -12996,13 +9998,7 @@ class SetupItemStatusSourceOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SetupItemStatusSourceProjectRelease {
@@ -13019,14 +10015,7 @@ class SetupLinkEntryPoint {
     item: string,
     provider: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["item"] = baml.json.from(self.item);
-            if (self.provider != null) { out["provider"] = baml.json.from(self.provider); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SetupRegistrationCloudFormationTarget {
@@ -13038,18 +10027,7 @@ class SetupRegistrationCloudFormationTarget {
     /// Default: `3300` (applied by the server when left out).
     serviceTimeoutSeconds: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["stackId"] = baml.json.from(self.stackId);
-            out["requestId"] = baml.json.from(self.requestId);
-            out["logicalResourceId"] = baml.json.from(self.logicalResourceId);
-            out["responseUrl"] = baml.json.from(self.responseUrl);
-            if (self.physicalResourceId != null) { out["physicalResourceId"] = baml.json.from(self.physicalResourceId); }
-            if (self.serviceTimeoutSeconds != null) { out["serviceTimeoutSeconds"] = baml.json.from(self.serviceTimeoutSeconds); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SetupRegistrationOperationResponse {
@@ -13120,38 +10098,9 @@ class StackByPlatform {
     machines: json?,
     local: json?,
     /// Wire name: `test`.
-    test_: json?,
+    test_: json? @json.rename("test"),
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackByPlatform {
-                    aws: baml.json.to<json?>(baml.json.field(object, "aws")),
-                    gcp: baml.json.to<json?>(baml.json.field(object, "gcp")),
-                    azure: baml.json.to<json?>(baml.json.field(object, "azure")),
-                    kubernetes: baml.json.to<json?>(baml.json.field(object, "kubernetes")),
-                    machines: baml.json.to<json?>(baml.json.field(object, "machines")),
-                    local: baml.json.to<json?>(baml.json.field(object, "local")),
-                    test_: baml.json.to<json?>(baml.json.field(object, "test")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackByPlatform must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            if (self.kubernetes != null) { out["kubernetes"] = baml.json.from(self.kubernetes); }
-            if (self.machines != null) { out["machines"] = baml.json.from(self.machines); }
-            if (self.local != null) { out["local"] = baml.json.from(self.local); }
-            if (self.test_ != null) { out["test"] = baml.json.from(self.test_); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type StackInputValueRequest = string | float | bool | string[]
@@ -13222,123 +10171,7 @@ class StackSettings {
     /// Known values: `auto`, `approval-required`. Others may appear.
     updates: string?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettings {
-                    compute: baml.json.to<StackSettingsCompute?>(baml.json.field(object, "compute")),
-                    deploymentModel: baml.json.to<string?>(baml.json.field(object, "deploymentModel")),
-                    domains: baml.json.to<StackSettingsDomains?>(baml.json.field(object, "domains")),
-                    endpointAccess: baml.json.to<string?>(baml.json.field(object, "endpointAccess")),
-                    externalBindings: match (baml.json.field(object, "externalBindings")) {
-                        null => null,
-                        let entries: map<string, baml.json.json> => {
-                            let out: map<string, ExternalBinding> = {};
-                            for (let key in entries.keys()) {
-                                out[key] = match (entries[key]) {
-                                    let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                                        "storage" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "s3" => baml.json.to<ExternalBindingStorageS3>(member),
-                                            "blob" => baml.json.to<ExternalBindingStorageBlob>(member),
-                                            "gcs" => baml.json.to<ExternalBindingStorageGcs>(member),
-                                            "local-storage" => baml.json.to<ExternalBindingStorageLocalStorage>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "queue" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "sqs" => baml.json.to<ExternalBindingQueueSqs>(member),
-                                            "pubsub" => baml.json.to<ExternalBindingQueuePubsub>(member),
-                                            "servicebus" => baml.json.to<ExternalBindingQueueServicebus>(member),
-                                            "local-queue" => baml.json.to<ExternalBindingQueueLocalQueue>(member),
-                                            "local-queue-http" => baml.json.to<ExternalBindingQueueLocalQueueHttp>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "kv" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "dynamodb" => baml.json.to<ExternalBindingKvDynamodb>(member),
-                                            "firestore" => baml.json.to<ExternalBindingKvFirestore>(member),
-                                            "tablestorage" => baml.json.to<ExternalBindingKvTablestorage>(member),
-                                            "redis" => baml.json.to<ExternalBindingKvRedis>(member),
-                                            "local-kv" => baml.json.to<ExternalBindingKvLocalKv>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "artifact_registry" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "ecr" => baml.json.to<ExternalBindingArtifactRegistryEcr>(member),
-                                            "acr" => baml.json.to<ExternalBindingArtifactRegistryAcr>(member),
-                                            "gar" => baml.json.to<ExternalBindingArtifactRegistryGar>(member),
-                                            "local" => baml.json.to<ExternalBindingArtifactRegistryLocal>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "vault" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "parameter-store" => baml.json.to<ExternalBindingVaultParameterStore>(member),
-                                            "secret-manager" => baml.json.to<ExternalBindingVaultSecretManager>(member),
-                                            "key-vault" => baml.json.to<ExternalBindingVaultKeyVault>(member),
-                                            "kubernetes-secret" => baml.json.to<ExternalBindingVaultKubernetesSecret>(member),
-                                            "local-vault" => baml.json.to<ExternalBindingVaultLocalVault>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "container_apps_environment" => baml.json.to<ExternalBindingContainerAppsEnvironment>(member),
-                                        "postgres" => match (baml.json.to<string>(baml.json.field(member, "service"))) {
-                                            "aurora" => baml.json.to<ExternalBindingPostgresAurora>(member),
-                                            "aurora-managed" => baml.json.to<ExternalBindingPostgresAuroraManaged>(member),
-                                            "cloud-sql" => baml.json.to<ExternalBindingPostgresCloudSql>(member),
-                                            "flexible-server" => baml.json.to<ExternalBindingPostgresFlexibleServer>(member),
-                                            "external" => baml.json.to<ExternalBindingPostgresExternal>(member),
-                                            "local-postgres" => baml.json.to<ExternalBindingPostgresLocalPostgres>(member),
-                                            _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                        },
-                                        "ai" => baml.json.to<ExternalBindingAi>(member),
-                                        _ => ExternalBindingOther { type: "UNKNOWN", raw: member },
-                                    },
-                                    _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                                };
-                            }
-                            out
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    heartbeats: baml.json.to<string?>(baml.json.field(object, "heartbeats")),
-                    kubernetes: baml.json.to<StackSettingsKubernetes?>(baml.json.field(object, "kubernetes")),
-                    network: match (baml.json.field(object, "network")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "use-default" => baml.json.to<StackSettingsNetworkUseDefault>(member),
-                            "create" => baml.json.to<StackSettingsNetworkCreate>(member),
-                            "byo-vpc-aws" => baml.json.to<StackSettingsNetworkByoVpcAws>(member),
-                            "byo-vpc-gcp" => baml.json.to<StackSettingsNetworkByoVpcGcp>(member),
-                            "byo-vnet-azure" => baml.json.to<StackSettingsNetworkByoVnetAzure>(member),
-                            _ => StackSettingsNetworkOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    publicEndpoints: baml.json.to<map<string, map<string, string>>?>(baml.json.field(object, "publicEndpoints")),
-                    quotaWarningOverrides: baml.json.to<string[]?>(baml.json.field(object, "quotaWarningOverrides")),
-                    setupManagement: baml.json.to<string?>(baml.json.field(object, "setupManagement")),
-                    telemetry: baml.json.to<string?>(baml.json.field(object, "telemetry")),
-                    updates: baml.json.to<string?>(baml.json.field(object, "updates")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettings must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.compute != null) { out["compute"] = baml.json.from(self.compute); }
-            if (self.deploymentModel != null) { out["deploymentModel"] = baml.json.from(self.deploymentModel); }
-            if (self.domains != null) { out["domains"] = baml.json.from(self.domains); }
-            if (self.endpointAccess != null) { out["endpointAccess"] = baml.json.from(self.endpointAccess); }
-            if (self.externalBindings != null) { out["externalBindings"] = baml.json.from(self.externalBindings); }
-            if (self.heartbeats != null) { out["heartbeats"] = baml.json.from(self.heartbeats); }
-            if (self.kubernetes != null) { out["kubernetes"] = baml.json.from(self.kubernetes); }
-            if (self.network != null) { out["network"] = baml.json.from(self.network); }
-            if (self.publicEndpoints != null) { out["publicEndpoints"] = baml.json.from(self.publicEndpoints); }
-            if (self.quotaWarningOverrides != null) { out["quotaWarningOverrides"] = baml.json.from(self.quotaWarningOverrides); }
-            if (self.setupManagement != null) { out["setupManagement"] = baml.json.from(self.setupManagement); }
-            if (self.telemetry != null) { out["telemetry"] = baml.json.from(self.telemetry); }
-            if (self.updates != null) { out["updates"] = baml.json.from(self.updates); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Deployment-time compute choices for Alien-managed compute pools.
@@ -13352,43 +10185,7 @@ class StackSettingsCompute {
     /// Selected compute choices keyed by pool ID.
     pools: map<string, ComputePoolSelectionFixed | ComputePoolSelectionAutoscale | ComputePoolSelectionOther>?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsCompute {
-                    containers: baml.json.to<map<string, StackSettingsComputeContainersValue>?>(baml.json.field(object, "containers")),
-                    pools: match (baml.json.field(object, "pools")) {
-                        null => null,
-                        let entries: map<string, baml.json.json> => {
-                            let out: map<string, ComputePoolSelectionFixed | ComputePoolSelectionAutoscale | ComputePoolSelectionOther> = {};
-                            for (let key in entries.keys()) {
-                                out[key] = match (entries[key]) {
-                                    let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                                        "fixed" => baml.json.to<ComputePoolSelectionFixed>(member),
-                                        "autoscale" => baml.json.to<ComputePoolSelectionAutoscale>(member),
-                                        _ => ComputePoolSelectionOther { mode: "UNKNOWN", raw: member },
-                                    },
-                                    _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                                };
-                            }
-                            out
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsCompute must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.containers != null) { out["containers"] = baml.json.from(self.containers); }
-            if (self.pools != null) { out["pools"] = baml.json.from(self.pools); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Deployment-time resource allocation for a container. Omitted fields use release defaults.
@@ -13401,15 +10198,7 @@ class StackSettingsComputeContainersValue {
     /// use the release default. Existing volumes can only grow.
     volumeSizeGib: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.volumeSizeGib != null) { out["volumeSizeGib"] = baml.json.from(self.volumeSizeGib); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Domain configuration for the stack.
@@ -13421,34 +10210,7 @@ class StackSettingsDomains {
     customDomains: map<string, StackSettingsDomainsCustomDomainsValue>?,
     publicEndpointTarget: (StackSettingsDomainsPublicEndpointTargetMachineAddresses | StackSettingsDomainsPublicEndpointTargetLoadBalancer | StackSettingsDomainsPublicEndpointTargetOther)?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsDomains {
-                    customDomains: baml.json.to<map<string, StackSettingsDomainsCustomDomainsValue>?>(baml.json.field(object, "customDomains")),
-                    publicEndpointTarget: match (baml.json.field(object, "publicEndpointTarget")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "machineAddresses" => baml.json.to<StackSettingsDomainsPublicEndpointTargetMachineAddresses>(member),
-                            "loadBalancer" => baml.json.to<StackSettingsDomainsPublicEndpointTargetLoadBalancer>(member),
-                            _ => StackSettingsDomainsPublicEndpointTargetOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsDomains must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.customDomains != null) { out["customDomains"] = baml.json.from(self.customDomains); }
-            if (self.publicEndpointTarget != null) { out["publicEndpointTarget"] = baml.json.from(self.publicEndpointTarget); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Custom domain configuration for a single resource.
@@ -13466,16 +10228,7 @@ class StackSettingsDomainsCustomDomainsValueCertificate {
     gcp: StackSettingsDomainsCustomDomainsValueCertificateGcp?,
     kubernetes: StackSettingsDomainsCustomDomainsValueCertificateKubernetes?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.aws != null) { out["aws"] = baml.json.from(self.aws); }
-            if (self.azure != null) { out["azure"] = baml.json.from(self.azure); }
-            if (self.gcp != null) { out["gcp"] = baml.json.from(self.gcp); }
-            if (self.kubernetes != null) { out["kubernetes"] = baml.json.from(self.kubernetes); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsDomainsCustomDomainsValueCertificateAws {
@@ -13486,14 +10239,7 @@ class StackSettingsDomainsCustomDomainsValueCertificateAzure {
     keyVaultCertificateId: string,
     keyVaultResourceId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["keyVaultCertificateId"] = baml.json.from(self.keyVaultCertificateId);
-            if (self.keyVaultResourceId != null) { out["keyVaultResourceId"] = baml.json.from(self.keyVaultResourceId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsDomainsCustomDomainsValueCertificateGcp {
@@ -13512,14 +10258,7 @@ class StackSettingsDomainsCustomDomainsValueCertificateKubernetesTlsSecretRef {
     /// Secret name.
     secretName: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out["secretName"] = baml.json.from(self.secretName);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsDomainsPublicEndpointTargetLoadBalancer {
@@ -13537,13 +10276,7 @@ class StackSettingsDomainsPublicEndpointTargetOther {
     /// Always `"UNKNOWN"`. The server's `mode` is `raw["mode"]`.
     mode: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Kubernetes runtime substrate configuration.
@@ -13557,35 +10290,7 @@ class StackSettingsKubernetes {
     cluster: StackSettingsKubernetesCluster?,
     exposure: (StackSettingsKubernetesExposureDisabled | StackSettingsKubernetesExposureGenerated | StackSettingsKubernetesExposureCustom | StackSettingsKubernetesExposureOther)?,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsKubernetes {
-                    cluster: baml.json.to<StackSettingsKubernetesCluster?>(baml.json.field(object, "cluster")),
-                    exposure: match (baml.json.field(object, "exposure")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "disabled" => baml.json.to<StackSettingsKubernetesExposureDisabled>(member),
-                            "generated" => baml.json.to<StackSettingsKubernetesExposureGenerated>(member),
-                            "custom" => baml.json.to<StackSettingsKubernetesExposureCustom>(member),
-                            _ => StackSettingsKubernetesExposureOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsKubernetes must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cluster != null) { out["cluster"] = baml.json.from(self.cluster); }
-            if (self.exposure != null) { out["exposure"] = baml.json.from(self.exposure); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Kubernetes cluster setup settings.
@@ -13599,15 +10304,7 @@ class StackSettingsKubernetesCluster {
     /// Known values: `managed`, `existing`, `external`. Others may appear.
     ownership: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cloud != null) { out["cloud"] = baml.json.from(self.cloud); }
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out["ownership"] = baml.json.from(self.ownership);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Optional provider-specific identity for a cloud-backed Kubernetes cluster.
@@ -13620,19 +10317,7 @@ class StackSettingsKubernetesClusterCloud {
     resourceGroup: string?,
     subscriptionId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.accountId != null) { out["accountId"] = baml.json.from(self.accountId); }
-            if (self.clusterId != null) { out["clusterId"] = baml.json.from(self.clusterId); }
-            if (self.clusterName != null) { out["clusterName"] = baml.json.from(self.clusterName); }
-            if (self.projectId != null) { out["projectId"] = baml.json.from(self.projectId); }
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.subscriptionId != null) { out["subscriptionId"] = baml.json.from(self.subscriptionId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureCustom {
@@ -13643,37 +10328,6 @@ class StackSettingsKubernetesExposureCustom {
     mode: "custom",
     /// Kubernetes route API selected for public endpoints.
     route: StackSettingsKubernetesExposureGeneratedRouteIngress | StackSettingsKubernetesExposureGeneratedRouteGateway | StackSettingsKubernetesExposureGeneratedRouteOther,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsKubernetesExposureCustom {
-                    certificate: match (baml.json.field(object, "certificate")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "tlsSecretRef" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateTlsSecretRef>(member),
-                            "managedAcmImport" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateManagedAcmImport>(member),
-                            "awsAcmArn" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateAwsAcmArn>(member),
-                            "managedTlsSecret" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateManagedTlsSecret>(member),
-                            "none" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateNone>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedCertificateOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    domain: baml.json.to<string>(baml.json.field(object, "domain")),
-                    mode: baml.json.to<"custom">(baml.json.field(object, "mode")),
-                    route: match (baml.json.field(object, "route")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "routeApi"))) {
-                            "ingress" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngress>(member),
-                            "gateway" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteGateway>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedRouteOther { routeApi: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsKubernetesExposureCustom must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class StackSettingsKubernetesExposureDisabled {
@@ -13686,36 +10340,6 @@ class StackSettingsKubernetesExposureGenerated {
     mode: "generated",
     /// Kubernetes route API selected for public endpoints.
     route: StackSettingsKubernetesExposureGeneratedRouteIngress | StackSettingsKubernetesExposureGeneratedRouteGateway | StackSettingsKubernetesExposureGeneratedRouteOther,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsKubernetesExposureGenerated {
-                    certificate: match (baml.json.field(object, "certificate")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                            "tlsSecretRef" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateTlsSecretRef>(member),
-                            "managedAcmImport" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateManagedAcmImport>(member),
-                            "awsAcmArn" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateAwsAcmArn>(member),
-                            "managedTlsSecret" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateManagedTlsSecret>(member),
-                            "none" => baml.json.to<StackSettingsKubernetesExposureGeneratedCertificateNone>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedCertificateOther { mode: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    mode: baml.json.to<"generated">(baml.json.field(object, "mode")),
-                    route: match (baml.json.field(object, "route")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "routeApi"))) {
-                            "ingress" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngress>(member),
-                            "gateway" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteGateway>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedRouteOther { routeApi: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsKubernetesExposureGenerated must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class StackSettingsKubernetesExposureGeneratedCertificateAwsAcmArn {
@@ -13731,15 +10355,7 @@ class StackSettingsKubernetesExposureGeneratedCertificateManagedAcmImport {
     /// Tags applied to runtime-imported ACM certificates.
     tags: map<string, string>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["mode"] = baml.json.from(self.mode);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.tags != null) { out["tags"] = baml.json.from(self.tags); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedCertificateManagedTlsSecret {
@@ -13757,13 +10373,7 @@ class StackSettingsKubernetesExposureGeneratedCertificateOther {
     /// Always `"UNKNOWN"`. The server's `mode` is `raw["mode"]`.
     mode: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class StackSettingsKubernetesExposureGeneratedCertificateTlsSecretRef {
@@ -13773,15 +10383,7 @@ class StackSettingsKubernetesExposureGeneratedCertificateTlsSecretRef {
     secretName: string,
     mode: "tlsSecretRef",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out["secretName"] = baml.json.from(self.secretName);
-            out["mode"] = baml.json.from(self.mode);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedRouteGateway {
@@ -13798,45 +10400,7 @@ class StackSettingsKubernetesExposureGeneratedRouteGateway {
     provider: (StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb | StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway | StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicationGatewayForContainers | StackSettingsKubernetesExposureGeneratedRouteIngressProviderOther)?,
     routeApi: "gateway",
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsKubernetesExposureGeneratedRouteGateway {
-                    annotations: baml.json.to<map<string, string>?>(baml.json.field(object, "annotations")),
-                    controller: baml.json.to<string?>(baml.json.field(object, "controller")),
-                    gatewayClassName: baml.json.to<string>(baml.json.field(object, "gatewayClassName")),
-                    labels: baml.json.to<map<string, string>?>(baml.json.field(object, "labels")),
-                    listenerPort: baml.json.to<int>(baml.json.field(object, "listenerPort")),
-                    provider: match (baml.json.field(object, "provider")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "provider"))) {
-                            "awsAlb" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb>(member),
-                            "gkeGateway" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway>(member),
-                            "azureApplicationGatewayForContainers" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicationGatewayForContainers>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedRouteIngressProviderOther { provider: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    routeApi: baml.json.to<"gateway">(baml.json.field(object, "routeApi")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsKubernetesExposureGeneratedRouteGateway must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.annotations != null) { out["annotations"] = baml.json.from(self.annotations); }
-            if (self.controller != null) { out["controller"] = baml.json.from(self.controller); }
-            out["gatewayClassName"] = baml.json.from(self.gatewayClassName);
-            if (self.labels != null) { out["labels"] = baml.json.from(self.labels); }
-            out["listenerPort"] = baml.json.from(self.listenerPort);
-            if (self.provider != null) { out["provider"] = baml.json.from(self.provider); }
-            out["routeApi"] = baml.json.from(self.routeApi);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedRouteIngress {
@@ -13851,43 +10415,7 @@ class StackSettingsKubernetesExposureGeneratedRouteIngress {
     provider: (StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb | StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway | StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicationGatewayForContainers | StackSettingsKubernetesExposureGeneratedRouteIngressProviderOther)?,
     routeApi: "ingress",
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsKubernetesExposureGeneratedRouteIngress {
-                    annotations: baml.json.to<map<string, string>?>(baml.json.field(object, "annotations")),
-                    controller: baml.json.to<string?>(baml.json.field(object, "controller")),
-                    ingressClassName: baml.json.to<string>(baml.json.field(object, "ingressClassName")),
-                    labels: baml.json.to<map<string, string>?>(baml.json.field(object, "labels")),
-                    provider: match (baml.json.field(object, "provider")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "provider"))) {
-                            "awsAlb" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb>(member),
-                            "gkeGateway" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway>(member),
-                            "azureApplicationGatewayForContainers" => baml.json.to<StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicationGatewayForContainers>(member),
-                            _ => StackSettingsKubernetesExposureGeneratedRouteIngressProviderOther { provider: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    routeApi: baml.json.to<"ingress">(baml.json.field(object, "routeApi")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsKubernetesExposureGeneratedRouteIngress must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.annotations != null) { out["annotations"] = baml.json.from(self.annotations); }
-            if (self.controller != null) { out["controller"] = baml.json.from(self.controller); }
-            out["ingressClassName"] = baml.json.from(self.ingressClassName);
-            if (self.labels != null) { out["labels"] = baml.json.from(self.labels); }
-            if (self.provider != null) { out["provider"] = baml.json.from(self.provider); }
-            out["routeApi"] = baml.json.from(self.routeApi);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb {
@@ -13901,17 +10429,7 @@ class StackSettingsKubernetesExposureGeneratedRouteIngressProviderAwsAlb {
     /// ALB target type, usually `ip`.
     targetType: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.ipAddressType != null) { out["ipAddressType"] = baml.json.from(self.ipAddressType); }
-            out["provider"] = baml.json.from(self.provider);
-            out["scheme"] = baml.json.from(self.scheme);
-            if (self.subnetIds != null) { out["subnetIds"] = baml.json.from(self.subnetIds); }
-            out["targetType"] = baml.json.from(self.targetType);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicationGatewayForContainers {
@@ -13923,16 +10441,7 @@ class StackSettingsKubernetesExposureGeneratedRouteIngressProviderAzureApplicati
     frontend: string,
     provider: "azureApplicationGatewayForContainers",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.albName != null) { out["albName"] = baml.json.from(self.albName); }
-            if (self.albNamespace != null) { out["albNamespace"] = baml.json.from(self.albNamespace); }
-            out["frontend"] = baml.json.from(self.frontend);
-            out["provider"] = baml.json.from(self.provider);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway {
@@ -13940,14 +10449,7 @@ class StackSettingsKubernetesExposureGeneratedRouteIngressProviderGkeGateway {
     /// Optional static address name for the Gateway frontend.
     staticAddressName: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["provider"] = baml.json.from(self.provider);
-            if (self.staticAddressName != null) { out["staticAddressName"] = baml.json.from(self.staticAddressName); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `provider` is always `"UNKNOWN"`, so code that switches on `provider` handles it like any other member; `raw` holds the member as the server sent it. A known `provider` never decodes as this class.
@@ -13955,13 +10457,7 @@ class StackSettingsKubernetesExposureGeneratedRouteIngressProviderOther {
     /// Always `"UNKNOWN"`. The server's `provider` is `raw["provider"]`.
     provider: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `routeApi` is always `"UNKNOWN"`, so code that switches on `routeApi` handles it like any other member; `raw` holds the member as the server sent it. A known `routeApi` never decodes as this class.
@@ -13969,13 +10465,7 @@ class StackSettingsKubernetesExposureGeneratedRouteOther {
     /// Always `"UNKNOWN"`. The server's `routeApi` is `raw["routeApi"]`.
     routeApi: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `mode` is always `"UNKNOWN"`, so code that switches on `mode` handles it like any other member; `raw` holds the member as the server sent it. A known `mode` never decodes as this class.
@@ -13983,20 +10473,14 @@ class StackSettingsKubernetesExposureOther {
     /// Always `"UNKNOWN"`. The server's `mode` is `raw["mode"]`.
     mode: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class StackSettingsNetworkByoVnetAzure {
     /// Name of the dedicated classic Application Gateway subnet within the VNet.
     ///
     /// Wire name: `application_gateway_subnet_name`.
-    applicationGatewaySubnetName: string?,
+    applicationGatewaySubnetName: string? @json.rename("application_gateway_subnet_name"),
     /// Name of the dedicated subnet that hosts Private Endpoints (e.g. for a
     /// Postgres Flexible Server). A Private Endpoint must not share the private
     /// subnet, which is already claimed by the Container Apps environment's
@@ -14004,169 +10488,71 @@ class StackSettingsNetworkByoVnetAzure {
     /// Postgres resource; otherwise unused.
     ///
     /// Wire name: `private_endpoint_subnet_name`.
-    privateEndpointSubnetName: string?,
+    privateEndpointSubnetName: string? @json.rename("private_endpoint_subnet_name"),
     /// Name of the private subnet within the VNet
     ///
     /// Wire name: `private_subnet_name`.
-    privateSubnetName: string,
+    privateSubnetName: string @json.rename("private_subnet_name"),
     /// Name of the public subnet within the VNet
     ///
     /// Wire name: `public_subnet_name`.
-    publicSubnetName: string,
+    publicSubnetName: string @json.rename("public_subnet_name"),
     type: "byo-vnet-azure",
     /// The full resource ID of the existing VNet
     ///
     /// Wire name: `vnet_resource_id`.
-    vnetResourceId: string,
+    vnetResourceId: string @json.rename("vnet_resource_id"),
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsNetworkByoVnetAzure {
-                    applicationGatewaySubnetName: baml.json.to<string?>(baml.json.field(object, "application_gateway_subnet_name")),
-                    privateEndpointSubnetName: baml.json.to<string?>(baml.json.field(object, "private_endpoint_subnet_name")),
-                    privateSubnetName: baml.json.to<string>(baml.json.field(object, "private_subnet_name")),
-                    publicSubnetName: baml.json.to<string>(baml.json.field(object, "public_subnet_name")),
-                    type: baml.json.to<"byo-vnet-azure">(baml.json.field(object, "type")),
-                    vnetResourceId: baml.json.to<string>(baml.json.field(object, "vnet_resource_id")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsNetworkByoVnetAzure must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.applicationGatewaySubnetName != null) { out["application_gateway_subnet_name"] = baml.json.from(self.applicationGatewaySubnetName); }
-            if (self.privateEndpointSubnetName != null) { out["private_endpoint_subnet_name"] = baml.json.from(self.privateEndpointSubnetName); }
-            out["private_subnet_name"] = baml.json.from(self.privateSubnetName);
-            out["public_subnet_name"] = baml.json.from(self.publicSubnetName);
-            out["type"] = baml.json.from(self.type);
-            out["vnet_resource_id"] = baml.json.from(self.vnetResourceId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsNetworkByoVpcAws {
     /// IDs of private subnets
     ///
     /// Wire name: `private_subnet_ids`.
-    privateSubnetIds: string[],
+    privateSubnetIds: string[] @json.rename("private_subnet_ids"),
     /// IDs of public subnets (required for public ingress)
     ///
     /// Wire name: `public_subnet_ids`.
-    publicSubnetIds: string[],
+    publicSubnetIds: string[] @json.rename("public_subnet_ids"),
     /// Optional security group IDs to use
     ///
     /// Wire name: `security_group_ids`.
-    securityGroupIds: string[]?,
+    securityGroupIds: string[]? @json.rename("security_group_ids"),
     type: "byo-vpc-aws",
     /// The ID of the existing VPC
     ///
     /// Wire name: `vpc_id`.
-    vpcId: string,
+    vpcId: string @json.rename("vpc_id"),
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsNetworkByoVpcAws {
-                    privateSubnetIds: baml.json.to<string[]>(baml.json.field(object, "private_subnet_ids")),
-                    publicSubnetIds: baml.json.to<string[]>(baml.json.field(object, "public_subnet_ids")),
-                    securityGroupIds: baml.json.to<string[]?>(baml.json.field(object, "security_group_ids")),
-                    type: baml.json.to<"byo-vpc-aws">(baml.json.field(object, "type")),
-                    vpcId: baml.json.to<string>(baml.json.field(object, "vpc_id")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsNetworkByoVpcAws must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["private_subnet_ids"] = baml.json.from(self.privateSubnetIds);
-            out["public_subnet_ids"] = baml.json.from(self.publicSubnetIds);
-            if (self.securityGroupIds != null) { out["security_group_ids"] = baml.json.from(self.securityGroupIds); }
-            out["type"] = baml.json.from(self.type);
-            out["vpc_id"] = baml.json.from(self.vpcId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class StackSettingsNetworkByoVpcGcp {
     /// The name of the existing VPC network
     ///
     /// Wire name: `network_name`.
-    networkName: string,
+    networkName: string @json.rename("network_name"),
     /// The region of the subnet
     region: string,
     /// The name of the subnet to use
     ///
     /// Wire name: `subnet_name`.
-    subnetName: string,
+    subnetName: string @json.rename("subnet_name"),
     type: "byo-vpc-gcp",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsNetworkByoVpcGcp {
-                    networkName: baml.json.to<string>(baml.json.field(object, "network_name")),
-                    region: baml.json.to<string>(baml.json.field(object, "region")),
-                    subnetName: baml.json.to<string>(baml.json.field(object, "subnet_name")),
-                    type: baml.json.to<"byo-vpc-gcp">(baml.json.field(object, "type")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsNetworkByoVpcGcp must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["network_name"] = baml.json.from(self.networkName);
-            out["region"] = baml.json.from(self.region);
-            out["subnet_name"] = baml.json.from(self.subnetName);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
 }
 
 class StackSettingsNetworkCreate {
     /// Number of availability zones (default: 2).
     ///
     /// Wire name: `availability_zones`.
-    availabilityZones: int?,
+    availabilityZones: int? @json.rename("availability_zones"),
     /// VPC/VNet CIDR block. If not specified, auto-generated from stack ID
     /// to reduce conflicts (e.g., "10.{hash}.0.0/16").
     cidr: string?,
     type: "create",
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => StackSettingsNetworkCreate {
-                    availabilityZones: baml.json.to<int?>(baml.json.field(object, "availability_zones")),
-                    cidr: baml.json.to<string?>(baml.json.field(object, "cidr")),
-                    type: baml.json.to<"create">(baml.json.field(object, "type")),
-                },
-                _ => throw baml.json.DecodeError { message: "StackSettingsNetworkCreate must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.availabilityZones != null) { out["availability_zones"] = baml.json.from(self.availabilityZones); }
-            if (self.cidr != null) { out["cidr"] = baml.json.from(self.cidr); }
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `type` is always `"UNKNOWN"`, so code that switches on `type` handles it like any other member; `raw` holds the member as the server sent it. A known `type` never decodes as this class.
@@ -14174,13 +10560,7 @@ class StackSettingsNetworkOther {
     /// Always `"UNKNOWN"`. The server's `type` is `raw["type"]`.
     type: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class StackSettingsNetworkUseDefault {
@@ -14195,13 +10575,7 @@ class SubjectOther {
     /// Always `"UNKNOWN"`. The server's `kind` is `raw["kind"]`.
     kind: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// Authorization scope defining what resources this service account can access
@@ -14290,24 +10664,7 @@ class SyncAcquireRequest {
     /// Maximum number of deployments to acquire (default: 10)
     limit: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.maxSupportedDeploymentProtocolVersion != null) { out["maxSupportedDeploymentProtocolVersion"] = baml.json.from(self.maxSupportedDeploymentProtocolVersion); }
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            out["session"] = baml.json.from(self.session);
-            out["requestId"] = baml.json.from(self.requestId);
-            if (self.deploymentIds != null) { out["deploymentIds"] = baml.json.from(self.deploymentIds); }
-            if (self.statuses != null) { out["statuses"] = baml.json.from(self.statuses); }
-            if (self.platforms != null) { out["platforms"] = baml.json.from(self.platforms); }
-            if (self.setupMethod != null) { out["setupMethod"] = baml.json.from(self.setupMethod); }
-            if (self.acquireMode != null) { out["acquireMode"] = baml.json.from(self.acquireMode); }
-            out["deploymentModel"] = baml.json.from(self.deploymentModel);
-            if (self.supportsExecutionClaims != null) { out["supportsExecutionClaims"] = baml.json.from(self.supportsExecutionClaims); }
-            if (self.limit != null) { out["limit"] = baml.json.from(self.limit); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Acquired deployments and failures
@@ -14356,14 +10713,7 @@ class SyncContextRequest {
     /// Unique identifier for the deployment.
     deploymentId: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncGitNamespacesRequest {
@@ -14398,19 +10748,7 @@ class SyncListRequest {
     /// Maximum records to return
     limit: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.maxSupportedDeploymentProtocolVersion != null) { out["maxSupportedDeploymentProtocolVersion"] = baml.json.from(self.maxSupportedDeploymentProtocolVersion); }
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            if (self.deploymentIds != null) { out["deploymentIds"] = baml.json.from(self.deploymentIds); }
-            if (self.statuses != null) { out["statuses"] = baml.json.from(self.statuses); }
-            if (self.platforms != null) { out["platforms"] = baml.json.from(self.platforms); }
-            if (self.deploymentGroupId != null) { out["deploymentGroupId"] = baml.json.from(self.deploymentGroupId); }
-            if (self.limit != null) { out["limit"] = baml.json.from(self.limit); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Full deployment records for manager operation
@@ -14521,83 +10859,6 @@ class SyncListResponseDeploymentsItem {
     deploymentToken: string?,
     lockedBy: string?,
     lockedAt: string?,
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncListResponseDeploymentsItem {
-                    id: baml.json.to<string>(baml.json.field(object, "id")),
-                    name: baml.json.to<string>(baml.json.field(object, "name")),
-                    publicSubdomain: baml.json.to<string?>(baml.json.field(object, "publicSubdomain")),
-                    status: baml.json.to<string>(baml.json.field(object, "status")),
-                    projectId: baml.json.to<string>(baml.json.field(object, "projectId")),
-                    platform: baml.json.to<string>(baml.json.field(object, "platform")),
-                    basePlatform: baml.json.to<string?>(baml.json.field(object, "basePlatform")),
-                    region: baml.json.to<string?>(baml.json.field(object, "region")),
-                    deploymentProtocolVersion: baml.json.to<int>(baml.json.field(object, "deploymentProtocolVersion")),
-                    deploymentGroupId: baml.json.to<string>(baml.json.field(object, "deploymentGroupId")),
-                    membershipRevision: baml.json.to<int?>(baml.json.field(object, "membershipRevision")),
-                    membershipProjectionRevision: baml.json.to<int?>(baml.json.field(object, "membershipProjectionRevision")),
-                    purpose: baml.json.to<string>(baml.json.field(object, "purpose")),
-                    environmentInfo: match (baml.json.field(object, "environmentInfo")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAws>(member),
-                            "gcp" => baml.json.to<CommandDeploymentInfoEnvironmentInfoGcp>(member),
-                            "azure" => baml.json.to<CommandDeploymentInfoEnvironmentInfoAzure>(member),
-                            "local" => baml.json.to<CommandDeploymentInfoEnvironmentInfoLocal>(member),
-                            "test" => baml.json.to<CommandDeploymentInfoEnvironmentInfoTest>(member),
-                            _ => CommandDeploymentInfoEnvironmentInfoOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    stackSettings: baml.json.to<StackSettings>(baml.json.field(object, "stackSettings")),
-                    stackState: baml.json.to<DeploymentStackState?>(baml.json.field(object, "stackState")),
-                    runtimeMetadata: baml.json.to<DeploymentRuntimeMetadata?>(baml.json.field(object, "runtimeMetadata")),
-                    currentReleaseId: baml.json.to<string?>(baml.json.field(object, "currentReleaseId")),
-                    desiredReleaseId: baml.json.to<string?>(baml.json.field(object, "desiredReleaseId")),
-                    pinnedReleaseId: baml.json.to<string?>(baml.json.field(object, "pinnedReleaseId")),
-                    releaseChannel: baml.json.to<string>(baml.json.field(object, "releaseChannel")),
-                    importSource: baml.json.to<string?>(baml.json.field(object, "importSource")),
-                    setupMethod: baml.json.to<string?>(baml.json.field(object, "setupMethod")),
-                    setupMetadata: baml.json.to<map<string, json>?>(baml.json.field(object, "setupMetadata")),
-                    setupTarget: baml.json.to<string?>(baml.json.field(object, "setupTarget")),
-                    setupFingerprint: baml.json.to<string?>(baml.json.field(object, "setupFingerprint")),
-                    setupFingerprintVersion: baml.json.to<int?>(baml.json.field(object, "setupFingerprintVersion")),
-                    operatorScope: baml.json.to<string?>(baml.json.field(object, "operatorScope")),
-                    operatorPermission: baml.json.to<string?>(baml.json.field(object, "operatorPermission")),
-                    operatorVersion: baml.json.to<string?>(baml.json.field(object, "operatorVersion")),
-                    capabilities: baml.json.to<OperatorCapabilityReport[]?>(baml.json.field(object, "capabilities")),
-                    observedOperationsBundleHash: baml.json.to<string?>(baml.json.field(object, "observedOperationsBundleHash")),
-                    observedOperations: baml.json.to<ReportedOperation[]?>(baml.json.field(object, "observedOperations")),
-                    retryRequested: baml.json.to<bool>(baml.json.field(object, "retryRequested")),
-                    lastHeartbeatAt: baml.json.to<string?>(baml.json.field(object, "lastHeartbeatAt")),
-                    error: baml.json.to<DeploymentError?>(baml.json.field(object, "error")),
-                    updateState: baml.json.to<DeploymentUpdateState?>(baml.json.field(object, "updateState")),
-                    createdAt: baml.json.to<string>(baml.json.field(object, "createdAt")),
-                    updatedAt: baml.json.to<string>(baml.json.field(object, "updatedAt")),
-                    managerId: baml.json.to<string>(baml.json.field(object, "managerId")),
-                    workspaceId: baml.json.to<string>(baml.json.field(object, "workspaceId")),
-                    userEnvironmentVariables: baml.json.to<EnvironmentVariableConfig[]?>(baml.json.field(object, "userEnvironmentVariables")),
-                    managementConfig: match (baml.json.field(object, "managementConfig")) {
-                        null => null,
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                            "aws" => baml.json.to<DeploymentConfigManagementConfigAws>(member),
-                            "gcp" => baml.json.to<DeploymentConfigManagementConfigGcp>(member),
-                            "azure" => baml.json.to<DeploymentConfigManagementConfigAzure>(member),
-                            "kubernetes" => baml.json.to<DeploymentConfigManagementConfigKubernetes>(member),
-                            _ => DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    deploymentToken: baml.json.to<string?>(baml.json.field(object, "deploymentToken")),
-                    lockedBy: baml.json.to<string?>(baml.json.field(object, "lockedBy")),
-                    lockedAt: baml.json.to<string?>(baml.json.field(object, "lockedAt")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncListResponseDeploymentsItem must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncManagementExternalIdRequest {
@@ -14606,14 +10867,7 @@ class SyncManagementExternalIdRequest {
     /// Unique identifier for the deployment.
     deploymentId: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.managerId != null) { out["managerId"] = baml.json.from(self.managerId); }
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncManagementExternalIdResponse {
@@ -14652,27 +10906,7 @@ class SyncReconcileRequest {
     /// Observed dynamic container generations from a Kubernetes Operator.
     dynamicContainers: SyncReconcileRequestDynamicContainersItem[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            if (self.session != null) { out["session"] = baml.json.from(self.session); }
-            if (self.operationId != null) { out["operationId"] = baml.json.from(self.operationId); }
-            if (self.attemptId != null) { out["attemptId"] = baml.json.from(self.attemptId); }
-            out["state"] = baml.json.from(self.state);
-            if (self.updateHeartbeat != null) { out["updateHeartbeat"] = baml.json.from(self.updateHeartbeat); }
-            if (self.suggestedDelayMs != null) { out["suggestedDelayMs"] = baml.json.from(self.suggestedDelayMs); }
-            if (self.resourceHeartbeats != null) { out["resourceHeartbeats"] = baml.json.from(self.resourceHeartbeats); }
-            if (self.observedInventoryBatches != null) { out["observedInventoryBatches"] = baml.json.from(self.observedInventoryBatches); }
-            if (self.capabilities != null) { out["capabilities"] = baml.json.from(self.capabilities); }
-            if (self.operatorVersion != null) { out["operatorVersion"] = baml.json.from(self.operatorVersion); }
-            if (self.operatorImage != null) { out["operatorImage"] = baml.json.from(self.operatorImage); }
-            if (self.operationsReport != null) { out["operationsReport"] = baml.json.from(self.operationsReport); }
-            if (self.operationsConfig != null) { out["operationsConfig"] = baml.json.from(self.operationsConfig); }
-            if (self.dynamicContainers != null) { out["dynamicContainers"] = baml.json.from(self.dynamicContainers); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestDynamicContainersItem {
@@ -14682,16 +10916,7 @@ class SyncReconcileRequestDynamicContainersItem {
     status: string,
     message: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["generation"] = baml.json.from(self.generation);
-            out["status"] = baml.json.from(self.status);
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Operations an Operator installed without a release declares in its environment. Setting values are never sent.
@@ -14701,14 +10926,7 @@ class SyncReconcileRequestOperationsConfig {
     /// Built-in plugins, by plugin name.
     plugins: map<string, SyncReconcileRequestOperationsConfigPluginsValue>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.custom != null) { out["custom"] = baml.json.from(self.custom); }
-            if (self.plugins != null) { out["plugins"] = baml.json.from(self.plugins); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A published custom plugin at an exact version.
@@ -14723,16 +10941,7 @@ class SyncReconcileRequestOperationsConfigCustomItem {
     /// Exact published version.
     version: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.approval != null) { out["approval"] = baml.json.from(self.approval); }
-            if (self.settings != null) { out["settings"] = baml.json.from(self.settings); }
-            out["name"] = baml.json.from(self.name);
-            out["version"] = baml.json.from(self.version);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestOperationsConfigCustomItemApprovalValue2 {
@@ -14744,14 +10953,7 @@ class SyncReconcileRequestOperationsConfigCustomItemApprovalValue2 {
     /// access request for these operations may cover.
     maxRisk: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["decision"] = baml.json.from(self.decision);
-            if (self.maxRisk != null) { out["maxRisk"] = baml.json.from(self.maxRisk); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestOperationsConfigCustomItemSettingsValue2 {
@@ -14777,14 +10979,7 @@ class SyncReconcileRequestOperationsConfigPluginsValue {
     /// Values for the settings the plugin's manifest declares.
     settings: map<string, string | SyncReconcileRequestOperationsConfigCustomItemSettingsValue2 | SyncReconcileRequestOperationsConfigCustomItemSettingsValue3 | SyncReconcileRequestOperationsConfigCustomItemSettingsValue4>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.approval != null) { out["approval"] = baml.json.from(self.approval); }
-            if (self.settings != null) { out["settings"] = baml.json.from(self.settings); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItem {
@@ -14804,92 +10999,12 @@ class SyncReconcileRequestResourceHeartbeatsItem {
     /// Resource type identifier that determines the specific kind of resource. This field is used for polymorphic deserialization and resource-specific behavior.
     resourceType: string,
 
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItem {
-                    backend: baml.json.to<string>(baml.json.field(object, "backend")),
-                    controllerPlatform: baml.json.to<string>(baml.json.field(object, "controllerPlatform")),
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "resourceType"))) {
-                            "storage" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataStorage>(member),
-                            "worker" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorker>(member),
-                            "container" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataContainer>(member),
-                            "daemon" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemon>(member),
-                            "compute-cluster" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeCluster>(member),
-                            "kubernetes-cluster" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKubernetesCluster>(member),
-                            "queue" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataQueue>(member),
-                            "kv" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKv>(member),
-                            "postgres" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataPostgres>(member),
-                            "vault" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVault>(member),
-                            "service-account" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceAccount>(member),
-                            "network" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataNetwork>(member),
-                            "remote-stack-management" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagement>(member),
-                            "artifact-registry" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistry>(member),
-                            "build" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataBuild>(member),
-                            "service_activation" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceActivation>(member),
-                            "azure_resource_group" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroup>(member),
-                            "azure_storage_account" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAzureStorageAccount>(member),
-                            "azure_container_apps_environment" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironment>(member),
-                            "azure_service_bus_namespace" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAzureServiceBusNamespace>(member),
-                            "ai" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAi>(member),
-                            "key" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKey>(member),
-                            "sandbox" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandbox>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataOther { resourceType: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    deploymentId: baml.json.to<string?>(baml.json.field(object, "deploymentId")),
-                    observedAt: baml.json.to<string>(baml.json.field(object, "observedAt")),
-                    raw: baml.json.to<ObservedInventoryBatchResourcesItemRawItem[]>(baml.json.field(object, "raw")),
-                    resourceId: baml.json.to<string>(baml.json.field(object, "resourceId")),
-                    resourceType: baml.json.to<string>(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItem must be a JSON object", path: "" },
-            }
-        }
-    }
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["backend"] = baml.json.from(self.backend);
-            out["controllerPlatform"] = baml.json.from(self.controllerPlatform);
-            out["data"] = baml.json.from(self.data);
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            out["observedAt"] = baml.json.from(self.observedAt);
-            out["raw"] = baml.json.from(self.raw);
-            out["resourceId"] = baml.json.from(self.resourceId);
-            out["resourceType"] = baml.json.from(self.resourceType);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAi {
     data: SyncReconcileRequestResourceHeartbeatsItemDataAiDataAwsBedrock | SyncReconcileRequestResourceHeartbeatsItemDataAiDataGcpVertex | SyncReconcileRequestResourceHeartbeatsItemDataAiDataAzureFoundry | SyncReconcileRequestResourceHeartbeatsItemDataAiDataExternal | SyncReconcileRequestResourceHeartbeatsItemDataAiDataOther,
     resourceType: "ai",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataAi {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsBedrock" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAiDataAwsBedrock>(member),
-                            "gcpVertex" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAiDataGcpVertex>(member),
-                            "azureFoundry" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAiDataAzureFoundry>(member),
-                            "external" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataAiDataExternal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataAiDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"ai">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataAi must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAiDataAwsBedrock {
@@ -14908,19 +11023,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAiDataAzureFoundry {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azureFoundry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["accountName"] = baml.json.from(self.accountName);
-            out["availability"] = baml.json.from(self.availability);
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAiDataExternal {
@@ -14931,16 +11034,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAiDataExternal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "external",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.availability != null) { out["availability"] = baml.json.from(self.availability); }
-            out["provider"] = baml.json.from(self.provider);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAiDataGcpVertex {
@@ -14956,39 +11050,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAiDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistry {
     data: SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcr | SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataGcpArtifactRegistry | SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAzureContainerRegistry | SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataOther,
     resourceType: "artifact-registry",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistry {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsEcr" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcr>(member),
-                            "gcpArtifactRegistry" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataGcpArtifactRegistry>(member),
-                            "azureContainerRegistry" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAzureContainerRegistry>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"artifact-registry">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistry must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcr {
@@ -15004,23 +11071,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcr {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "awsEcr",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.pullRoleArn != null) { out["pullRoleArn"] = baml.json.from(self.pullRoleArn); }
-            if (self.pushRoleArn != null) { out["pushRoleArn"] = baml.json.from(self.pushRoleArn); }
-            out["region"] = baml.json.from(self.region);
-            out["registryId"] = baml.json.from(self.registryId);
-            out["registryUri"] = baml.json.from(self.registryUri);
-            out["repositories"] = baml.json.from(self.repositories);
-            out["repositoriesTruncated"] = baml.json.from(self.repositoriesTruncated);
-            out["repositoryCount"] = baml.json.from(self.repositoryCount);
-            out["repositoryPrefix"] = baml.json.from(self.repositoryPrefix);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcrRepositoriesItem {
@@ -15034,21 +11085,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAwsEcrRe
     repositoryUri: string,
     scanOnPush: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["createdAt"] = baml.json.from(self.createdAt);
-            if (self.encryptionType != null) { out["encryptionType"] = baml.json.from(self.encryptionType); }
-            if (self.imageTagMutability != null) { out["imageTagMutability"] = baml.json.from(self.imageTagMutability); }
-            out["kmsKeyPresent"] = baml.json.from(self.kmsKeyPresent);
-            out["registryId"] = baml.json.from(self.registryId);
-            out["repositoryArn"] = baml.json.from(self.repositoryArn);
-            out["repositoryName"] = baml.json.from(self.repositoryName);
-            out["repositoryUri"] = baml.json.from(self.repositoryUri);
-            if (self.scanOnPush != null) { out["scanOnPush"] = baml.json.from(self.scanOnPush); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAzureContainerRegistry {
@@ -15081,40 +11118,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataAzureCon
     zoneRedundancy: string,
     backend: "azureContainerRegistry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["adminUserEnabled"] = baml.json.from(self.adminUserEnabled);
-            out["anonymousPullEnabled"] = baml.json.from(self.anonymousPullEnabled);
-            if (self.creationDate != null) { out["creationDate"] = baml.json.from(self.creationDate); }
-            if (self.dataEndpointEnabled != null) { out["dataEndpointEnabled"] = baml.json.from(self.dataEndpointEnabled); }
-            out["dataEndpointHostNames"] = baml.json.from(self.dataEndpointHostNames);
-            out["encryptionKeyIdentifierPresent"] = baml.json.from(self.encryptionKeyIdentifierPresent);
-            out["encryptionKeyVaultUriPresent"] = baml.json.from(self.encryptionKeyVaultUriPresent);
-            if (self.encryptionStatus != null) { out["encryptionStatus"] = baml.json.from(self.encryptionStatus); }
-            out["ipRuleCount"] = baml.json.from(self.ipRuleCount);
-            out["location"] = baml.json.from(self.location);
-            if (self.loginServer != null) { out["loginServer"] = baml.json.from(self.loginServer); }
-            out["managedTagCount"] = baml.json.from(self.managedTagCount);
-            out["name"] = baml.json.from(self.name);
-            out["networkRuleBypassOptions"] = baml.json.from(self.networkRuleBypassOptions);
-            if (self.networkRuleDefaultAction != null) { out["networkRuleDefaultAction"] = baml.json.from(self.networkRuleDefaultAction); }
-            out["policiesPresent"] = baml.json.from(self.policiesPresent);
-            out["policyCount"] = baml.json.from(self.policyCount);
-            out["privateEndpointConnectionCount"] = baml.json.from(self.privateEndpointConnectionCount);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            out["publicNetworkAccess"] = baml.json.from(self.publicNetworkAccess);
-            out["resourceGroup"] = baml.json.from(self.resourceGroup);
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            out["skuName"] = baml.json.from(self.skuName);
-            if (self.skuTier != null) { out["skuTier"] = baml.json.from(self.skuTier); }
-            out["status"] = baml.json.from(self.status);
-            if (self.type != null) { out["type"] = baml.json.from(self.type); }
-            out["zoneRedundancy"] = baml.json.from(self.zoneRedundancy);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataGcpArtifactRegistry {
@@ -15141,34 +11145,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataGcpArtif
     updateTime: string?,
     backend: "gcpArtifactRegistry",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["cleanupPolicyCount"] = baml.json.from(self.cleanupPolicyCount);
-            if (self.cleanupPolicyDryRun != null) { out["cleanupPolicyDryRun"] = baml.json.from(self.cleanupPolicyDryRun); }
-            if (self.createTime != null) { out["createTime"] = baml.json.from(self.createTime); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.format != null) { out["format"] = baml.json.from(self.format); }
-            out["iamBindingCount"] = baml.json.from(self.iamBindingCount);
-            out["iamPolicyEtagPresent"] = baml.json.from(self.iamPolicyEtagPresent);
-            out["iamRoles"] = baml.json.from(self.iamRoles);
-            out["kmsKeyNamePresent"] = baml.json.from(self.kmsKeyNamePresent);
-            out["labelCount"] = baml.json.from(self.labelCount);
-            out["location"] = baml.json.from(self.location);
-            if (self.mode != null) { out["mode"] = baml.json.from(self.mode); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            out["projectId"] = baml.json.from(self.projectId);
-            if (self.pullServiceAccountEmail != null) { out["pullServiceAccountEmail"] = baml.json.from(self.pullServiceAccountEmail); }
-            if (self.pushServiceAccountEmail != null) { out["pushServiceAccountEmail"] = baml.json.from(self.pushServiceAccountEmail); }
-            out["repositoryId"] = baml.json.from(self.repositoryId);
-            if (self.satisfiesPzs != null) { out["satisfiesPzs"] = baml.json.from(self.satisfiesPzs); }
-            if (self.sizeBytes != null) { out["sizeBytes"] = baml.json.from(self.sizeBytes); }
-            out["status"] = baml.json.from(self.status);
-            if (self.updateTime != null) { out["updateTime"] = baml.json.from(self.updateTime); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataLocal {
@@ -15183,13 +11160,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataArtifactRegistryDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironment {
@@ -15214,27 +11185,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironmen
     workloadProfiles: SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironmentDataWorkloadProfilesItem[],
     zoneRedundant: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.customDomainVerificationId != null) { out["customDomainVerificationId"] = baml.json.from(self.customDomainVerificationId); }
-            if (self.defaultDomain != null) { out["defaultDomain"] = baml.json.from(self.defaultDomain); }
-            if (self.eventStreamEndpoint != null) { out["eventStreamEndpoint"] = baml.json.from(self.eventStreamEndpoint); }
-            if (self.infrastructureResourceGroup != null) { out["infrastructureResourceGroup"] = baml.json.from(self.infrastructureResourceGroup); }
-            if (self.kind != null) { out["kind"] = baml.json.from(self.kind); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["name"] = baml.json.from(self.name);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            if (self.staticIp != null) { out["staticIp"] = baml.json.from(self.staticIp); }
-            out["status"] = baml.json.from(self.status);
-            out["workloadProfileCount"] = baml.json.from(self.workloadProfileCount);
-            out["workloadProfiles"] = baml.json.from(self.workloadProfiles);
-            if (self.zoneRedundant != null) { out["zoneRedundant"] = baml.json.from(self.zoneRedundant); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironmentDataWorkloadProfilesItem {
@@ -15243,16 +11194,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureContainerAppsEnvironmen
     name: string,
     workloadProfileType: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.maximumCount != null) { out["maximumCount"] = baml.json.from(self.maximumCount); }
-            if (self.minimumCount != null) { out["minimumCount"] = baml.json.from(self.minimumCount); }
-            out["name"] = baml.json.from(self.name);
-            out["workloadProfileType"] = baml.json.from(self.workloadProfileType);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroup {
@@ -15268,18 +11210,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupData {
     resourceId: string?,
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["managedTags"] = baml.json.from(self.managedTags);
-            out["name"] = baml.json.from(self.name);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            out["status"] = baml.json.from(self.status);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus {
@@ -15292,18 +11223,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus
     partial: bool,
     stale: bool,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["collectionIssues"] = baml.json.from(self.collectionIssues);
-            out["health"] = baml.json.from(self.health);
-            out["lifecycle"] = baml.json.from(self.lifecycle);
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            out["partial"] = baml.json.from(self.partial);
-            out["stale"] = baml.json.from(self.stale);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureServiceBusNamespace {
@@ -15333,32 +11253,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureServiceBusNamespaceData
     updatedAt: string?,
     zoneRedundant: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.createdAt != null) { out["createdAt"] = baml.json.from(self.createdAt); }
-            if (self.disableLocalAuth != null) { out["disableLocalAuth"] = baml.json.from(self.disableLocalAuth); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            if (self.metricId != null) { out["metricId"] = baml.json.from(self.metricId); }
-            if (self.minimumTlsVersion != null) { out["minimumTlsVersion"] = baml.json.from(self.minimumTlsVersion); }
-            out["name"] = baml.json.from(self.name);
-            if (self.namespaceStatus != null) { out["namespaceStatus"] = baml.json.from(self.namespaceStatus); }
-            if (self.premiumMessagingPartitions != null) { out["premiumMessagingPartitions"] = baml.json.from(self.premiumMessagingPartitions); }
-            out["privateEndpointConnectionCount"] = baml.json.from(self.privateEndpointConnectionCount);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.publicNetworkAccess != null) { out["publicNetworkAccess"] = baml.json.from(self.publicNetworkAccess); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            if (self.serviceBusEndpoint != null) { out["serviceBusEndpoint"] = baml.json.from(self.serviceBusEndpoint); }
-            if (self.skuCapacity != null) { out["skuCapacity"] = baml.json.from(self.skuCapacity); }
-            if (self.skuName != null) { out["skuName"] = baml.json.from(self.skuName); }
-            if (self.skuTier != null) { out["skuTier"] = baml.json.from(self.skuTier); }
-            out["status"] = baml.json.from(self.status);
-            if (self.updatedAt != null) { out["updatedAt"] = baml.json.from(self.updatedAt); }
-            if (self.zoneRedundant != null) { out["zoneRedundant"] = baml.json.from(self.zoneRedundant); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureStorageAccount {
@@ -15391,35 +11286,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureStorageAccountData {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     supportsHttpsTrafficOnly: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.allowBlobPublicAccess != null) { out["allowBlobPublicAccess"] = baml.json.from(self.allowBlobPublicAccess); }
-            if (self.allowSharedKeyAccess != null) { out["allowSharedKeyAccess"] = baml.json.from(self.allowSharedKeyAccess); }
-            if (self.encryptionKeySource != null) { out["encryptionKeySource"] = baml.json.from(self.encryptionKeySource); }
-            if (self.kind != null) { out["kind"] = baml.json.from(self.kind); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            if (self.minimumTlsVersion != null) { out["minimumTlsVersion"] = baml.json.from(self.minimumTlsVersion); }
-            out["name"] = baml.json.from(self.name);
-            if (self.networkBypass != null) { out["networkBypass"] = baml.json.from(self.networkBypass); }
-            if (self.networkDefaultAction != null) { out["networkDefaultAction"] = baml.json.from(self.networkDefaultAction); }
-            if (self.networkIpRuleCount != null) { out["networkIpRuleCount"] = baml.json.from(self.networkIpRuleCount); }
-            if (self.networkResourceAccessRuleCount != null) { out["networkResourceAccessRuleCount"] = baml.json.from(self.networkResourceAccessRuleCount); }
-            if (self.networkVirtualNetworkRuleCount != null) { out["networkVirtualNetworkRuleCount"] = baml.json.from(self.networkVirtualNetworkRuleCount); }
-            out["primaryEndpoints"] = baml.json.from(self.primaryEndpoints);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.publicNetworkAccess != null) { out["publicNetworkAccess"] = baml.json.from(self.publicNetworkAccess); }
-            if (self.requireInfrastructureEncryption != null) { out["requireInfrastructureEncryption"] = baml.json.from(self.requireInfrastructureEncryption); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            out["secondaryEndpoints"] = baml.json.from(self.secondaryEndpoints);
-            if (self.skuName != null) { out["skuName"] = baml.json.from(self.skuName); }
-            if (self.skuTier != null) { out["skuTier"] = baml.json.from(self.skuTier); }
-            out["status"] = baml.json.from(self.status);
-            if (self.supportsHttpsTrafficOnly != null) { out["supportsHttpsTrafficOnly"] = baml.json.from(self.supportsHttpsTrafficOnly); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataAzureStorageAccountDataPrimaryEndpoints {
@@ -15430,44 +11297,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataAzureStorageAccountDataPrima
     table: string?,
     web: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.blob != null) { out["blob"] = baml.json.from(self.blob); }
-            if (self.dfs != null) { out["dfs"] = baml.json.from(self.dfs); }
-            if (self.file != null) { out["file"] = baml.json.from(self.file); }
-            if (self.queue != null) { out["queue"] = baml.json.from(self.queue); }
-            if (self.table != null) { out["table"] = baml.json.from(self.table); }
-            if (self.web != null) { out["web"] = baml.json.from(self.web); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataBuild {
     data: SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAwsCodeBuild | SyncReconcileRequestResourceHeartbeatsItemDataBuildDataGcpCloudBuild | SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAzureContainerApps | SyncReconcileRequestResourceHeartbeatsItemDataBuildDataKubernetesJob | SyncReconcileRequestResourceHeartbeatsItemDataBuildDataOther,
     resourceType: "build",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataBuild {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsCodeBuild" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAwsCodeBuild>(member),
-                            "gcpCloudBuild" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataBuildDataGcpCloudBuild>(member),
-                            "azureContainerApps" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAzureContainerApps>(member),
-                            "kubernetesJob" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataBuildDataKubernetesJob>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataBuildDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"build">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataBuild must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAwsCodeBuild {
@@ -15494,34 +11329,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAwsCodeBuild {
     timeoutInMinutes: int?,
     backend: "awsCodeBuild",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.artifactsEncryptionDisabled != null) { out["artifactsEncryptionDisabled"] = baml.json.from(self.artifactsEncryptionDisabled); }
-            if (self.artifactsType != null) { out["artifactsType"] = baml.json.from(self.artifactsType); }
-            if (self.cloudWatchLogsStatus != null) { out["cloudWatchLogsStatus"] = baml.json.from(self.cloudWatchLogsStatus); }
-            if (self.computeType != null) { out["computeType"] = baml.json.from(self.computeType); }
-            if (self.created != null) { out["created"] = baml.json.from(self.created); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["encryptionKeyPresent"] = baml.json.from(self.encryptionKeyPresent);
-            if (self.environmentImage != null) { out["environmentImage"] = baml.json.from(self.environmentImage); }
-            if (self.environmentType != null) { out["environmentType"] = baml.json.from(self.environmentType); }
-            out["environmentVariableCount"] = baml.json.from(self.environmentVariableCount);
-            if (self.imagePullCredentialsType != null) { out["imagePullCredentialsType"] = baml.json.from(self.imagePullCredentialsType); }
-            if (self.lastModified != null) { out["lastModified"] = baml.json.from(self.lastModified); }
-            if (self.privilegedMode != null) { out["privilegedMode"] = baml.json.from(self.privilegedMode); }
-            if (self.projectArn != null) { out["projectArn"] = baml.json.from(self.projectArn); }
-            out["projectName"] = baml.json.from(self.projectName);
-            if (self.queuedTimeoutInMinutes != null) { out["queuedTimeoutInMinutes"] = baml.json.from(self.queuedTimeoutInMinutes); }
-            if (self.s3LogsStatus != null) { out["s3LogsStatus"] = baml.json.from(self.s3LogsStatus); }
-            out["serviceRolePresent"] = baml.json.from(self.serviceRolePresent);
-            if (self.sourceType != null) { out["sourceType"] = baml.json.from(self.sourceType); }
-            out["status"] = baml.json.from(self.status);
-            if (self.timeoutInMinutes != null) { out["timeoutInMinutes"] = baml.json.from(self.timeoutInMinutes); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAzureContainerApps {
@@ -15533,19 +11341,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataAzureContainerApps 
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azureContainerApps",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["environmentVariableCount"] = baml.json.from(self.environmentVariableCount);
-            out["managedEnvironmentId"] = baml.json.from(self.managedEnvironmentId);
-            if (self.managedIdentityId != null) { out["managedIdentityId"] = baml.json.from(self.managedIdentityId); }
-            out["resourceGroupName"] = baml.json.from(self.resourceGroupName);
-            if (self.resourcePrefix != null) { out["resourcePrefix"] = baml.json.from(self.resourcePrefix); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataGcpCloudBuild {
@@ -15557,19 +11353,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataGcpCloudBuild {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "gcpCloudBuild",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["buildConfigId"] = baml.json.from(self.buildConfigId);
-            out["environmentVariableCount"] = baml.json.from(self.environmentVariableCount);
-            out["location"] = baml.json.from(self.location);
-            out["projectId"] = baml.json.from(self.projectId);
-            if (self.serviceAccount != null) { out["serviceAccount"] = baml.json.from(self.serviceAccount); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataKubernetesJob {
@@ -15586,24 +11370,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataKubernetesJob {
     succeeded: int?,
     backend: "kubernetesJob",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.active != null) { out["active"] = baml.json.from(self.active); }
-            if (self.completionTime != null) { out["completionTime"] = baml.json.from(self.completionTime); }
-            out["conditionCount"] = baml.json.from(self.conditionCount);
-            out["events"] = baml.json.from(self.events);
-            if (self.failed != null) { out["failed"] = baml.json.from(self.failed); }
-            if (self.imageDigest != null) { out["imageDigest"] = baml.json.from(self.imageDigest); }
-            out["jobName"] = baml.json.from(self.jobName);
-            out["namespace"] = baml.json.from(self.namespace);
-            if (self.startTime != null) { out["startTime"] = baml.json.from(self.startTime); }
-            out["status"] = baml.json.from(self.status);
-            if (self.succeeded != null) { out["succeeded"] = baml.json.from(self.succeeded); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -15611,40 +11378,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataBuildDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeCluster {
     data: SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAws | SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataGcp | SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAzure | SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachines | SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataOther,
     resourceType: "compute-cluster",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataComputeCluster {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "aws" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAws>(member),
-                            "gcp" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataGcp>(member),
-                            "azure" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAzure>(member),
-                            "machines" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachines>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"compute-cluster">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataComputeCluster must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAws {
@@ -15659,22 +11398,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAws {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "aws",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.backendClusterId != null) { out["backendClusterId"] = baml.json.from(self.backendClusterId); }
-            out["capacityGroups"] = baml.json.from(self.capacityGroups);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["nodes"] = baml.json.from(self.nodes);
-            out["providerFleets"] = baml.json.from(self.providerFleets);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacityGroupsItem {
@@ -15688,21 +11412,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacit
     minMachines: int?,
     recommendation: SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacityGroupsItemRecommendation?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.capacityBlocker != null) { out["capacityBlocker"] = baml.json.from(self.capacityBlocker); }
-            out["currentMachines"] = baml.json.from(self.currentMachines);
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            if (self.drainProgress != null) { out["drainProgress"] = baml.json.from(self.drainProgress); }
-            out["groupId"] = baml.json.from(self.groupId);
-            if (self.instanceType != null) { out["instanceType"] = baml.json.from(self.instanceType); }
-            if (self.maxMachines != null) { out["maxMachines"] = baml.json.from(self.maxMachines); }
-            if (self.minMachines != null) { out["minMachines"] = baml.json.from(self.minMachines); }
-            if (self.recommendation != null) { out["recommendation"] = baml.json.from(self.recommendation); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacityGroupsItemCapacityBlocker {
@@ -15713,17 +11423,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacit
     providerCode: string?,
     providerReference: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["category"] = baml.json.from(self.category);
-            out["message"] = baml.json.from(self.message);
-            out["observedAt"] = baml.json.from(self.observedAt);
-            if (self.providerCode != null) { out["providerCode"] = baml.json.from(self.providerCode); }
-            if (self.providerReference != null) { out["providerReference"] = baml.json.from(self.providerReference); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacityGroupsItemDrainProgress {
@@ -15738,21 +11438,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacit
     /// Known values: `draining`, `drained`, `terminating`. Others may appear.
     status: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.blockers != null) { out["blockers"] = baml.json.from(self.blockers); }
-            if (self.drainDeadlineAt != null) { out["drainDeadlineAt"] = baml.json.from(self.drainDeadlineAt); }
-            if (self.drainRequestedAt != null) { out["drainRequestedAt"] = baml.json.from(self.drainRequestedAt); }
-            if (self.drainedAt != null) { out["drainedAt"] = baml.json.from(self.drainedAt); }
-            out["force"] = baml.json.from(self.force);
-            out["machineId"] = baml.json.from(self.machineId);
-            out["replicaCount"] = baml.json.from(self.replicaCount);
-            out["stalled"] = baml.json.from(self.stalled);
-            out["status"] = baml.json.from(self.status);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacityGroupsItemRecommendation {
@@ -15761,16 +11447,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsCapacit
     unschedulableReplicas: int?,
     utilization: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataCpu?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            if (self.unschedulableReplicas != null) { out["unschedulableReplicas"] = baml.json.from(self.unschedulableReplicas); }
-            if (self.utilization != null) { out["utilization"] = baml.json.from(self.utilization); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsProviderFleetsItem {
@@ -15780,17 +11457,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAwsProvide
     location: string?,
     providerId: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["currentMachines"] = baml.json.from(self.currentMachines);
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            out["groupId"] = baml.json.from(self.groupId);
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["providerId"] = baml.json.from(self.providerId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAzure {
@@ -15805,22 +11472,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataAzure {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azure",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.backendClusterId != null) { out["backendClusterId"] = baml.json.from(self.backendClusterId); }
-            out["capacityGroups"] = baml.json.from(self.capacityGroups);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["nodes"] = baml.json.from(self.nodes);
-            out["providerFleets"] = baml.json.from(self.providerFleets);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataGcp {
@@ -15835,22 +11487,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataGcp {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "gcp",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.backendClusterId != null) { out["backendClusterId"] = baml.json.from(self.backendClusterId); }
-            out["capacityGroups"] = baml.json.from(self.capacityGroups);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["nodes"] = baml.json.from(self.nodes);
-            out["providerFleets"] = baml.json.from(self.providerFleets);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataLocal {
@@ -15869,26 +11506,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataLocal {
     trackedContainers: int?,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.dockerApiVersion != null) { out["dockerApiVersion"] = baml.json.from(self.dockerApiVersion); }
-            if (self.dockerArch != null) { out["dockerArch"] = baml.json.from(self.dockerArch); }
-            out["dockerAvailable"] = baml.json.from(self.dockerAvailable);
-            if (self.dockerOs != null) { out["dockerOs"] = baml.json.from(self.dockerOs); }
-            if (self.dockerVersion != null) { out["dockerVersion"] = baml.json.from(self.dockerVersion); }
-            if (self.hostIdentifier != null) { out["hostIdentifier"] = baml.json.from(self.hostIdentifier); }
-            out["name"] = baml.json.from(self.name);
-            out["networkAvailable"] = baml.json.from(self.networkAvailable);
-            if (self.networkName != null) { out["networkName"] = baml.json.from(self.networkName); }
-            out["nodes"] = baml.json.from(self.nodes);
-            if (self.runningContainers != null) { out["runningContainers"] = baml.json.from(self.runningContainers); }
-            out["status"] = baml.json.from(self.status);
-            if (self.trackedContainers != null) { out["trackedContainers"] = baml.json.from(self.trackedContainers); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachines {
@@ -15902,21 +11520,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachines {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "machines",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.backendClusterId != null) { out["backendClusterId"] = baml.json.from(self.backendClusterId); }
-            out["capacityGroups"] = baml.json.from(self.capacityGroups);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["machines"] = baml.json.from(self.machines);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["nodes"] = baml.json.from(self.nodes);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachinesMachinesItem {
@@ -15937,28 +11541,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachinesMa
     status: string,
     zone: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["capacityGroup"] = baml.json.from(self.capacityGroup);
-            if (self.cpuCores != null) { out["cpuCores"] = baml.json.from(self.cpuCores); }
-            if (self.drainBlockers != null) { out["drainBlockers"] = baml.json.from(self.drainBlockers); }
-            if (self.drainDeadlineAt != null) { out["drainDeadlineAt"] = baml.json.from(self.drainDeadlineAt); }
-            out["drainForce"] = baml.json.from(self.drainForce);
-            if (self.drainRequestedAt != null) { out["drainRequestedAt"] = baml.json.from(self.drainRequestedAt); }
-            if (self.drainedAt != null) { out["drainedAt"] = baml.json.from(self.drainedAt); }
-            if (self.horizondVersion != null) { out["horizondVersion"] = baml.json.from(self.horizondVersion); }
-            out["lastHeartbeat"] = baml.json.from(self.lastHeartbeat);
-            out["machineId"] = baml.json.from(self.machineId);
-            if (self.memoryBytes != null) { out["memoryBytes"] = baml.json.from(self.memoryBytes); }
-            if (self.overlayIp != null) { out["overlayIp"] = baml.json.from(self.overlayIp); }
-            if (self.publicIp != null) { out["publicIp"] = baml.json.from(self.publicIp); }
-            out["replicaCount"] = baml.json.from(self.replicaCount);
-            out["status"] = baml.json.from(self.status);
-            out["zone"] = baml.json.from(self.zone);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataMachinesMachinesItemDrainBlockersItem {
@@ -15974,38 +11557,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataComputeClusterDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainer {
     data: SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform | SyncReconcileRequestResourceHeartbeatsItemDataContainerDataKubernetes | SyncReconcileRequestResourceHeartbeatsItemDataContainerDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataContainerDataOther,
     resourceType: "container",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataContainer {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "horizonPlatform" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform>(member),
-                            "kubernetes" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataContainerDataKubernetes>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataContainerDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataContainerDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"container">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataContainer must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform {
@@ -16024,25 +11581,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "horizonPlatform",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["attentionCount"] = baml.json.from(self.attentionCount);
-            out["containerId"] = baml.json.from(self.containerId);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.image != null) { out["image"] = baml.json.from(self.image); }
-            if (self.latestUpdateTimestamp != null) { out["latestUpdateTimestamp"] = baml.json.from(self.latestUpdateTimestamp); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.observedImage != null) { out["observedImage"] = baml.json.from(self.observedImage); }
-            out["replicaUnits"] = baml.json.from(self.replicaUnits);
-            out["replicas"] = baml.json.from(self.replicas);
-            out["schedulingMode"] = baml.json.from(self.schedulingMode);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatformEventsItem {
@@ -16059,24 +11598,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform
     source: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsItemSource?,
     type: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.count != null) { out["count"] = baml.json.from(self.count); }
-            if (self.details != null) { out["details"] = baml.json.from(self.details); }
-            if (self.eventId != null) { out["eventId"] = baml.json.from(self.eventId); }
-            if (self.eventTime != null) { out["eventTime"] = baml.json.from(self.eventTime); }
-            if (self.firstTimestamp != null) { out["firstTimestamp"] = baml.json.from(self.firstTimestamp); }
-            if (self.involvedObject != null) { out["involvedObject"] = baml.json.from(self.involvedObject); }
-            if (self.lastTimestamp != null) { out["lastTimestamp"] = baml.json.from(self.lastTimestamp); }
-            out["message"] = baml.json.from(self.message);
-            if (self.raw != null) { out["raw"] = baml.json.from(self.raw); }
-            out["reason"] = baml.json.from(self.reason);
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            if (self.type != null) { out["type"] = baml.json.from(self.type); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatformEventsItemInvolvedObject {
@@ -16087,18 +11609,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform
     name: string?,
     replicaId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.details != null) { out["details"] = baml.json.from(self.details); }
-            if (self.id != null) { out["id"] = baml.json.from(self.id); }
-            if (self.kind != null) { out["kind"] = baml.json.from(self.kind); }
-            if (self.machineId != null) { out["machineId"] = baml.json.from(self.machineId); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.replicaId != null) { out["replicaId"] = baml.json.from(self.replicaId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatformReplicaUnitsItem {
@@ -16123,31 +11634,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataHorizonPlatform
     terminatedReason: string?,
     waitingReason: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.image != null) { out["image"] = baml.json.from(self.image); }
-            if (self.ip != null) { out["ip"] = baml.json.from(self.ip); }
-            if (self.machineId != null) { out["machineId"] = baml.json.from(self.machineId); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            if (self.metricsHealthy != null) { out["metricsHealthy"] = baml.json.from(self.metricsHealthy); }
-            if (self.metricsLastUpdated != null) { out["metricsLastUpdated"] = baml.json.from(self.metricsLastUpdated); }
-            if (self.metricsStatus != null) { out["metricsStatus"] = baml.json.from(self.metricsStatus); }
-            out["name"] = baml.json.from(self.name);
-            if (self.nodeName != null) { out["nodeName"] = baml.json.from(self.nodeName); }
-            if (self.phase != null) { out["phase"] = baml.json.from(self.phase); }
-            out["ready"] = baml.json.from(self.ready);
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            out["replicaId"] = baml.json.from(self.replicaId);
-            if (self.restartCount != null) { out["restartCount"] = baml.json.from(self.restartCount); }
-            if (self.status != null) { out["status"] = baml.json.from(self.status); }
-            if (self.terminatedReason != null) { out["terminatedReason"] = baml.json.from(self.terminatedReason); }
-            if (self.waitingReason != null) { out["waitingReason"] = baml.json.from(self.waitingReason); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataKubernetes {
@@ -16165,24 +11652,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataKubernetes {
     workloadKind: string,
     backend: "kubernetes",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["namespace"] = baml.json.from(self.namespace);
-            out["pods"] = baml.json.from(self.pods);
-            out["replicas"] = baml.json.from(self.replicas);
-            if (self.restarts != null) { out["restarts"] = baml.json.from(self.restarts); }
-            out["status"] = baml.json.from(self.status);
-            if (self.workload != null) { out["workload"] = baml.json.from(self.workload); }
-            out["workloadKind"] = baml.json.from(self.workloadKind);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataLocal {
@@ -16202,27 +11672,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["bindMountCount"] = baml.json.from(self.bindMountCount);
-            if (self.containerId != null) { out["containerId"] = baml.json.from(self.containerId); }
-            if (self.containerUnit != null) { out["containerUnit"] = baml.json.from(self.containerUnit); }
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.image != null) { out["image"] = baml.json.from(self.image); }
-            if (self.localUrl != null) { out["localUrl"] = baml.json.from(self.localUrl); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            out["portCount"] = baml.json.from(self.portCount);
-            if (self.restartCount != null) { out["restartCount"] = baml.json.from(self.restartCount); }
-            out["runtimeReachable"] = baml.json.from(self.runtimeReachable);
-            if (self.runtimeStatus != null) { out["runtimeStatus"] = baml.json.from(self.runtimeStatus); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -16230,41 +11680,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataContainerDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemon {
     data: SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAws | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataGcp | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAzure | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataMachines | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataKubernetes | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataOther,
     resourceType: "daemon",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataDaemon {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "aws" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAws>(member),
-                            "gcp" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataGcp>(member),
-                            "azure" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAzure>(member),
-                            "machines" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataMachines>(member),
-                            "kubernetes" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataKubernetes>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"daemon">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataDaemon must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAws {
@@ -16286,29 +11707,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAws {
     unavailableInstances: int,
     backend: "aws",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["assignedMachines"] = baml.json.from(self.assignedMachines);
-            out["capacityGroup"] = baml.json.from(self.capacityGroup);
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            out["daemonInstances"] = baml.json.from(self.daemonInstances);
-            if (self.daemonName != null) { out["daemonName"] = baml.json.from(self.daemonName); }
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            out["events"] = baml.json.from(self.events);
-            out["healthyInstances"] = baml.json.from(self.healthyInstances);
-            out["horizonClusterId"] = baml.json.from(self.horizonClusterId);
-            out["horizonStatus"] = baml.json.from(self.horizonStatus);
-            if (self.horizonStatusMessage != null) { out["horizonStatusMessage"] = baml.json.from(self.horizonStatusMessage); }
-            if (self.horizonStatusReason != null) { out["horizonStatusReason"] = baml.json.from(self.horizonStatusReason); }
-            out["latestUpdateTimestamp"] = baml.json.from(self.latestUpdateTimestamp);
-            if (self.observedImage != null) { out["observedImage"] = baml.json.from(self.observedImage); }
-            out["status"] = baml.json.from(self.status);
-            out["unavailableInstances"] = baml.json.from(self.unavailableInstances);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAzure {
@@ -16330,29 +11729,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataAzure {
     unavailableInstances: int,
     backend: "azure",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["assignedMachines"] = baml.json.from(self.assignedMachines);
-            out["capacityGroup"] = baml.json.from(self.capacityGroup);
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            out["daemonInstances"] = baml.json.from(self.daemonInstances);
-            if (self.daemonName != null) { out["daemonName"] = baml.json.from(self.daemonName); }
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            out["events"] = baml.json.from(self.events);
-            out["healthyInstances"] = baml.json.from(self.healthyInstances);
-            out["horizonClusterId"] = baml.json.from(self.horizonClusterId);
-            out["horizonStatus"] = baml.json.from(self.horizonStatus);
-            if (self.horizonStatusMessage != null) { out["horizonStatusMessage"] = baml.json.from(self.horizonStatusMessage); }
-            if (self.horizonStatusReason != null) { out["horizonStatusReason"] = baml.json.from(self.horizonStatusReason); }
-            out["latestUpdateTimestamp"] = baml.json.from(self.latestUpdateTimestamp);
-            if (self.observedImage != null) { out["observedImage"] = baml.json.from(self.observedImage); }
-            out["status"] = baml.json.from(self.status);
-            out["unavailableInstances"] = baml.json.from(self.unavailableInstances);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataGcp {
@@ -16374,29 +11751,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataGcp {
     unavailableInstances: int,
     backend: "gcp",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["assignedMachines"] = baml.json.from(self.assignedMachines);
-            out["capacityGroup"] = baml.json.from(self.capacityGroup);
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            out["daemonInstances"] = baml.json.from(self.daemonInstances);
-            if (self.daemonName != null) { out["daemonName"] = baml.json.from(self.daemonName); }
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            out["events"] = baml.json.from(self.events);
-            out["healthyInstances"] = baml.json.from(self.healthyInstances);
-            out["horizonClusterId"] = baml.json.from(self.horizonClusterId);
-            out["horizonStatus"] = baml.json.from(self.horizonStatus);
-            if (self.horizonStatusMessage != null) { out["horizonStatusMessage"] = baml.json.from(self.horizonStatusMessage); }
-            if (self.horizonStatusReason != null) { out["horizonStatusReason"] = baml.json.from(self.horizonStatusReason); }
-            out["latestUpdateTimestamp"] = baml.json.from(self.latestUpdateTimestamp);
-            if (self.observedImage != null) { out["observedImage"] = baml.json.from(self.observedImage); }
-            out["status"] = baml.json.from(self.status);
-            out["unavailableInstances"] = baml.json.from(self.unavailableInstances);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataKubernetes {
@@ -16413,24 +11768,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataKubernetes {
     workload: SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesWorkload?,
     backend: "kubernetes",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["namespace"] = baml.json.from(self.namespace);
-            out["pods"] = baml.json.from(self.pods);
-            out["replicas"] = baml.json.from(self.replicas);
-            if (self.restarts != null) { out["restarts"] = baml.json.from(self.restarts); }
-            out["status"] = baml.json.from(self.status);
-            if (self.workload != null) { out["workload"] = baml.json.from(self.workload); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataLocal {
@@ -16446,23 +11784,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            if (self.daemonInstance != null) { out["daemonInstance"] = baml.json.from(self.daemonInstance); }
-            if (self.daemonName != null) { out["daemonName"] = baml.json.from(self.daemonName); }
-            out["events"] = baml.json.from(self.events);
-            if (self.exitReason != null) { out["exitReason"] = baml.json.from(self.exitReason); }
-            out["imagePathPresent"] = baml.json.from(self.imagePathPresent);
-            if (self.pid != null) { out["pid"] = baml.json.from(self.pid); }
-            if (self.restartCount != null) { out["restartCount"] = baml.json.from(self.restartCount); }
-            out["runtimeId"] = baml.json.from(self.runtimeId);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataMachines {
@@ -16484,29 +11806,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataMachines {
     unavailableInstances: int,
     backend: "machines",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["assignedMachines"] = baml.json.from(self.assignedMachines);
-            out["capacityGroup"] = baml.json.from(self.capacityGroup);
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            out["daemonInstances"] = baml.json.from(self.daemonInstances);
-            if (self.daemonName != null) { out["daemonName"] = baml.json.from(self.daemonName); }
-            out["desiredMachines"] = baml.json.from(self.desiredMachines);
-            out["events"] = baml.json.from(self.events);
-            out["healthyInstances"] = baml.json.from(self.healthyInstances);
-            out["horizonClusterId"] = baml.json.from(self.horizonClusterId);
-            out["horizonStatus"] = baml.json.from(self.horizonStatus);
-            if (self.horizonStatusMessage != null) { out["horizonStatusMessage"] = baml.json.from(self.horizonStatusMessage); }
-            if (self.horizonStatusReason != null) { out["horizonStatusReason"] = baml.json.from(self.horizonStatusReason); }
-            out["latestUpdateTimestamp"] = baml.json.from(self.latestUpdateTimestamp);
-            if (self.observedImage != null) { out["observedImage"] = baml.json.from(self.observedImage); }
-            out["status"] = baml.json.from(self.status);
-            out["unavailableInstances"] = baml.json.from(self.unavailableInstances);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -16514,38 +11814,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataDaemonDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKey {
     data: SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKms | SyncReconcileRequestResourceHeartbeatsItemDataKeyDataGcpCloudKms | SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAzureKeyVault | SyncReconcileRequestResourceHeartbeatsItemDataKeyDataOther,
     resourceType: "key",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataKey {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "provider"))) {
-                            "aws-kms" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKms>(member),
-                            "gcp-cloud-kms" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKeyDataGcpCloudKms>(member),
-                            "azure-key-vault" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAzureKeyVault>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataKeyDataOther { provider: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"key">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataKey must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKms {
@@ -16569,15 +11843,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKmsDataStatus {
     lifecycle: string,
     message: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["health"] = baml.json.from(self.health);
-            out["lifecycle"] = baml.json.from(self.lifecycle);
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAzureKeyVault {
@@ -16593,18 +11859,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAzureKeyVaultData {
     recoveryLevel: string?,
     status: SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKmsDataStatus,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            out["keyId"] = baml.json.from(self.keyId);
-            out["keyOperations"] = baml.json.from(self.keyOperations);
-            out["keyType"] = baml.json.from(self.keyType);
-            if (self.recoveryLevel != null) { out["recoveryLevel"] = baml.json.from(self.recoveryLevel); }
-            out["status"] = baml.json.from(self.status);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataGcpCloudKms {
@@ -16620,18 +11875,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataGcpCloudKmsData {
     purpose: string,
     status: SyncReconcileRequestResourceHeartbeatsItemDataKeyDataAwsKmsDataStatus,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.algorithm != null) { out["algorithm"] = baml.json.from(self.algorithm); }
-            out["cryptoKeyName"] = baml.json.from(self.cryptoKeyName);
-            if (self.primaryState != null) { out["primaryState"] = baml.json.from(self.primaryState); }
-            if (self.primaryVersion != null) { out["primaryVersion"] = baml.json.from(self.primaryVersion); }
-            out["purpose"] = baml.json.from(self.purpose);
-            out["status"] = baml.json.from(self.status);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `provider` is always `"UNKNOWN"`, so code that switches on `provider` handles it like any other member; `raw` holds the member as the server sent it. A known `provider` never decodes as this class.
@@ -16639,13 +11883,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKeyDataOther {
     /// Always `"UNKNOWN"`. The server's `provider` is `raw["provider"]`.
     provider: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesCluster {
@@ -16666,23 +11904,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterData {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     version: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            out["nodeCounts"] = baml.json.from(self.nodeCounts);
-            if (self.nodeStatuses != null) { out["nodeStatuses"] = baml.json.from(self.nodeStatuses); }
-            out["podCounts"] = baml.json.from(self.podCounts);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["status"] = baml.json.from(self.status);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataCpu {
@@ -16703,22 +11925,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsI
     source: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsItemSource?,
     type: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.count != null) { out["count"] = baml.json.from(self.count); }
-            if (self.eventTime != null) { out["eventTime"] = baml.json.from(self.eventTime); }
-            if (self.firstTimestamp != null) { out["firstTimestamp"] = baml.json.from(self.firstTimestamp); }
-            if (self.involvedObject != null) { out["involvedObject"] = baml.json.from(self.involvedObject); }
-            if (self.lastTimestamp != null) { out["lastTimestamp"] = baml.json.from(self.lastTimestamp); }
-            out["message"] = baml.json.from(self.message);
-            if (self.raw != null) { out["raw"] = baml.json.from(self.raw); }
-            out["reason"] = baml.json.from(self.reason);
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            if (self.type != null) { out["type"] = baml.json.from(self.type); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsItemInvolvedObject {
@@ -16730,33 +11937,14 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsI
     resourceVersion: string?,
     uid: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.apiVersion != null) { out["apiVersion"] = baml.json.from(self.apiVersion); }
-            if (self.fieldPath != null) { out["fieldPath"] = baml.json.from(self.fieldPath); }
-            if (self.kind != null) { out["kind"] = baml.json.from(self.kind); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.namespace != null) { out["namespace"] = baml.json.from(self.namespace); }
-            if (self.resourceVersion != null) { out["resourceVersion"] = baml.json.from(self.resourceVersion); }
-            if (self.uid != null) { out["uid"] = baml.json.from(self.uid); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataEventsItemSource {
     component: string?,
     host: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.component != null) { out["component"] = baml.json.from(self.component); }
-            if (self.host != null) { out["host"] = baml.json.from(self.host); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeStatusesItem {
@@ -16772,23 +11960,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeSta
     uid: string?,
     usage: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeStatusesItemUsage?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["allocatable"] = baml.json.from(self.allocatable);
-            out["capacity"] = baml.json.from(self.capacity);
-            if (self.conditions != null) { out["conditions"] = baml.json.from(self.conditions); }
-            if (self.containerRuntimeVersion != null) { out["containerRuntimeVersion"] = baml.json.from(self.containerRuntimeVersion); }
-            if (self.kubeletVersion != null) { out["kubeletVersion"] = baml.json.from(self.kubeletVersion); }
-            out["labels"] = baml.json.from(self.labels);
-            out["name"] = baml.json.from(self.name);
-            out["ready"] = baml.json.from(self.ready);
-            out["roles"] = baml.json.from(self.roles);
-            if (self.uid != null) { out["uid"] = baml.json.from(self.uid); }
-            if (self.usage != null) { out["usage"] = baml.json.from(self.usage); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeStatusesItemAllocatable {
@@ -16796,15 +11968,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeSta
     memory: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataCpu?,
     pods: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.pods != null) { out["pods"] = baml.json.from(self.pods); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeStatusesItemConditionsItem {
@@ -16813,56 +11977,19 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeSta
     status: string,
     type: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            out["status"] = baml.json.from(self.status);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataNodeStatusesItemUsage {
     cpu: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataCpu?,
     memory: SyncReconcileRequestResourceHeartbeatsItemDataKubernetesClusterDataCpu?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKv {
     data: SyncReconcileRequestResourceHeartbeatsItemDataKvDataAwsDynamoDb | SyncReconcileRequestResourceHeartbeatsItemDataKvDataGcpFirestore | SyncReconcileRequestResourceHeartbeatsItemDataKvDataAzureTable | SyncReconcileRequestResourceHeartbeatsItemDataKvDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataKvDataOther,
     resourceType: "kv",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataKv {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsDynamoDb" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKvDataAwsDynamoDb>(member),
-                            "gcpFirestore" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKvDataGcpFirestore>(member),
-                            "azureTable" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKvDataAzureTable>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataKvDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataKvDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"kv">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataKv must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKvDataAwsDynamoDb {
@@ -16889,34 +12016,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKvDataAwsDynamoDb {
     ttlStatus: string?,
     backend: "awsDynamoDb",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.billingMode != null) { out["billingMode"] = baml.json.from(self.billingMode); }
-            if (self.deletionProtectionEnabled != null) { out["deletionProtectionEnabled"] = baml.json.from(self.deletionProtectionEnabled); }
-            if (self.globalSecondaryIndexCount != null) { out["globalSecondaryIndexCount"] = baml.json.from(self.globalSecondaryIndexCount); }
-            if (self.itemCount != null) { out["itemCount"] = baml.json.from(self.itemCount); }
-            out["keySchema"] = baml.json.from(self.keySchema);
-            if (self.localSecondaryIndexCount != null) { out["localSecondaryIndexCount"] = baml.json.from(self.localSecondaryIndexCount); }
-            out["name"] = baml.json.from(self.name);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.replicaCount != null) { out["replicaCount"] = baml.json.from(self.replicaCount); }
-            if (self.restoreInProgress != null) { out["restoreInProgress"] = baml.json.from(self.restoreInProgress); }
-            if (self.sseStatus != null) { out["sseStatus"] = baml.json.from(self.sseStatus); }
-            if (self.sseType != null) { out["sseType"] = baml.json.from(self.sseType); }
-            out["status"] = baml.json.from(self.status);
-            if (self.streamEnabled != null) { out["streamEnabled"] = baml.json.from(self.streamEnabled); }
-            if (self.streamViewType != null) { out["streamViewType"] = baml.json.from(self.streamViewType); }
-            if (self.tableArn != null) { out["tableArn"] = baml.json.from(self.tableArn); }
-            if (self.tableClass != null) { out["tableClass"] = baml.json.from(self.tableClass); }
-            if (self.tableSizeBytes != null) { out["tableSizeBytes"] = baml.json.from(self.tableSizeBytes); }
-            if (self.tableStatus != null) { out["tableStatus"] = baml.json.from(self.tableStatus); }
-            if (self.ttlAttributeName != null) { out["ttlAttributeName"] = baml.json.from(self.ttlAttributeName); }
-            if (self.ttlStatus != null) { out["ttlStatus"] = baml.json.from(self.ttlStatus); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKvDataAwsDynamoDbKeySchemaItem {
@@ -16939,25 +12039,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKvDataAzureTable {
     tableName: string,
     backend: "azureTable",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.signedIdentifierCount != null) { out["signedIdentifierCount"] = baml.json.from(self.signedIdentifierCount); }
-            out["status"] = baml.json.from(self.status);
-            if (self.storageAccountKind != null) { out["storageAccountKind"] = baml.json.from(self.storageAccountKind); }
-            if (self.storageAccountLocation != null) { out["storageAccountLocation"] = baml.json.from(self.storageAccountLocation); }
-            out["storageAccountName"] = baml.json.from(self.storageAccountName);
-            if (self.storageAccountPrimaryStatus != null) { out["storageAccountPrimaryStatus"] = baml.json.from(self.storageAccountPrimaryStatus); }
-            if (self.storageAccountProvisioningState != null) { out["storageAccountProvisioningState"] = baml.json.from(self.storageAccountProvisioningState); }
-            if (self.storageAccountResourceId != null) { out["storageAccountResourceId"] = baml.json.from(self.storageAccountResourceId); }
-            out["tableExists"] = baml.json.from(self.tableExists);
-            out["tableName"] = baml.json.from(self.tableName);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKvDataGcpFirestore {
@@ -16981,31 +12063,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKvDataGcpFirestore {
     versionRetentionPeriod: string?,
     backend: "gcpFirestore",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.appEngineIntegrationMode != null) { out["appEngineIntegrationMode"] = baml.json.from(self.appEngineIntegrationMode); }
-            out["cmekEnabled"] = baml.json.from(self.cmekEnabled);
-            if (self.concurrencyMode != null) { out["concurrencyMode"] = baml.json.from(self.concurrencyMode); }
-            if (self.createTime != null) { out["createTime"] = baml.json.from(self.createTime); }
-            if (self.databaseEdition != null) { out["databaseEdition"] = baml.json.from(self.databaseEdition); }
-            out["databaseName"] = baml.json.from(self.databaseName);
-            if (self.databaseType != null) { out["databaseType"] = baml.json.from(self.databaseType); }
-            if (self.deleteProtectionState != null) { out["deleteProtectionState"] = baml.json.from(self.deleteProtectionState); }
-            if (self.deleteTime != null) { out["deleteTime"] = baml.json.from(self.deleteTime); }
-            if (self.earliestVersionTime != null) { out["earliestVersionTime"] = baml.json.from(self.earliestVersionTime); }
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.locationId != null) { out["locationId"] = baml.json.from(self.locationId); }
-            if (self.pointInTimeRecoveryEnablement != null) { out["pointInTimeRecoveryEnablement"] = baml.json.from(self.pointInTimeRecoveryEnablement); }
-            if (self.projectId != null) { out["projectId"] = baml.json.from(self.projectId); }
-            out["sourceInfoPresent"] = baml.json.from(self.sourceInfoPresent);
-            out["status"] = baml.json.from(self.status);
-            if (self.updateTime != null) { out["updateTime"] = baml.json.from(self.updateTime); }
-            if (self.versionRetentionPeriod != null) { out["versionRetentionPeriod"] = baml.json.from(self.versionRetentionPeriod); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataKvDataLocal {
@@ -17017,19 +12075,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKvDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["cloudMetadataSupported"] = baml.json.from(self.cloudMetadataSupported);
-            if (self.isDirectory != null) { out["isDirectory"] = baml.json.from(self.isDirectory); }
-            out["name"] = baml.json.from(self.name);
-            out["path"] = baml.json.from(self.path);
-            out["pathExists"] = baml.json.from(self.pathExists);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -17037,38 +12083,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataKvDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataNetwork {
     data: SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAwsVpc | SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataGcpVpc | SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAzureVnet | SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataOther,
     resourceType: "network",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataNetwork {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsVpc" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAwsVpc>(member),
-                            "gcpVpc" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataGcpVpc>(member),
-                            "azureVnet" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAzureVnet>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"network">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataNetwork must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAwsVpc {
@@ -17086,25 +12106,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAwsVpc {
     vpcState: string?,
     backend: "awsVpc",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["availabilityZones"] = baml.json.from(self.availabilityZones);
-            if (self.cidrBlock != null) { out["cidrBlock"] = baml.json.from(self.cidrBlock); }
-            if (self.internetGatewayId != null) { out["internetGatewayId"] = baml.json.from(self.internetGatewayId); }
-            out["isByoVpc"] = baml.json.from(self.isByoVpc);
-            if (self.natGatewayId != null) { out["natGatewayId"] = baml.json.from(self.natGatewayId); }
-            out["privateSubnetIds"] = baml.json.from(self.privateSubnetIds);
-            out["publicSubnetIds"] = baml.json.from(self.publicSubnetIds);
-            out["routeTableCount"] = baml.json.from(self.routeTableCount);
-            if (self.securityGroupId != null) { out["securityGroupId"] = baml.json.from(self.securityGroupId); }
-            out["status"] = baml.json.from(self.status);
-            if (self.vpcId != null) { out["vpcId"] = baml.json.from(self.vpcId); }
-            if (self.vpcState != null) { out["vpcState"] = baml.json.from(self.vpcState); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAzureVnet {
@@ -17125,28 +12127,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataAzureVnet {
     vnetResourceId: string?,
     backend: "azureVnet",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.applicationGatewaySubnetName != null) { out["applicationGatewaySubnetName"] = baml.json.from(self.applicationGatewaySubnetName); }
-            if (self.cidrBlock != null) { out["cidrBlock"] = baml.json.from(self.cidrBlock); }
-            out["isByoVnet"] = baml.json.from(self.isByoVnet);
-            if (self.lastByoVnetVerificationErrorCode != null) { out["lastByoVnetVerificationErrorCode"] = baml.json.from(self.lastByoVnetVerificationErrorCode); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            if (self.natGatewayId != null) { out["natGatewayId"] = baml.json.from(self.natGatewayId); }
-            if (self.nsgId != null) { out["nsgId"] = baml.json.from(self.nsgId); }
-            if (self.privateEndpointSubnetName != null) { out["privateEndpointSubnetName"] = baml.json.from(self.privateEndpointSubnetName); }
-            if (self.privateSubnetName != null) { out["privateSubnetName"] = baml.json.from(self.privateSubnetName); }
-            if (self.publicIpId != null) { out["publicIpId"] = baml.json.from(self.publicIpId); }
-            if (self.publicSubnetName != null) { out["publicSubnetName"] = baml.json.from(self.publicSubnetName); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            out["status"] = baml.json.from(self.status);
-            if (self.vnetName != null) { out["vnetName"] = baml.json.from(self.vnetName); }
-            if (self.vnetResourceId != null) { out["vnetResourceId"] = baml.json.from(self.vnetResourceId); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataGcpVpc {
@@ -17163,24 +12144,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataGcpVpc {
     subnetworkSelfLink: string?,
     backend: "gcpVpc",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cidrBlock != null) { out["cidrBlock"] = baml.json.from(self.cidrBlock); }
-            if (self.cloudNatName != null) { out["cloudNatName"] = baml.json.from(self.cloudNatName); }
-            if (self.firewallName != null) { out["firewallName"] = baml.json.from(self.firewallName); }
-            out["isByoVpc"] = baml.json.from(self.isByoVpc);
-            if (self.networkName != null) { out["networkName"] = baml.json.from(self.networkName); }
-            if (self.networkSelfLink != null) { out["networkSelfLink"] = baml.json.from(self.networkSelfLink); }
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.routerName != null) { out["routerName"] = baml.json.from(self.routerName); }
-            out["status"] = baml.json.from(self.status);
-            if (self.subnetworkName != null) { out["subnetworkName"] = baml.json.from(self.subnetworkName); }
-            if (self.subnetworkSelfLink != null) { out["subnetworkSelfLink"] = baml.json.from(self.subnetworkSelfLink); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -17188,13 +12152,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataNetworkDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `resourceType` is always `"UNKNOWN"`, so code that switches on `resourceType` handles it like any other member; `raw` holds the member as the server sent it. A known `resourceType` never decodes as this class.
@@ -17202,39 +12160,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataOther {
     /// Always `"UNKNOWN"`. The server's `resourceType` is `raw["resourceType"]`.
     resourceType: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataPostgres {
     data: SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataAurora | SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataCloudSql | SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataFlexibleServer | SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataOther,
     resourceType: "postgres",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataPostgres {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "aurora" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataAurora>(member),
-                            "cloudSql" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataCloudSql>(member),
-                            "flexibleServer" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataFlexibleServer>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"postgres">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataPostgres must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// AWS Aurora Serverless v2 backend.
@@ -17250,19 +12181,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataAurora {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "aurora",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["clusterIdentifier"] = baml.json.from(self.clusterIdentifier);
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.engineVersion != null) { out["engineVersion"] = baml.json.from(self.engineVersion); }
-            out["neverPauses"] = baml.json.from(self.neverPauses);
-            if (self.serverlessCapacity != null) { out["serverlessCapacity"] = baml.json.from(self.serverlessCapacity); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// GCP Cloud SQL backend.
@@ -17273,17 +12192,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataCloudSql {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "cloudSql",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.databaseVersion != null) { out["databaseVersion"] = baml.json.from(self.databaseVersion); }
-            out["instanceName"] = baml.json.from(self.instanceName);
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Azure Flexible Server backend.
@@ -17294,17 +12203,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataFlexibleServer {
     version: string?,
     backend: "flexibleServer",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["serverName"] = baml.json.from(self.serverName);
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            out["status"] = baml.json.from(self.status);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Local embedded Postgres backend.
@@ -17316,18 +12215,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataLocal {
     version: string,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.port != null) { out["port"] = baml.json.from(self.port); }
-            out["processRunning"] = baml.json.from(self.processRunning);
-            out["status"] = baml.json.from(self.status);
-            out["version"] = baml.json.from(self.version);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -17335,39 +12223,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataPostgresDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataQueue {
     data: SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAwsSqs | SyncReconcileRequestResourceHeartbeatsItemDataQueueDataGcpPubSub | SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAzureServiceBus | SyncReconcileRequestResourceHeartbeatsItemDataQueueDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataQueueDataOther,
     resourceType: "queue",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataQueue {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsSqs" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAwsSqs>(member),
-                            "gcpPubSub" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataQueueDataGcpPubSub>(member),
-                            "azureServiceBus" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAzureServiceBus>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataQueueDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataQueueDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"queue">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataQueue must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAwsSqs {
@@ -17397,37 +12258,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAwsSqs {
     visibilityTimeoutSeconds: int?,
     backend: "awsSqs",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["approximateCounts"] = baml.json.from(self.approximateCounts);
-            if (self.approximateDelayedMessages != null) { out["approximateDelayedMessages"] = baml.json.from(self.approximateDelayedMessages); }
-            if (self.approximateInFlightMessages != null) { out["approximateInFlightMessages"] = baml.json.from(self.approximateInFlightMessages); }
-            if (self.approximateVisibleMessages != null) { out["approximateVisibleMessages"] = baml.json.from(self.approximateVisibleMessages); }
-            if (self.contentBasedDeduplication != null) { out["contentBasedDeduplication"] = baml.json.from(self.contentBasedDeduplication); }
-            if (self.deduplicationScope != null) { out["deduplicationScope"] = baml.json.from(self.deduplicationScope); }
-            if (self.delaySeconds != null) { out["delaySeconds"] = baml.json.from(self.delaySeconds); }
-            if (self.fifoQueue != null) { out["fifoQueue"] = baml.json.from(self.fifoQueue); }
-            if (self.fifoThroughputLimit != null) { out["fifoThroughputLimit"] = baml.json.from(self.fifoThroughputLimit); }
-            if (self.kmsDataKeyReusePeriodSeconds != null) { out["kmsDataKeyReusePeriodSeconds"] = baml.json.from(self.kmsDataKeyReusePeriodSeconds); }
-            if (self.kmsMasterKeyId != null) { out["kmsMasterKeyId"] = baml.json.from(self.kmsMasterKeyId); }
-            if (self.maximumMessageSize != null) { out["maximumMessageSize"] = baml.json.from(self.maximumMessageSize); }
-            if (self.messageRetentionPeriodSeconds != null) { out["messageRetentionPeriodSeconds"] = baml.json.from(self.messageRetentionPeriodSeconds); }
-            out["name"] = baml.json.from(self.name);
-            if (self.queueArn != null) { out["queueArn"] = baml.json.from(self.queueArn); }
-            if (self.queueUrl != null) { out["queueUrl"] = baml.json.from(self.queueUrl); }
-            if (self.receiveMessageWaitTimeSeconds != null) { out["receiveMessageWaitTimeSeconds"] = baml.json.from(self.receiveMessageWaitTimeSeconds); }
-            if (self.redriveAllowPolicy != null) { out["redriveAllowPolicy"] = baml.json.from(self.redriveAllowPolicy); }
-            if (self.redrivePolicy != null) { out["redrivePolicy"] = baml.json.from(self.redrivePolicy); }
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.sqsManagedSseEnabled != null) { out["sqsManagedSseEnabled"] = baml.json.from(self.sqsManagedSseEnabled); }
-            if (self.sseEnabled != null) { out["sseEnabled"] = baml.json.from(self.sseEnabled); }
-            out["status"] = baml.json.from(self.status);
-            if (self.visibilityTimeoutSeconds != null) { out["visibilityTimeoutSeconds"] = baml.json.from(self.visibilityTimeoutSeconds); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAzureServiceBus {
@@ -17465,45 +12296,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataAzureServiceBus {
     updatedAt: string?,
     backend: "azureServiceBus",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.accessedAt != null) { out["accessedAt"] = baml.json.from(self.accessedAt); }
-            if (self.activeMessageCount != null) { out["activeMessageCount"] = baml.json.from(self.activeMessageCount); }
-            if (self.autoDeleteOnIdle != null) { out["autoDeleteOnIdle"] = baml.json.from(self.autoDeleteOnIdle); }
-            if (self.createdAt != null) { out["createdAt"] = baml.json.from(self.createdAt); }
-            if (self.deadLetterMessageCount != null) { out["deadLetterMessageCount"] = baml.json.from(self.deadLetterMessageCount); }
-            if (self.deadLetteringOnMessageExpiration != null) { out["deadLetteringOnMessageExpiration"] = baml.json.from(self.deadLetteringOnMessageExpiration); }
-            if (self.defaultMessageTimeToLive != null) { out["defaultMessageTimeToLive"] = baml.json.from(self.defaultMessageTimeToLive); }
-            if (self.duplicateDetectionHistoryTimeWindow != null) { out["duplicateDetectionHistoryTimeWindow"] = baml.json.from(self.duplicateDetectionHistoryTimeWindow); }
-            if (self.enableBatchedOperations != null) { out["enableBatchedOperations"] = baml.json.from(self.enableBatchedOperations); }
-            if (self.enableExpress != null) { out["enableExpress"] = baml.json.from(self.enableExpress); }
-            if (self.enablePartitioning != null) { out["enablePartitioning"] = baml.json.from(self.enablePartitioning); }
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.forwardDeadLetteredMessagesTo != null) { out["forwardDeadLetteredMessagesTo"] = baml.json.from(self.forwardDeadLetteredMessagesTo); }
-            if (self.forwardTo != null) { out["forwardTo"] = baml.json.from(self.forwardTo); }
-            if (self.lockDuration != null) { out["lockDuration"] = baml.json.from(self.lockDuration); }
-            if (self.maxDeliveryCount != null) { out["maxDeliveryCount"] = baml.json.from(self.maxDeliveryCount); }
-            if (self.maxMessageSizeInKilobytes != null) { out["maxMessageSizeInKilobytes"] = baml.json.from(self.maxMessageSizeInKilobytes); }
-            if (self.maxSizeInMegabytes != null) { out["maxSizeInMegabytes"] = baml.json.from(self.maxSizeInMegabytes); }
-            if (self.messageCount != null) { out["messageCount"] = baml.json.from(self.messageCount); }
-            out["name"] = baml.json.from(self.name);
-            out["namespaceName"] = baml.json.from(self.namespaceName);
-            if (self.queueStatus != null) { out["queueStatus"] = baml.json.from(self.queueStatus); }
-            if (self.requiresDuplicateDetection != null) { out["requiresDuplicateDetection"] = baml.json.from(self.requiresDuplicateDetection); }
-            if (self.requiresSession != null) { out["requiresSession"] = baml.json.from(self.requiresSession); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            if (self.scheduledMessageCount != null) { out["scheduledMessageCount"] = baml.json.from(self.scheduledMessageCount); }
-            if (self.sizeInBytes != null) { out["sizeInBytes"] = baml.json.from(self.sizeInBytes); }
-            out["status"] = baml.json.from(self.status);
-            if (self.transferDeadLetterMessageCount != null) { out["transferDeadLetterMessageCount"] = baml.json.from(self.transferDeadLetterMessageCount); }
-            if (self.transferMessageCount != null) { out["transferMessageCount"] = baml.json.from(self.transferMessageCount); }
-            if (self.updatedAt != null) { out["updatedAt"] = baml.json.from(self.updatedAt); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataGcpPubSub {
@@ -17543,47 +12336,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataGcpPubSub {
     topicState: string?,
     backend: "gcpPubSub",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.endpoint != null) { out["endpoint"] = baml.json.from(self.endpoint); }
-            if (self.kmsKeyName != null) { out["kmsKeyName"] = baml.json.from(self.kmsKeyName); }
-            out["messageStorageAllowedPersistenceRegions"] = baml.json.from(self.messageStorageAllowedPersistenceRegions);
-            if (self.messageStorageEnforceInTransit != null) { out["messageStorageEnforceInTransit"] = baml.json.from(self.messageStorageEnforceInTransit); }
-            if (self.projectId != null) { out["projectId"] = baml.json.from(self.projectId); }
-            if (self.schemaEncoding != null) { out["schemaEncoding"] = baml.json.from(self.schemaEncoding); }
-            if (self.schemaFirstRevisionId != null) { out["schemaFirstRevisionId"] = baml.json.from(self.schemaFirstRevisionId); }
-            if (self.schemaLastRevisionId != null) { out["schemaLastRevisionId"] = baml.json.from(self.schemaLastRevisionId); }
-            if (self.schemaName != null) { out["schemaName"] = baml.json.from(self.schemaName); }
-            out["status"] = baml.json.from(self.status);
-            if (self.subscriptionAckDeadlineSeconds != null) { out["subscriptionAckDeadlineSeconds"] = baml.json.from(self.subscriptionAckDeadlineSeconds); }
-            if (self.subscriptionDeadLetterMaxDeliveryAttempts != null) { out["subscriptionDeadLetterMaxDeliveryAttempts"] = baml.json.from(self.subscriptionDeadLetterMaxDeliveryAttempts); }
-            if (self.subscriptionDeadLetterTopic != null) { out["subscriptionDeadLetterTopic"] = baml.json.from(self.subscriptionDeadLetterTopic); }
-            if (self.subscriptionDetached != null) { out["subscriptionDetached"] = baml.json.from(self.subscriptionDetached); }
-            if (self.subscriptionEnableMessageOrdering != null) { out["subscriptionEnableMessageOrdering"] = baml.json.from(self.subscriptionEnableMessageOrdering); }
-            if (self.subscriptionFilter != null) { out["subscriptionFilter"] = baml.json.from(self.subscriptionFilter); }
-            if (self.subscriptionFullName != null) { out["subscriptionFullName"] = baml.json.from(self.subscriptionFullName); }
-            out["subscriptionLabels"] = baml.json.from(self.subscriptionLabels);
-            if (self.subscriptionMessageRetentionDuration != null) { out["subscriptionMessageRetentionDuration"] = baml.json.from(self.subscriptionMessageRetentionDuration); }
-            if (self.subscriptionName != null) { out["subscriptionName"] = baml.json.from(self.subscriptionName); }
-            out["subscriptionPushAttributes"] = baml.json.from(self.subscriptionPushAttributes);
-            if (self.subscriptionPushConfigPresent != null) { out["subscriptionPushConfigPresent"] = baml.json.from(self.subscriptionPushConfigPresent); }
-            if (self.subscriptionPushEndpoint != null) { out["subscriptionPushEndpoint"] = baml.json.from(self.subscriptionPushEndpoint); }
-            if (self.subscriptionPushNoWrapperWriteMetadata != null) { out["subscriptionPushNoWrapperWriteMetadata"] = baml.json.from(self.subscriptionPushNoWrapperWriteMetadata); }
-            if (self.subscriptionPushOidcAudience != null) { out["subscriptionPushOidcAudience"] = baml.json.from(self.subscriptionPushOidcAudience); }
-            if (self.subscriptionPushOidcServiceAccountEmail != null) { out["subscriptionPushOidcServiceAccountEmail"] = baml.json.from(self.subscriptionPushOidcServiceAccountEmail); }
-            if (self.subscriptionPushPubsubWrapperWriteMetadata != null) { out["subscriptionPushPubsubWrapperWriteMetadata"] = baml.json.from(self.subscriptionPushPubsubWrapperWriteMetadata); }
-            if (self.subscriptionRetainAckedMessages != null) { out["subscriptionRetainAckedMessages"] = baml.json.from(self.subscriptionRetainAckedMessages); }
-            if (self.subscriptionState != null) { out["subscriptionState"] = baml.json.from(self.subscriptionState); }
-            if (self.topicFullName != null) { out["topicFullName"] = baml.json.from(self.topicFullName); }
-            out["topicLabels"] = baml.json.from(self.topicLabels);
-            if (self.topicMessageRetentionDuration != null) { out["topicMessageRetentionDuration"] = baml.json.from(self.topicMessageRetentionDuration); }
-            out["topicName"] = baml.json.from(self.topicName);
-            if (self.topicState != null) { out["topicState"] = baml.json.from(self.topicState); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataLocal {
@@ -17593,17 +12346,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            if (self.path != null) { out["path"] = baml.json.from(self.path); }
-            if (self.serviceStatus != null) { out["serviceStatus"] = baml.json.from(self.serviceStatus); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -17611,38 +12354,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataQueueDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagement {
     data: SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAwsIamRole | SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataGcpServiceAccount | SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAzureManagedIdentity | SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataOther,
     resourceType: "remote-stack-management",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagement {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsIamRole" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAwsIamRole>(member),
-                            "gcpServiceAccount" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataGcpServiceAccount>(member),
-                            "azureManagedIdentity" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAzureManagedIdentity>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"remote-stack-management">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagement must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAwsIamRole {
@@ -17652,17 +12369,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAws
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "awsIamRole",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["managementPermissionsApplied"] = baml.json.from(self.managementPermissionsApplied);
-            if (self.roleArn != null) { out["roleArn"] = baml.json.from(self.roleArn); }
-            if (self.roleName != null) { out["roleName"] = baml.json.from(self.roleName); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAzureManagedIdentity {
@@ -17676,21 +12383,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataAzu
     uamiResourceId: string?,
     backend: "azureManagedIdentity",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.ficName != null) { out["ficName"] = baml.json.from(self.ficName); }
-            out["roleAssignmentIds"] = baml.json.from(self.roleAssignmentIds);
-            if (self.roleDefinitionId != null) { out["roleDefinitionId"] = baml.json.from(self.roleDefinitionId); }
-            out["status"] = baml.json.from(self.status);
-            if (self.tenantId != null) { out["tenantId"] = baml.json.from(self.tenantId); }
-            if (self.uamiClientId != null) { out["uamiClientId"] = baml.json.from(self.uamiClientId); }
-            if (self.uamiPrincipalId != null) { out["uamiPrincipalId"] = baml.json.from(self.uamiPrincipalId); }
-            if (self.uamiResourceId != null) { out["uamiResourceId"] = baml.json.from(self.uamiResourceId); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataGcpServiceAccount {
@@ -17701,18 +12394,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataGcp
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "gcpServiceAccount",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["impersonationGranted"] = baml.json.from(self.impersonationGranted);
-            out["roleBound"] = baml.json.from(self.roleBound);
-            if (self.serviceAccountEmail != null) { out["serviceAccountEmail"] = baml.json.from(self.serviceAccountEmail); }
-            if (self.serviceAccountUniqueId != null) { out["serviceAccountUniqueId"] = baml.json.from(self.serviceAccountUniqueId); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -17720,13 +12402,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataRemoteStackManagementDataOth
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataSandbox {
@@ -17736,28 +12412,6 @@ class SyncReconcileRequestResourceHeartbeatsItemDataSandbox {
     /// and the whole point of the resource is that the control plane cannot see what runs in it.
     data: SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAwsMicrovm | SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAzureSandboxGroup | SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataGcpAgentPlatform | SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataKubernetesPods | SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataOther,
     resourceType: "sandbox",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataSandbox {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsMicrovm" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAwsMicrovm>(member),
-                            "azureSandboxGroup" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAzureSandboxGroup>(member),
-                            "gcpAgentPlatform" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataGcpAgentPlatform>(member),
-                            "kubernetesPods" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataKubernetesPods>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"sandbox">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataSandbox must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 /// AWS: the image a sandbox runs from, and the lifecycle state AWS reports for it.
@@ -17774,16 +12428,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAwsMicrovm {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "awsMicrovm",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["imageIdentifier"] = baml.json.from(self.imageIdentifier);
-            if (self.imageState != null) { out["imageState"] = baml.json.from(self.imageState); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Azure: the sandbox group's ARM state. The data plane has no list operation, so a sandbox count
@@ -17794,16 +12439,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataAzureSandboxGroup
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azureSandboxGroup",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            out["sandboxGroup"] = baml.json.from(self.sandboxGroup);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// GCP: the Agent Platform template sandboxes are cut from, and the engine it hangs under.
@@ -17845,39 +12481,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataSandboxDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccount {
     data: SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAwsIamRole | SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataGcpServiceAccount | SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAzureManagedIdentity | SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataOther,
     resourceType: "service-account",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataServiceAccount {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsIamRole" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAwsIamRole>(member),
-                            "gcpServiceAccount" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataGcpServiceAccount>(member),
-                            "azureManagedIdentity" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAzureManagedIdentity>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"service-account">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataServiceAccount must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAwsIamRole {
@@ -17903,33 +12512,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAwsIamRole
     tagCount: int,
     backend: "awsIamRole",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["assumeRolePolicyPresent"] = baml.json.from(self.assumeRolePolicyPresent);
-            out["attachedPolicyCount"] = baml.json.from(self.attachedPolicyCount);
-            out["attachedPolicyNames"] = baml.json.from(self.attachedPolicyNames);
-            out["createDate"] = baml.json.from(self.createDate);
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            out["inlinePolicyCount"] = baml.json.from(self.inlinePolicyCount);
-            out["inlinePolicyNames"] = baml.json.from(self.inlinePolicyNames);
-            if (self.lastUsedDate != null) { out["lastUsedDate"] = baml.json.from(self.lastUsedDate); }
-            if (self.lastUsedRegion != null) { out["lastUsedRegion"] = baml.json.from(self.lastUsedRegion); }
-            out["managedTagCount"] = baml.json.from(self.managedTagCount);
-            if (self.maxSessionDuration != null) { out["maxSessionDuration"] = baml.json.from(self.maxSessionDuration); }
-            out["path"] = baml.json.from(self.path);
-            if (self.permissionsBoundaryArn != null) { out["permissionsBoundaryArn"] = baml.json.from(self.permissionsBoundaryArn); }
-            if (self.permissionsBoundaryType != null) { out["permissionsBoundaryType"] = baml.json.from(self.permissionsBoundaryType); }
-            out["roleArn"] = baml.json.from(self.roleArn);
-            out["roleId"] = baml.json.from(self.roleId);
-            out["roleName"] = baml.json.from(self.roleName);
-            out["stackPermissionsApplied"] = baml.json.from(self.stackPermissionsApplied);
-            out["status"] = baml.json.from(self.status);
-            out["tagCount"] = baml.json.from(self.tagCount);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAzureManagedIdentity {
@@ -17951,29 +12534,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataAzureManag
     type: string?,
     backend: "azureManagedIdentity",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.clientId != null) { out["clientId"] = baml.json.from(self.clientId); }
-            out["customRoleDefinitionCount"] = baml.json.from(self.customRoleDefinitionCount);
-            out["customRoleDefinitionIds"] = baml.json.from(self.customRoleDefinitionIds);
-            if (self.isolationScope != null) { out["isolationScope"] = baml.json.from(self.isolationScope); }
-            out["location"] = baml.json.from(self.location);
-            out["managedTagCount"] = baml.json.from(self.managedTagCount);
-            out["name"] = baml.json.from(self.name);
-            if (self.principalId != null) { out["principalId"] = baml.json.from(self.principalId); }
-            out["resourceGroup"] = baml.json.from(self.resourceGroup);
-            out["resourceId"] = baml.json.from(self.resourceId);
-            out["roleAssignmentCount"] = baml.json.from(self.roleAssignmentCount);
-            out["roleAssignmentIds"] = baml.json.from(self.roleAssignmentIds);
-            out["stackPermissionsApplied"] = baml.json.from(self.stackPermissionsApplied);
-            out["status"] = baml.json.from(self.status);
-            if (self.tenantId != null) { out["tenantId"] = baml.json.from(self.tenantId); }
-            if (self.type != null) { out["type"] = baml.json.from(self.type); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataGcpServiceAccount {
@@ -17993,27 +12554,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataGcpService
     uniqueId: string?,
     backend: "gcpServiceAccount",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.disabled != null) { out["disabled"] = baml.json.from(self.disabled); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            out["email"] = baml.json.from(self.email);
-            if (self.etag != null) { out["etag"] = baml.json.from(self.etag); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.oauth2ClientId != null) { out["oauth2ClientId"] = baml.json.from(self.oauth2ClientId); }
-            out["projectBindingCount"] = baml.json.from(self.projectBindingCount);
-            if (self.projectId != null) { out["projectId"] = baml.json.from(self.projectId); }
-            out["projectRoles"] = baml.json.from(self.projectRoles);
-            out["serviceAccountBindingCount"] = baml.json.from(self.serviceAccountBindingCount);
-            out["serviceAccountRoles"] = baml.json.from(self.serviceAccountRoles);
-            out["status"] = baml.json.from(self.status);
-            if (self.uniqueId != null) { out["uniqueId"] = baml.json.from(self.uniqueId); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataLocal {
@@ -18028,37 +12569,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceAccountDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivation {
     data: SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataGcpServiceUsage | SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataAzureResourceProvider | SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataOther,
     resourceType: "service_activation",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataServiceActivation {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "gcpServiceUsage" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataGcpServiceUsage>(member),
-                            "azureResourceProvider" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataAzureResourceProvider>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"service_activation">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataServiceActivation must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataAzureResourceProvider {
@@ -18071,20 +12587,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataAzureRe
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azureResourceProvider",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["namespace"] = baml.json.from(self.namespace);
-            if (self.providerId != null) { out["providerId"] = baml.json.from(self.providerId); }
-            out["registered"] = baml.json.from(self.registered);
-            if (self.registrationPolicy != null) { out["registrationPolicy"] = baml.json.from(self.registrationPolicy); }
-            if (self.registrationState != null) { out["registrationState"] = baml.json.from(self.registrationState); }
-            out["resourceTypeCount"] = baml.json.from(self.resourceTypeCount);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataGcpServiceUsage {
@@ -18098,21 +12601,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataGcpServ
     title: string?,
     backend: "gcpServiceUsage",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["enabled"] = baml.json.from(self.enabled);
-            if (self.lastOperationName != null) { out["lastOperationName"] = baml.json.from(self.lastOperationName); }
-            out["projectId"] = baml.json.from(self.projectId);
-            out["serviceName"] = baml.json.from(self.serviceName);
-            if (self.serviceResourceName != null) { out["serviceResourceName"] = baml.json.from(self.serviceResourceName); }
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            out["status"] = baml.json.from(self.status);
-            if (self.title != null) { out["title"] = baml.json.from(self.title); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -18120,39 +12609,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataServiceActivationDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataStorage {
     data: SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAwsS3 | SyncReconcileRequestResourceHeartbeatsItemDataStorageDataGcpCloudStorage | SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAzureBlob | SyncReconcileRequestResourceHeartbeatsItemDataStorageDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataStorageDataOther,
     resourceType: "storage",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataStorage {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsS3" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAwsS3>(member),
-                            "gcpCloudStorage" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataStorageDataGcpCloudStorage>(member),
-                            "azureBlob" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAzureBlob>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataStorageDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataStorageDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"storage">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataStorage must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAwsS3 {
@@ -18175,30 +12637,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAwsS3 {
     versioningStatus: string?,
     backend: "awsS3",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.blockPublicAcls != null) { out["blockPublicAcls"] = baml.json.from(self.blockPublicAcls); }
-            if (self.blockPublicPolicy != null) { out["blockPublicPolicy"] = baml.json.from(self.blockPublicPolicy); }
-            if (self.bucketAclPresent != null) { out["bucketAclPresent"] = baml.json.from(self.bucketAclPresent); }
-            if (self.bucketLocation != null) { out["bucketLocation"] = baml.json.from(self.bucketLocation); }
-            if (self.bucketPolicyPresent != null) { out["bucketPolicyPresent"] = baml.json.from(self.bucketPolicyPresent); }
-            out["encryptionConfigPresent"] = baml.json.from(self.encryptionConfigPresent);
-            if (self.encryptionEnabled != null) { out["encryptionEnabled"] = baml.json.from(self.encryptionEnabled); }
-            if (self.ignorePublicAcls != null) { out["ignorePublicAcls"] = baml.json.from(self.ignorePublicAcls); }
-            out["lifecyclePresent"] = baml.json.from(self.lifecyclePresent);
-            if (self.lifecycleRuleCount != null) { out["lifecycleRuleCount"] = baml.json.from(self.lifecycleRuleCount); }
-            out["name"] = baml.json.from(self.name);
-            out["publicAccessBlockPresent"] = baml.json.from(self.publicAccessBlockPresent);
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            if (self.restrictPublicBuckets != null) { out["restrictPublicBuckets"] = baml.json.from(self.restrictPublicBuckets); }
-            out["status"] = baml.json.from(self.status);
-            if (self.versioningEnabled != null) { out["versioningEnabled"] = baml.json.from(self.versioningEnabled); }
-            if (self.versioningStatus != null) { out["versioningStatus"] = baml.json.from(self.versioningStatus); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAzureBlob {
@@ -18233,42 +12672,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataAzureBlob {
     tableEncryptionEnabled: bool?,
     backend: "azureBlob",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.accessTier != null) { out["accessTier"] = baml.json.from(self.accessTier); }
-            if (self.accountKind != null) { out["accountKind"] = baml.json.from(self.accountKind); }
-            if (self.allowBlobPublicAccess != null) { out["allowBlobPublicAccess"] = baml.json.from(self.allowBlobPublicAccess); }
-            if (self.blobDeleteRetentionDays != null) { out["blobDeleteRetentionDays"] = baml.json.from(self.blobDeleteRetentionDays); }
-            if (self.blobDeleteRetentionEnabled != null) { out["blobDeleteRetentionEnabled"] = baml.json.from(self.blobDeleteRetentionEnabled); }
-            if (self.blobEncryptionEnabled != null) { out["blobEncryptionEnabled"] = baml.json.from(self.blobEncryptionEnabled); }
-            if (self.blobVersioningEnabled != null) { out["blobVersioningEnabled"] = baml.json.from(self.blobVersioningEnabled); }
-            if (self.changeFeedEnabled != null) { out["changeFeedEnabled"] = baml.json.from(self.changeFeedEnabled); }
-            if (self.changeFeedRetentionDays != null) { out["changeFeedRetentionDays"] = baml.json.from(self.changeFeedRetentionDays); }
-            if (self.containerDeleteRetentionDays != null) { out["containerDeleteRetentionDays"] = baml.json.from(self.containerDeleteRetentionDays); }
-            if (self.containerDeleteRetentionEnabled != null) { out["containerDeleteRetentionEnabled"] = baml.json.from(self.containerDeleteRetentionEnabled); }
-            if (self.containerPublicAccess != null) { out["containerPublicAccess"] = baml.json.from(self.containerPublicAccess); }
-            if (self.encryptionKeySource != null) { out["encryptionKeySource"] = baml.json.from(self.encryptionKeySource); }
-            if (self.fileEncryptionEnabled != null) { out["fileEncryptionEnabled"] = baml.json.from(self.fileEncryptionEnabled); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["name"] = baml.json.from(self.name);
-            if (self.primaryLocation != null) { out["primaryLocation"] = baml.json.from(self.primaryLocation); }
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.publicNetworkAccess != null) { out["publicNetworkAccess"] = baml.json.from(self.publicNetworkAccess); }
-            if (self.queueEncryptionEnabled != null) { out["queueEncryptionEnabled"] = baml.json.from(self.queueEncryptionEnabled); }
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.secondaryLocation != null) { out["secondaryLocation"] = baml.json.from(self.secondaryLocation); }
-            if (self.skuName != null) { out["skuName"] = baml.json.from(self.skuName); }
-            if (self.skuTier != null) { out["skuTier"] = baml.json.from(self.skuTier); }
-            out["status"] = baml.json.from(self.status);
-            if (self.statusOfPrimary != null) { out["statusOfPrimary"] = baml.json.from(self.statusOfPrimary); }
-            if (self.statusOfSecondary != null) { out["statusOfSecondary"] = baml.json.from(self.statusOfSecondary); }
-            if (self.storageAccountName != null) { out["storageAccountName"] = baml.json.from(self.storageAccountName); }
-            if (self.tableEncryptionEnabled != null) { out["tableEncryptionEnabled"] = baml.json.from(self.tableEncryptionEnabled); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataGcpCloudStorage {
@@ -18293,32 +12697,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataGcpCloudStorage {
     versioningEnabled: bool?,
     backend: "gcpCloudStorage",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.bucketId != null) { out["bucketId"] = baml.json.from(self.bucketId); }
-            if (self.defaultKmsKeyName != null) { out["defaultKmsKeyName"] = baml.json.from(self.defaultKmsKeyName); }
-            out["encryptionConfigPresent"] = baml.json.from(self.encryptionConfigPresent);
-            out["lifecyclePresent"] = baml.json.from(self.lifecyclePresent);
-            if (self.lifecycleRuleCount != null) { out["lifecycleRuleCount"] = baml.json.from(self.lifecycleRuleCount); }
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            if (self.locationType != null) { out["locationType"] = baml.json.from(self.locationType); }
-            out["name"] = baml.json.from(self.name);
-            if (self.publicAccessPrevention != null) { out["publicAccessPrevention"] = baml.json.from(self.publicAccessPrevention); }
-            if (self.retentionPeriod != null) { out["retentionPeriod"] = baml.json.from(self.retentionPeriod); }
-            if (self.retentionPolicyEffectiveTime != null) { out["retentionPolicyEffectiveTime"] = baml.json.from(self.retentionPolicyEffectiveTime); }
-            if (self.retentionPolicyIsLocked != null) { out["retentionPolicyIsLocked"] = baml.json.from(self.retentionPolicyIsLocked); }
-            if (self.softDeleteEffectiveTime != null) { out["softDeleteEffectiveTime"] = baml.json.from(self.softDeleteEffectiveTime); }
-            if (self.softDeleteRetentionDurationSeconds != null) { out["softDeleteRetentionDurationSeconds"] = baml.json.from(self.softDeleteRetentionDurationSeconds); }
-            out["status"] = baml.json.from(self.status);
-            if (self.storageClass != null) { out["storageClass"] = baml.json.from(self.storageClass); }
-            if (self.uniformBucketLevelAccessEnabled != null) { out["uniformBucketLevelAccessEnabled"] = baml.json.from(self.uniformBucketLevelAccessEnabled); }
-            if (self.uniformBucketLevelAccessLockedTime != null) { out["uniformBucketLevelAccessLockedTime"] = baml.json.from(self.uniformBucketLevelAccessLockedTime); }
-            if (self.versioningEnabled != null) { out["versioningEnabled"] = baml.json.from(self.versioningEnabled); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataLocal {
@@ -18330,19 +12709,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.isDirectory != null) { out["isDirectory"] = baml.json.from(self.isDirectory); }
-            if (self.modifiedAt != null) { out["modifiedAt"] = baml.json.from(self.modifiedAt); }
-            out["path"] = baml.json.from(self.path);
-            out["pathExists"] = baml.json.from(self.pathExists);
-            if (self.readonly != null) { out["readonly"] = baml.json.from(self.readonly); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -18350,40 +12717,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataStorageDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataVault {
     data: SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAwsParameterStore | SyncReconcileRequestResourceHeartbeatsItemDataVaultDataGcpSecretManager | SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAzureKeyVault | SyncReconcileRequestResourceHeartbeatsItemDataVaultDataKubernetesSecret | SyncReconcileRequestResourceHeartbeatsItemDataVaultDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataVaultDataOther,
     resourceType: "vault",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataVault {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsParameterStore" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAwsParameterStore>(member),
-                            "gcpSecretManager" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVaultDataGcpSecretManager>(member),
-                            "azureKeyVault" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAzureKeyVault>(member),
-                            "kubernetesSecret" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVaultDataKubernetesSecret>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataVaultDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataVaultDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"vault">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataVault must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAwsParameterStore {
@@ -18402,26 +12741,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAwsParameterStore {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "awsParameterStore",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["accountId"] = baml.json.from(self.accountId);
-            if (self.hasMoreParameters != null) { out["hasMoreParameters"] = baml.json.from(self.hasMoreParameters); }
-            if (self.latestModifiedAt != null) { out["latestModifiedAt"] = baml.json.from(self.latestModifiedAt); }
-            out["parameterMetadataSampled"] = baml.json.from(self.parameterMetadataSampled);
-            out["prefix"] = baml.json.from(self.prefix);
-            out["region"] = baml.json.from(self.region);
-            if (self.sampledAdvancedTierCount != null) { out["sampledAdvancedTierCount"] = baml.json.from(self.sampledAdvancedTierCount); }
-            if (self.sampledKmsKeyMetadataPresentCount != null) { out["sampledKmsKeyMetadataPresentCount"] = baml.json.from(self.sampledKmsKeyMetadataPresentCount); }
-            if (self.sampledParameterCount != null) { out["sampledParameterCount"] = baml.json.from(self.sampledParameterCount); }
-            if (self.sampledSecureStringCount != null) { out["sampledSecureStringCount"] = baml.json.from(self.sampledSecureStringCount); }
-            if (self.sampledStringCount != null) { out["sampledStringCount"] = baml.json.from(self.sampledStringCount); }
-            if (self.sampledStringListCount != null) { out["sampledStringListCount"] = baml.json.from(self.sampledStringListCount); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAzureKeyVault {
@@ -18444,30 +12764,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataAzureKeyVault {
     vaultUri: string?,
     backend: "azureKeyVault",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["accessPolicyCount"] = baml.json.from(self.accessPolicyCount);
-            if (self.location != null) { out["location"] = baml.json.from(self.location); }
-            out["name"] = baml.json.from(self.name);
-            out["privateEndpointConnectionCount"] = baml.json.from(self.privateEndpointConnectionCount);
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            out["publicNetworkAccess"] = baml.json.from(self.publicNetworkAccess);
-            if (self.purgeProtectionEnabled != null) { out["purgeProtectionEnabled"] = baml.json.from(self.purgeProtectionEnabled); }
-            out["rbacAuthorizationEnabled"] = baml.json.from(self.rbacAuthorizationEnabled);
-            if (self.resourceGroup != null) { out["resourceGroup"] = baml.json.from(self.resourceGroup); }
-            if (self.resourceId != null) { out["resourceId"] = baml.json.from(self.resourceId); }
-            out["secretMetadataListed"] = baml.json.from(self.secretMetadataListed);
-            if (self.skuFamily != null) { out["skuFamily"] = baml.json.from(self.skuFamily); }
-            if (self.skuName != null) { out["skuName"] = baml.json.from(self.skuName); }
-            out["softDeleteEnabled"] = baml.json.from(self.softDeleteEnabled);
-            out["softDeleteRetentionDays"] = baml.json.from(self.softDeleteRetentionDays);
-            out["status"] = baml.json.from(self.status);
-            if (self.vaultUri != null) { out["vaultUri"] = baml.json.from(self.vaultUri); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataGcpSecretManager {
@@ -18497,20 +12794,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataLocal {
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.isDirectory != null) { out["isDirectory"] = baml.json.from(self.isDirectory); }
-            if (self.modifiedAt != null) { out["modifiedAt"] = baml.json.from(self.modifiedAt); }
-            out["path"] = baml.json.from(self.path);
-            out["pathExists"] = baml.json.from(self.pathExists);
-            if (self.readonly != null) { out["readonly"] = baml.json.from(self.readonly); }
-            out["secretMetadataListed"] = baml.json.from(self.secretMetadataListed);
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -18518,40 +12802,12 @@ class SyncReconcileRequestResourceHeartbeatsItemDataVaultDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorker {
     data: SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAwsLambda | SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataGcpCloudRun | SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAzureContainerApps | SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetes | SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocal | SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataOther,
     resourceType: "worker",
-
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => SyncReconcileRequestResourceHeartbeatsItemDataWorker {
-                    data: match (baml.json.field(object, "data")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "backend"))) {
-                            "awsLambda" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAwsLambda>(member),
-                            "gcpCloudRun" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataGcpCloudRun>(member),
-                            "azureContainerApps" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAzureContainerApps>(member),
-                            "kubernetes" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetes>(member),
-                            "local" => baml.json.to<SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocal>(member),
-                            _ => SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataOther { backend: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    resourceType: baml.json.to<"worker">(baml.json.field(object, "resourceType")),
-                },
-                _ => throw baml.json.DecodeError { message: "SyncReconcileRequestResourceHeartbeatsItemDataWorker must be a JSON object", path: "" },
-            }
-        }
-    }
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAwsLambda {
@@ -18577,33 +12833,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAwsLambda {
     version: string?,
     backend: "awsLambda",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.codeSha256 != null) { out["codeSha256"] = baml.json.from(self.codeSha256); }
-            out["functionName"] = baml.json.from(self.functionName);
-            if (self.functionUrlAuthType != null) { out["functionUrlAuthType"] = baml.json.from(self.functionUrlAuthType); }
-            out["functionUrlCorsPresent"] = baml.json.from(self.functionUrlCorsPresent);
-            if (self.lastModified != null) { out["lastModified"] = baml.json.from(self.lastModified); }
-            if (self.lastUpdateStatus != null) { out["lastUpdateStatus"] = baml.json.from(self.lastUpdateStatus); }
-            if (self.lastUpdateStatusReason != null) { out["lastUpdateStatusReason"] = baml.json.from(self.lastUpdateStatusReason); }
-            if (self.lastUpdateStatusReasonCode != null) { out["lastUpdateStatusReasonCode"] = baml.json.from(self.lastUpdateStatusReasonCode); }
-            out["layerCount"] = baml.json.from(self.layerCount);
-            if (self.memorySizeMb != null) { out["memorySizeMb"] = baml.json.from(self.memorySizeMb); }
-            if (self.packageType != null) { out["packageType"] = baml.json.from(self.packageType); }
-            if (self.revisionId != null) { out["revisionId"] = baml.json.from(self.revisionId); }
-            if (self.runtime != null) { out["runtime"] = baml.json.from(self.runtime); }
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            if (self.stateReason != null) { out["stateReason"] = baml.json.from(self.stateReason); }
-            if (self.stateReasonCode != null) { out["stateReasonCode"] = baml.json.from(self.stateReasonCode); }
-            out["status"] = baml.json.from(self.status);
-            if (self.timeoutSeconds != null) { out["timeoutSeconds"] = baml.json.from(self.timeoutSeconds); }
-            out["triggerCount"] = baml.json.from(self.triggerCount);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAzureContainerApps {
@@ -18620,24 +12850,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataAzureContainerApps
     status: SyncReconcileRequestResourceHeartbeatsItemDataAzureResourceGroupDataStatus,
     backend: "azureContainerApps",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["appName"] = baml.json.from(self.appName);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.environmentName != null) { out["environmentName"] = baml.json.from(self.environmentName); }
-            if (self.ingressFqdn != null) { out["ingressFqdn"] = baml.json.from(self.ingressFqdn); }
-            if (self.maxReplicas != null) { out["maxReplicas"] = baml.json.from(self.maxReplicas); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.minReplicas != null) { out["minReplicas"] = baml.json.from(self.minReplicas); }
-            if (self.provisioningState != null) { out["provisioningState"] = baml.json.from(self.provisioningState); }
-            if (self.revision != null) { out["revision"] = baml.json.from(self.revision); }
-            if (self.runningStatus != null) { out["runningStatus"] = baml.json.from(self.runningStatus); }
-            out["status"] = baml.json.from(self.status);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataGcpCloudRun {
@@ -18658,28 +12871,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataGcpCloudRun {
     urls: string[],
     backend: "gcpCloudRun",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.containerImage != null) { out["containerImage"] = baml.json.from(self.containerImage); }
-            if (self.cpuLimit != null) { out["cpuLimit"] = baml.json.from(self.cpuLimit); }
-            if (self.generation != null) { out["generation"] = baml.json.from(self.generation); }
-            if (self.latestCreatedRevision != null) { out["latestCreatedRevision"] = baml.json.from(self.latestCreatedRevision); }
-            if (self.latestReadyRevision != null) { out["latestReadyRevision"] = baml.json.from(self.latestReadyRevision); }
-            if (self.maxInstanceCount != null) { out["maxInstanceCount"] = baml.json.from(self.maxInstanceCount); }
-            if (self.memoryLimit != null) { out["memoryLimit"] = baml.json.from(self.memoryLimit); }
-            if (self.minInstanceCount != null) { out["minInstanceCount"] = baml.json.from(self.minInstanceCount); }
-            if (self.observedGeneration != null) { out["observedGeneration"] = baml.json.from(self.observedGeneration); }
-            if (self.region != null) { out["region"] = baml.json.from(self.region); }
-            out["service"] = baml.json.from(self.service);
-            out["status"] = baml.json.from(self.status);
-            out["trafficCount"] = baml.json.from(self.trafficCount);
-            if (self.uri != null) { out["uri"] = baml.json.from(self.uri); }
-            out["urls"] = baml.json.from(self.urls);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetes {
@@ -18698,25 +12890,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetes {
     workloadKind: string,
     backend: "kubernetes",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            out["namespace"] = baml.json.from(self.namespace);
-            out["pods"] = baml.json.from(self.pods);
-            out["replicas"] = baml.json.from(self.replicas);
-            if (self.restarts != null) { out["restarts"] = baml.json.from(self.restarts); }
-            out["status"] = baml.json.from(self.status);
-            out["triggerCount"] = baml.json.from(self.triggerCount);
-            if (self.workload != null) { out["workload"] = baml.json.from(self.workload); }
-            out["workloadKind"] = baml.json.from(self.workloadKind);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesPodsItem {
@@ -18734,25 +12908,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesPodsItem
     uid: string?,
     waitingReason: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.containers != null) { out["containers"] = baml.json.from(self.containers); }
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            if (self.nodeName != null) { out["nodeName"] = baml.json.from(self.nodeName); }
-            out["ownerReferences"] = baml.json.from(self.ownerReferences);
-            if (self.phase != null) { out["phase"] = baml.json.from(self.phase); }
-            if (self.podIp != null) { out["podIp"] = baml.json.from(self.podIp); }
-            out["ready"] = baml.json.from(self.ready);
-            out["restartCount"] = baml.json.from(self.restartCount);
-            if (self.terminatedReason != null) { out["terminatedReason"] = baml.json.from(self.terminatedReason); }
-            if (self.uid != null) { out["uid"] = baml.json.from(self.uid); }
-            if (self.waitingReason != null) { out["waitingReason"] = baml.json.from(self.waitingReason); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesPodsItemOwnerReferencesItem {
@@ -18770,18 +12926,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesReplicas
     ready: int?,
     updated: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.available != null) { out["available"] = baml.json.from(self.available); }
-            if (self.current != null) { out["current"] = baml.json.from(self.current); }
-            if (self.desired != null) { out["desired"] = baml.json.from(self.desired); }
-            if (self.misscheduled != null) { out["misscheduled"] = baml.json.from(self.misscheduled); }
-            if (self.ready != null) { out["ready"] = baml.json.from(self.ready); }
-            if (self.updated != null) { out["updated"] = baml.json.from(self.updated); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesWorkload {
@@ -18794,20 +12939,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesWorkload
     rolloutReason: string?,
     updatedReplicas: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.availableReplicas != null) { out["availableReplicas"] = baml.json.from(self.availableReplicas); }
-            out["conditions"] = baml.json.from(self.conditions);
-            if (self.desiredGeneration != null) { out["desiredGeneration"] = baml.json.from(self.desiredGeneration); }
-            if (self.desiredReplicas != null) { out["desiredReplicas"] = baml.json.from(self.desiredReplicas); }
-            if (self.observedGeneration != null) { out["observedGeneration"] = baml.json.from(self.observedGeneration); }
-            if (self.readyReplicas != null) { out["readyReplicas"] = baml.json.from(self.readyReplicas); }
-            if (self.rolloutReason != null) { out["rolloutReason"] = baml.json.from(self.rolloutReason); }
-            if (self.updatedReplicas != null) { out["updatedReplicas"] = baml.json.from(self.updatedReplicas); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesWorkloadConditionsItem {
@@ -18817,17 +12949,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataKubernetesWorkload
     status: string,
     type: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.lastTransitionTime != null) { out["lastTransitionTime"] = baml.json.from(self.lastTransitionTime); }
-            if (self.message != null) { out["message"] = baml.json.from(self.message); }
-            if (self.reason != null) { out["reason"] = baml.json.from(self.reason); }
-            out["status"] = baml.json.from(self.status);
-            out["type"] = baml.json.from(self.type);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocal {
@@ -18843,23 +12965,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocal {
     triggerCount: int,
     backend: "local",
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["commandSupported"] = baml.json.from(self.commandSupported);
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["events"] = baml.json.from(self.events);
-            out["imagePathPresent"] = baml.json.from(self.imagePathPresent);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            if (self.pid != null) { out["pid"] = baml.json.from(self.pid); }
-            if (self.process != null) { out["process"] = baml.json.from(self.process); }
-            if (self.readinessProbeOk != null) { out["readinessProbeOk"] = baml.json.from(self.readinessProbeOk); }
-            out["status"] = baml.json.from(self.status);
-            out["triggerCount"] = baml.json.from(self.triggerCount);
-            out["backend"] = baml.json.from(self.backend);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalEventsItem {
@@ -18871,18 +12977,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalEventsItem {
     subject: SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalEventsItemSubject?,
     timestamp: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["kind"] = baml.json.from(self.kind);
-            out["message"] = baml.json.from(self.message);
-            if (self.raw != null) { out["raw"] = baml.json.from(self.raw); }
-            out["severity"] = baml.json.from(self.severity);
-            if (self.subject != null) { out["subject"] = baml.json.from(self.subject); }
-            out["timestamp"] = baml.json.from(self.timestamp);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalEventsItemSubject {
@@ -18890,15 +12985,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalEventsItemSub
     kind: string,
     name: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.id != null) { out["id"] = baml.json.from(self.id); }
-            out["kind"] = baml.json.from(self.kind);
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalProcess {
@@ -18913,21 +13000,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataLocalProcess {
     restartCount: int?,
     unitId: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cpu != null) { out["cpu"] = baml.json.from(self.cpu); }
-            out["kind"] = baml.json.from(self.kind);
-            if (self.memory != null) { out["memory"] = baml.json.from(self.memory); }
-            out["name"] = baml.json.from(self.name);
-            if (self.phase != null) { out["phase"] = baml.json.from(self.phase); }
-            if (self.pid != null) { out["pid"] = baml.json.from(self.pid); }
-            out["ready"] = baml.json.from(self.ready);
-            if (self.restartCount != null) { out["restartCount"] = baml.json.from(self.restartCount); }
-            out["unitId"] = baml.json.from(self.unitId);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// A member of this union that this SDK does not know, for example one a newer server added. Its `backend` is always `"UNKNOWN"`, so code that switches on `backend` handles it like any other member; `raw` holds the member as the server sent it. A known `backend` never decodes as this class.
@@ -18935,13 +13008,7 @@ class SyncReconcileRequestResourceHeartbeatsItemDataWorkerDataOther {
     /// Always `"UNKNOWN"`. The server's `backend` is `raw["backend"]`.
     backend: "UNKNOWN",
     /// The member as the server sent it, every key included.
-    raw: map<string, json>,
-
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            baml.json.from(self.raw)
-        }
-    }
+    raw: map<string, json> @json.fallback,
 }
 
 /// State reconciliation result with optional target
@@ -18986,17 +13053,7 @@ class SyncReleaseRequest {
     /// Attempt returned by acquire. Required when the lease carried update work.
     attemptId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["deploymentId"] = baml.json.from(self.deploymentId);
-            out["session"] = baml.json.from(self.session);
-            if (self.mode != null) { out["mode"] = baml.json.from(self.mode); }
-            if (self.operationId != null) { out["operationId"] = baml.json.from(self.operationId); }
-            if (self.attemptId != null) { out["attemptId"] = baml.json.from(self.attemptId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncReleaseResponse {
@@ -19013,16 +13070,7 @@ class SyncRenewRequest {
     claims: SyncRenewRequestClaimsItem[]?,
     session: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            if (self.deploymentIds != null) { out["deploymentIds"] = baml.json.from(self.deploymentIds); }
-            if (self.claims != null) { out["claims"] = baml.json.from(self.claims); }
-            out["session"] = baml.json.from(self.session);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class SyncRenewRequestClaimsItem {
@@ -19080,16 +13128,7 @@ class TargetDeploymentReleaseInfo {
     /// Version string (e.g., 2.1.0)
     version: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.releaseId != null) { out["releaseId"] = baml.json.from(self.releaseId); }
-            out["stack"] = baml.json.from(self.stack);
-            if (self.version != null) { out["version"] = baml.json.from(self.version); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Target operations-bundle set the Operator should converge its loaded plugin registry toward.
@@ -19144,16 +13183,7 @@ class UpdateAPIKeyRequest {
     /// Optional expiration date for the API key
     expiresAt: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.deploymentSetupConfig != null) { out["deploymentSetupConfig"] = baml.json.from(self.deploymentSetupConfig); }
-            if (self.expiresAt != null) { out["expiresAt"] = baml.json.from(self.expiresAt); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateCommandRequest {
@@ -19172,18 +13202,7 @@ class UpdateCommandRequest {
     /// Error details if failed
     error: map<string, json>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            if (self.attempt != null) { out["attempt"] = baml.json.from(self.attempt); }
-            if (self.dispatchedAt != null) { out["dispatchedAt"] = baml.json.from(self.dispatchedAt); }
-            if (self.completedAt != null) { out["completedAt"] = baml.json.from(self.completedAt); }
-            if (self.responseSizeBytes != null) { out["responseSizeBytes"] = baml.json.from(self.responseSizeBytes); }
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDebugSessionRequest {
@@ -19192,15 +13211,7 @@ class UpdateDebugSessionRequest {
     error: map<string, json>?,
     expiresAt: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.state != null) { out["state"] = baml.json.from(self.state); }
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            if (self.expiresAt != null) { out["expiresAt"] = baml.json.from(self.expiresAt); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDeploymentComputeRequest {
@@ -19215,14 +13226,7 @@ class UpdateDeploymentComputeRequest {
     /// Unknown identities are rejected. An empty list restores normal blocking.
     quotaWarningOverrides: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.compute != null) { out["compute"] = baml.json.from(self.compute); }
-            if (self.quotaWarningOverrides != null) { out["quotaWarningOverrides"] = baml.json.from(self.quotaWarningOverrides); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDeploymentComputeResponse {
@@ -19249,16 +13253,7 @@ class UpdateDeploymentEnvironmentVariablesRequestVariablesItem {
     /// Target resource patterns (null = all resources)
     targetResources: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["value"] = baml.json.from(self.value);
-            out["type"] = baml.json.from(self.type);
-            if (self.targetResources != null) { out["targetResources"] = baml.json.from(self.targetResources); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDeploymentEnvironmentVariablesResponse {
@@ -19271,14 +13266,7 @@ class UpdateDeploymentGroupRequest {
     /// Maximum number of deployments in this deployment group
     maxDeployments: int?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.maxDeployments != null) { out["maxDeployments"] = baml.json.from(self.maxDeployments); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDeploymentInputsRequest {
@@ -19289,15 +13277,7 @@ class UpdateDeploymentInputsRequest {
     /// Default: `[]` (applied by the server when left out).
     clearInputIds: string[]?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.expectedBaseOperationId != null) { out["expectedBaseOperationId"] = baml.json.from(self.expectedBaseOperationId); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            if (self.clearInputIds != null) { out["clearInputIds"] = baml.json.from(self.clearInputIds); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateDeploymentInputsResponse {
@@ -19321,29 +13301,14 @@ class UpdateDeploymentSetupPolicy {
     policy: DeploymentSetupPolicy,
     metadata: DeploymentSetupMetadata?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.returnUrl != null) { out["returnUrl"] = baml.json.from(self.returnUrl); }
-            if (self.refreshUrl != null) { out["refreshUrl"] = baml.json.from(self.refreshUrl); }
-            out["policy"] = baml.json.from(self.policy);
-            if (self.metadata != null) { out["metadata"] = baml.json.from(self.metadata); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateManagerDomainBinding {
     /// Unique identifier for the domain.
     domainId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.domainId != null) { out["domainId"] = baml.json.from(self.domainId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Request schema for updating a manager to a new release
@@ -19351,13 +13316,7 @@ class UpdateManagerRequest {
     /// Optional release ID to update to. If not provided, the active release will be chosen
     releaseId: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.releaseId != null) { out["releaseId"] = baml.json.from(self.releaseId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateManagerResponse {
@@ -19378,19 +13337,7 @@ class UpdateProject {
     defaultManagers: ProjectDefaultManagers?,
     packagesConfigPatch: UpdateProjectPackagesConfigPatch?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.gitRepository != null) { out["gitRepository"] = baml.json.from(self.gitRepository); }
-            if (self.rootDirectory != null) { out["rootDirectory"] = baml.json.from(self.rootDirectory); }
-            if (self.deploymentPortalAppearance != null) { out["deploymentPortalAppearance"] = baml.json.from(self.deploymentPortalAppearance); }
-            if (self.packagesConfig != null) { out["packagesConfig"] = baml.json.from(self.packagesConfig); }
-            if (self.domainId != null) { out["domainId"] = baml.json.from(self.domainId); }
-            if (self.defaultManagers != null) { out["defaultManagers"] = baml.json.from(self.defaultManagers); }
-            if (self.packagesConfigPatch != null) { out["packagesConfigPatch"] = baml.json.from(self.packagesConfigPatch); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 type UpdateProjectGcpOAuthProvider = ResolveManagerGcpOAuthProviderResponseAlienManaged | UpdateProjectGcpOAuthProviderCustom | ProjectGcpOAuthProviderOther
@@ -19400,15 +13347,7 @@ class UpdateProjectGcpOAuthProviderCustom {
     clientId: string,
     clientSecret: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["mode"] = baml.json.from(self.mode);
-            out["clientId"] = baml.json.from(self.clientId);
-            if (self.clientSecret != null) { out["clientSecret"] = baml.json.from(self.clientSecret); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectLogExportRequestBody {
@@ -19416,15 +13355,7 @@ class UpdateProjectLogExportRequestBody {
     enabled: bool,
     headers: map<string, string>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["endpoint"] = baml.json.from(self.endpoint);
-            out["enabled"] = baml.json.from(self.enabled);
-            if (self.headers != null) { out["headers"] = baml.json.from(self.headers); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectLogExportResponse {
@@ -19444,17 +13375,7 @@ class UpdateProjectPackagesConfigPatch {
     operatorImage: UpdateProjectPackagesConfigPatchOperatorImage?,
     helm: UpdateProjectPackagesConfigPatchHelm?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.cli != null) { out["cli"] = baml.json.from(self.cli); }
-            if (self.cloudformation != null) { out["cloudformation"] = baml.json.from(self.cloudformation); }
-            if (self.terraform != null) { out["terraform"] = baml.json.from(self.terraform); }
-            if (self.operatorImage != null) { out["operatorImage"] = baml.json.from(self.operatorImage); }
-            if (self.helm != null) { out["helm"] = baml.json.from(self.helm); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchCli {
@@ -19472,16 +13393,7 @@ class UpdateProjectPackagesConfigPatchCli {
     /// Whether CLI package generation is enabled
     enabled: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.binaryTargets != null) { out["binaryTargets"] = baml.json.from(self.binaryTargets); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchCloudformation {
@@ -19492,15 +13404,7 @@ class UpdateProjectPackagesConfigPatchCloudformation {
     /// Require AWS External ID. When true, AWS setup templates require the ManagementExternalId parameter (every install and update must enter the deployment group's ExternalId) and, on a hosted manager, accept only its management roles as ManagingRoleArn. Applies to packages built after the change. Missing means false; new projects are created with true.
     requireManagementExternalId: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.requireManagementExternalId != null) { out["requireManagementExternalId"] = baml.json.from(self.requireManagementExternalId); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchHelm {
@@ -19514,18 +13418,7 @@ class UpdateProjectPackagesConfigPatchHelm {
     setupResources: PackageConfigHelmSetupResources?,
     runtimePersistence: UpdateProjectPackagesConfigPatchHelmRuntimePersistence?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.chartName != null) { out["chartName"] = baml.json.from(self.chartName); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.logCollector != null) { out["logCollector"] = baml.json.from(self.logCollector); }
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.setupResources != null) { out["setupResources"] = baml.json.from(self.setupResources); }
-            if (self.runtimePersistence != null) { out["runtimePersistence"] = baml.json.from(self.runtimePersistence); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchHelmLogCollector {
@@ -19536,14 +13429,7 @@ class UpdateProjectPackagesConfigPatchHelmLogCollector {
     /// Known values: `podApi`, `nodeAgent`. Others may appear.
     mode: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.mode != null) { out["mode"] = baml.json.from(self.mode); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchHelmRuntimePersistence {
@@ -19553,16 +13439,7 @@ class UpdateProjectPackagesConfigPatchHelmRuntimePersistence {
     size: string?,
     storageClassName: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.existingClaim != null) { out["existingClaim"] = baml.json.from(self.existingClaim); }
-            if (self.size != null) { out["size"] = baml.json.from(self.size); }
-            if (self.storageClassName != null) { out["storageClassName"] = baml.json.from(self.storageClassName); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchOperatorImage {
@@ -19579,18 +13456,7 @@ class UpdateProjectPackagesConfigPatchOperatorImage {
     /// Whether Operator image package generation is enabled
     enabled: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.brand != null) { out["brand"] = baml.json.from(self.brand); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            if (self.envPrefix != null) { out["envPrefix"] = baml.json.from(self.envPrefix); }
-            if (self.labelDomain != null) { out["labelDomain"] = baml.json.from(self.labelDomain); }
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateProjectPackagesConfigPatchTerraform {
@@ -19599,27 +13465,14 @@ class UpdateProjectPackagesConfigPatchTerraform {
     /// Human-friendly application name shown in generated install artifacts
     displayName: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            if (self.displayName != null) { out["displayName"] = baml.json.from(self.displayName); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateUserProfileRequest {
     /// Display name
     name: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.name != null) { out["name"] = baml.json.from(self.name); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateWebhookEndpointRequestBody {
@@ -19629,16 +13482,7 @@ class UpdateWebhookEndpointRequestBody {
     filterTypes: string[]?,
     disabled: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.url != null) { out["url"] = baml.json.from(self.url); }
-            if (self.description != null) { out["description"] = baml.json.from(self.description); }
-            if (self.filterTypes != null) { out["filterTypes"] = baml.json.from(self.filterTypes); }
-            if (self.disabled != null) { out["disabled"] = baml.json.from(self.disabled); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateWorkspaceMemberRequestBody {
@@ -19649,26 +13493,14 @@ class UpdateWorkspaceMemberRequestBody {
 class UpdateWorkspaceRequestBody {
     logoUrl: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.logoUrl != null) { out["logoUrl"] = baml.json.from(self.logoUrl); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UpdateWorkspaceSettingsRequest {
     /// Turn the ai-agent on (`true`) or off (`false`) for this workspace.
     enabled: bool?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.enabled != null) { out["enabled"] = baml.json.from(self.enabled); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class UserProfile {
@@ -19719,18 +13551,7 @@ class UserProfileSetupRequest {
     useCaseTags: string[]?,
     useCases: string?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["name"] = baml.json.from(self.name);
-            out["company"] = baml.json.from(self.company);
-            out["acquisitionSource"] = baml.json.from(self.acquisitionSource);
-            if (self.acquisitionSourceDetail != null) { out["acquisitionSourceDetail"] = baml.json.from(self.acquisitionSourceDetail); }
-            if (self.useCaseTags != null) { out["useCaseTags"] = baml.json.from(self.useCaseTags); }
-            if (self.useCases != null) { out["useCases"] = baml.json.from(self.useCases); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// Authenticated user subject with workspace-scoped permissions

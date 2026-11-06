@@ -155,36 +155,13 @@ fn open_unions_get_an_other_member_for_tags_this_sdk_does_not_know() {
     // The Other member's tag is the literal "UNKNOWN"; raw keeps the member and is what it encodes as.
     assert!(types.contains("type Pet = Cat | Dog | PetOther\n"), "{types}");
     assert!(types.contains("class PetOther {\n    /// Always `\"UNKNOWN\"`. The server's `kind` is `raw[\"kind\"]`.\n    kind: \"UNKNOWN\",\n"), "{types}");
-    assert!(types.contains("    raw: map<string, json>,\n"), "{types}");
-    assert!(types.contains("            baml.json.from(self.raw)\n"), "{types}");
-    // A class holding an open union decodes it by its tag: a known tag as its member, any other as Other.
-    let pet = "pet: match (baml.json.field(object, \"pet\")) {
-    let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, \"kind\"))) {
-        \"cat\" => baml.json.to<Cat>(member),
-        \"dog\" => baml.json.to<Dog>(member),
-        _ => PetOther { kind: \"UNKNOWN\", raw: member },
-    },
-    _ => throw baml.json.DecodeError { message: \"expected a JSON object\", path: \"\" },
-},"
-    .replace('\n', "\n                    ");
-    assert!(types.contains(&pet), "{types}");
-    assert!(types.contains("name: baml.json.to<string>(baml.json.field(object, \"name\")),"), "{types}");
-    // So does an operation returning one, here in a list, with a `decode` function.
-    let operations = files.operations;
-    assert!(operations.contains("    root.internal.platform_decoded<Pet[]>(\n        client, \"GET\", \"/pets\",\n        decode = (response) -> {\n"), "{operations}");
-    assert!(operations.contains("let items: baml.json.json[] => items.map((item) -> {\n"), "{operations}");
-    assert!(operations.contains("\"dog\" => baml.json.to<Dog>(member),"), "{operations}");
+    assert!(types.contains("    raw: map<string, json> @json.fallback,\n"), "{types}");
+    // Nothing decodes an open union by hand: BAML picks the member by its tag.
+    assert!(!types.contains("baml.FromJson") && !types.contains("baml.ToJson"), "{types}");
+    assert!(types.contains("class Home {\n    pet: Pet,\n    name: string,\n}\n"), "{types}");
+    assert!(files.operations.contains("    root.internal.platform_json<Pet[]>(client, \"GET\", \"/pets\")\n"), "{}", files.operations);
     // A union with a member that is not a class has no tag: it stays closed.
     assert!(!types.contains("GetShapeResponseOther"), "{types}");
-
-    // A response that may be empty cannot hold an open union.
-    let mut maybe = paths.clone();
-    maybe["/maybe"] = json!({"get": {"operationId": "getMaybe", "responses": {
-        "200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/Pet"}}}},
-        "204": {"description": "nothing"},
-    }}});
-    let error = import_with(json!({"open_unions": true}), "open-unions-optional", maybe, schemas.clone()).err().expect("an error");
-    assert!(error.contains("(operation getMaybe): a response that may be empty and holds an open union is not implemented"), "{error}");
 
     // A member tagged "UNKNOWN" would be indistinguishable from the Other member.
     let mut clash = schemas;
@@ -216,30 +193,12 @@ fn open_unions_tagged_by_several_fields_get_one_other_member() {
     let types = files.types;
     // One Other member, shaped as for one tag field: the first tag field is "UNKNOWN".
     assert!(types.contains("type Binding = S3 | Gcs | Redis | Ai | BindingOther\n"), "{types}");
-    assert!(types.contains("    /// Always `\"UNKNOWN\"`. The server's `kind` is `raw[\"kind\"]`, its `service` `raw[\"service\"]`.\n    kind: \"UNKNOWN\",\n    /// The member as the server sent it, every key included.\n    raw: map<string, json>,\n"), "{types}");
+    assert!(types.contains("    /// Always `\"UNKNOWN\"`. The server's `kind` is `raw[\"kind\"]`, its `service` `raw[\"service\"]`.\n    kind: \"UNKNOWN\",\n    /// The member as the server sent it, every key included.\n    raw: map<string, json> @json.fallback,\n"), "{types}");
     assert!(types.contains("Members are told apart by `kind`, then `service`"), "{types}");
     assert_eq!(types.matches("Other {\n").count(), 1, "{types}");
-    // Decoding reads `kind`, then `service` where members share the `kind`. A
-    // `service` no member of that `kind` has, or a new `kind`, is the Other member.
-    let operations = files.operations;
-    let select = "match (baml.json.to<string>(baml.json.field(member, \"kind\"))) {
-    \"storage\" => match (baml.json.to<string>(baml.json.field(member, \"service\"))) {
-        \"s3\" => baml.json.to<S3>(member),
-        \"gcs\" => baml.json.to<Gcs>(member),
-        _ => BindingOther { kind: \"UNKNOWN\", raw: member },
-    },
-    \"kv\" => match (baml.json.to<string>(baml.json.field(member, \"service\"))) {
-        \"redis\" => baml.json.to<Redis>(member),
-        _ => BindingOther { kind: \"UNKNOWN\", raw: member },
-    },
-    \"ai\" => baml.json.to<Ai>(member),
-    _ => BindingOther { kind: \"UNKNOWN\", raw: member },
-}";
-    // A member alone with its `kind` and without a `service` (`Ai`) is picked by its `kind`.
-    assert!(operations.contains(&select.replace('\n', &format!("\n{}", " ".repeat(16)))), "{operations}");
-    // A class holding the union decodes it the same way, here as map values.
-    assert!(types.contains("out[key] = match (entries[key]) {"), "{types}");
-    assert!(types.contains(&select.replace('\n', &format!("\n{}", " ".repeat(36)))), "{types}");
+    // Nothing decodes it by hand: each member's literals are its tags.
+    assert!(!types.contains("baml.FromJson"), "{types}");
+    assert!(files.operations.contains("root.internal.platform_json<Binding>("), "{}", files.operations);
 
     // When the fields cannot tell every member apart, the union stays closed:
     // here `Ai` shares the `kind` "storage" but has no `service`.
@@ -453,13 +412,13 @@ fn header_parameters_are_sent_when_set() {
 
 #[test]
 fn json_fields_decode_without_a_conversion() {
-    // A renamed field makes the class implement FromJson.
+    // A renamed field carries its wire name.
     let files = import(
         "json-field",
         json!({"/x": get("getX", object(json!({"test": {}, "n": {"type": "integer"}}), &["n"]))}),
         json!({}),
     )
     .expect("import");
-    assert!(files.types.contains("test_: baml.json.to<json?>(baml.json.field(object, \"test\")),"), "{}", files.types);
-    assert!(files.types.contains("n: baml.json.to<int>(baml.json.field(object, \"n\")),"), "{}", files.types);
+    assert!(files.types.contains("test_: json? @json.rename(\"test\"),"), "{}", files.types);
+    assert!(!files.types.contains("baml.FromJson"), "{}", files.types);
 }

@@ -373,10 +373,8 @@ The choices behind the shape above, with the alternative where there was one.
     TypeScript SDK, which camelCases wire names with separators (21 in the
     Platform API, 14 in the Manager API; `billing.getEntitlements`: `features.customDomains` for
     `custom_domains`; stack settings networks: `vpcId`, `privateSubnetIds`).
-    The importer maps them as it maps `test` → `test_`, so the JSON on the
-    wire does not change. The cost: the 15 classes that gained a mapping
-    decode through their own `baml.FromJson`, where a decode failure loses its
-    location ([B21](gaps.md#b21)).
+    The importer maps them as it maps `test` → `test_`, with `@json.rename`, so
+    the JSON on the wire does not change.
 12. **Argument names with separators.** Decided: argument names follow the
     field-name rule, as in Alien's TypeScript SDK: `command_id` →
     `commandId`, `lease_id` → `leaseId`, `vault_name` → `vaultName` (Manager
