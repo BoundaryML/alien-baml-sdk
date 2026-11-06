@@ -17,7 +17,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@boundaryml/baml-bridge": "0.25.1"
+    "@boundaryml/baml-bridge": "0.25.2"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

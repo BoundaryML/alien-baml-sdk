@@ -33,7 +33,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # sdk/python/pyproject.toml, sdk/go/go.mod, sdk/rust/Cargo.toml,
 # examples/coexistence/other/typescript/package.json, bench/go/go.mod), update
 # their lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
-BAML_PIN="0.25.1"     # what the toolchain reports and sdk/*/ pin
+BAML_PIN="0.25.2"     # what the toolchain reports and sdk/*/ pin
 # Empty: the scripts use the published BAML $BAML_PIN. To build against one
 # unreleased BAML commit instead (when the SDKs need a change no release has
 # yet), set it to that commit, built locally: check
@@ -137,8 +137,8 @@ baml_cli() {
 }
 
 # True when `baml --version` (with the given selector) reports toolchain
-# $BAML_PIN: "baml toolchain 0.25.1 …" or "baml toolchain baml-cli 0.25.1 …"
-# from wrapper 0.2, "baml-cli 0.25.1" from wrapper 0.3.
+# $BAML_PIN: "baml toolchain 0.25.2 …" or "baml toolchain baml-cli 0.25.2 …"
+# from wrapper 0.2, "baml-cli 0.25.2" from wrapper 0.3.
 toolchain_is_pinned() {
   BAML_HOME="$CLI_HOME" BAML_VERSION="$1" BAML_TOOLCHAIN="$1" baml --version 2>&1 \
     | grep -Eq "^(baml toolchain (baml-cli )?|baml-cli )${BAML_PIN//./\\.}( |$)"
