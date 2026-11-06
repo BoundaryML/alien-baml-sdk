@@ -143,7 +143,7 @@ UNION_CASES = [
      {"files": {**S3_BINDING, "forcePathStyle": "yes"}},
      # `json_path` is relative to the binding (docs/gaps.md, B21).
      {"code": "MALFORMED_RESPONSE", "retryable": False, "http_status": 200,
-      "context": {"path": "path", "decode_error": "expected boolean", "json_path": ".forcePathStyle"}}),
+      "context": {"path": "path", "decode_error": "expected boolean", "json_path": ".stackSettings.externalBindings[\"files\"].forcePathStyle"}}),
 ]
 
 
