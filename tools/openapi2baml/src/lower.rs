@@ -241,9 +241,9 @@ pub struct Class {
     pub extra: Option<Ty>,
     /// Where the schema came from (JSON pointer), for diagnostics.
     pub origin: String,
-    /// A field name differs from its wire name: needs FromJson and ToJson.
+    /// A field name differs from its wire name: has `@json.rename`.
     pub renamed: bool,
-    /// Reachable from a request body: needs ToJson to omit unset fields.
+    /// Reachable from a request body: needs `@@json.omit_nulls`.
     pub encoded: bool,
     /// Keeps its name through deduplication: a spec component, or an
     /// operation's own request body or response.
@@ -977,7 +977,7 @@ impl<'a> Lowerer<'a> {
     /// together ([`tag_fields`]), gets one more member, last:
     /// `<Owner><Field>Other`, whose first tag field is the literal
     /// [`UNKNOWN_TAG`] and whose `raw` holds the member as the server sent it.
-    /// Its tag never matches a server's, so emit decodes an open union by its
+    /// Its tag never matches a server's, and `@json.fallback` decodes an open union by its
     /// tags (DESIGN.md, "Open unions"): known tags as their own class, any
     /// others as the `Other` class, instead of failing the whole response.
     /// Request types get it too: they share classes with responses, and it
@@ -1142,7 +1142,7 @@ impl<'a> Lowerer<'a> {
         Ty::Json
     }
 
-    /// Marks every class reachable from `ty` as encoded (needs ToJson).
+    /// Marks every class reachable from `ty` as encoded (needs `@@json.omit_nulls`).
     pub fn mark_encoded(&mut self, ty: &Ty) {
         let mut pending = BTreeSet::new();
         ty.names(&mut pending);

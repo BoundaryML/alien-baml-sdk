@@ -18,7 +18,7 @@ SDK works with.
 | [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>` |
 | [B9](#b9) | A project cannot depend on another BAML package | One project, `ns_*` namespaces | — |
 | [B13](#b13) | An unset optional field and an explicit `null` are one value | Not changed in BAML; the SDK encodes request bodies by omission, so a request cannot send an explicit `null` | — |
-| [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` plus `baml.FromJson`/`baml.ToJson` mapping it to `"test"` | — |
+| [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` with `@json.rename("test")` | — |
 | [B15](#b15) | TypeScript rejects class arguments with an omitted nullable key | None: fixed in 0.23.0 (BAML #5291 and #5377) | — |
 | [B16](#b16) | Telemetry is lost on exit unless the host shuts the runtime down | None: fixed in 0.23.0 (BAML #5293); every facade exports `shutdown` | — |
 | [B17](#b17) | Constants are not exported to the generated SDKs | Error codes documented, not exported | — |
@@ -262,10 +262,9 @@ malformed arrays are rejected (`stored_secret_presence` in
 `baml/baml_src/ns_compat/`, and the `compat.stored_secret_presence.*`
 scenarios).
 
-**Encoding.** The SDK's request classes own their wire encoding. The importer
-gives every class reachable from a request body that has optional fields a
-`baml.ToJson` that leaves unset optional fields out, as both of Alien's SDKs
-do: Speakeasy omits `undefined`, and Progenitor skips `None`. Values inside
+**Encoding.** The importer gives every class reachable from a request body
+that has optional fields `@@json.omit_nulls`, which leaves unset optional fields
+out, as both of Alien's SDKs do: Speakeasy omits `undefined`, and Progenitor skips `None`. Values inside
 `json` fields are written as given, `null`s included.
 
 **Impact on Alien.** A request cannot send an explicit `null` for an optional
@@ -342,9 +341,9 @@ class StackByPlatform2 {
 Platform and Manager specs (the only collision with a BAML keyword in either).
 
 **Rule.** A wire field whose name is a reserved word gets a trailing
-underscore (`test` → `test_`), and the class implements `baml.FromJson` and
-`baml.ToJson` to map `test_` to and from `"test"`. This SDK does not use
-`@alias` for wire names. The same mapping gives a snake_case wire name its TypeScript SDK
+underscore (`test` → `test_`), with `@json.rename("test")` for its wire name.
+`@alias` is the name a model is shown, so this SDK does not use it for wire
+names. The same mapping gives a snake_case wire name its TypeScript SDK
 name (`custom_domains` ↔ `customDomains`). The importer applies the rule and
 lists every renamed field in `docs/importer-coverage.md`. The `stack_by_platform` tests in `ns_compat` run on
 the imported `platform.StackByPlatform`: decode, encode, round trips (unset
@@ -353,7 +352,7 @@ platforms omitted, `null`s inside a stack kept) and non-object input. The
 `on-other`) in both APIs.
 
 Decoding goes through `baml.json.decode`, and encoding through
-`baml.json.stringify`; both honor the overrides.
+`baml.json.stringify`; both follow the `@json` attributes.
 
 ## B15
 

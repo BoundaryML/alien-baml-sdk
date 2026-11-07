@@ -107,7 +107,7 @@ pub fn client(kind: ClientKind) -> &'static str {
     }
 }
 
-pub fn types(defs: &[&Def]) -> String {
+pub fn types(defs: &[&Def]) -> Result<String, Error> {
     let mut out = String::new();
     let local = |n: &str| n.to_string();
     for def in defs {
@@ -117,13 +117,13 @@ pub fn types(defs: &[&Def]) -> String {
                 doc(&mut out, "", text);
                 let _ = writeln!(out, "type {name} = {}", ty.render(&local));
             }
-            Def::Class(class) => class_text(&mut out, class),
+            Def::Class(class) => class_text(&mut out, class, defs)?,
         }
     }
-    out
+    Ok(out)
 }
 
-fn class_text(out: &mut String, class: &Class) {
+fn class_text(out: &mut String, class: &Class, defs: &[&Def]) -> Result<(), Error> {
     let local = |n: &str| n.to_string();
     doc(out, "", &class.doc);
     let _ = writeln!(out, "class {} {{", class.name);
@@ -147,6 +147,13 @@ fn class_text(out: &mut String, class: &Class) {
         let _ = writeln!(out, "    {}: {}{attribute},", field.name, field.ty.render(&local));
     }
     if let Some(extra) = &class.extra {
+        if !matches!(extra, Ty::Json) {
+            return Err(Error::new(format!(
+                "{}: extra keys of type {} are not implemented: `@json.flatten` holds `json`",
+                class.name,
+                extra.render(&local)
+            )));
+        }
         doc(out, INDENT, "Keys the schema does not list, with their values.");
         let _ = writeln!(out, "    {EXTRA_FIELD}: map<string, {}> @json.flatten,", extra.render(&local));
     }
@@ -154,15 +161,23 @@ fn class_text(out: &mut String, class: &Class) {
     // leaves out every unset optional field, so a required field that may be
     // null needs an override: it has to be sent, as `null`.
     let omits = (class.renamed || class.extra.is_some() || class.encoded) && class.fields.iter().any(omittable);
-    if omits && !class.fields.iter().any(required_nullable) {
+    let sends_null = class.fields.iter().any(|field| required_nullable(field, defs));
+    if omits && !sends_null {
         let _ = writeln!(out);
         let _ = writeln!(out, "    @@json.omit_nulls");
     } else if omits {
-        assert!(!class.renamed && class.extra.is_none(), "{}: `@json` attributes cannot sit beside the override", class.name);
+        if class.renamed || class.extra.is_some() {
+            return Err(Error::new(format!(
+                "{}: a required nullable field beside a renamed field or extra keys is not implemented: \
+                 `@json` attributes cannot sit beside the `baml.ToJson` it needs",
+                class.name
+            )));
+        }
         let _ = writeln!(out);
         let _ = writeln!(out, "{}", nest(&to_json(&to_json_body(class))));
     }
     let _ = writeln!(out, "}}");
+    Ok(())
 }
 
 /// The statements of `ToJson.to_json`: every field, an unset optional field
@@ -192,8 +207,23 @@ fn omittable(field: &Field) -> bool {
 
 /// A field the request encoding sends even when it is `null`. `@@json.omit_nulls`
 /// leaves it out, except a `json` field, where `null` is a value.
-fn required_nullable(field: &Field) -> bool {
-    field.required && field.ty.is_optional() && !matches!(field.ty, Ty::Json)
+fn required_nullable(field: &Field, defs: &[&Def]) -> bool {
+    field.required && !matches!(field.ty, Ty::Json) && admits_null(&field.ty, defs, &mut Vec::new())
+}
+
+/// Whether `ty` is optional, through any aliases.
+fn admits_null<'a>(ty: &'a Ty, defs: &[&'a Def], seen: &mut Vec<&'a str>) -> bool {
+    if ty.is_optional() {
+        return true;
+    }
+    let Ty::Named(name) = ty else {
+        return false;
+    };
+    if seen.contains(&name.as_str()) {
+        return false;
+    }
+    seen.push(name);
+    defs.iter().any(|def| matches!(def, Def::Alias { name: alias, ty, .. } if alias == name && admits_null(ty, defs, seen)))
 }
 
 /// One function per operation: its doc comment, its signature, and one call

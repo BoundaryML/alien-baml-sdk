@@ -93,7 +93,7 @@ also imports twice into empty trees and compares them byte for byte.
 | `$ref: '#/components/schemas/X'` | `X` | Component names sanitized to valid identifiers. Scalar components (IDs, open enums) are inlined where used unless they are recursive |
 | object with `properties` | `class` | Component name, or a name derived from where it appears (below) |
 | object with only `additionalProperties: S` | `map<string, S>` | `true`/`{}` values become `map<string, json>` |
-| object with both | `class` plus `additionalProperties: map<string, S>` | Keys the schema does not list are kept in that field (Speakeasy's name for it), by generated `FromJson`/`ToJson`. A property named `additionalProperties` fails generation |
+| object with both | `class` plus `additionalProperties: map<string, S>` | Keys the schema does not list are kept in that field (Speakeasy's name for it), by `@json.flatten`. A property named `additionalProperties` fails generation |
 | free-form object, `{}`, untyped schema | `json` | |
 | `allOf` of one schema (with or without a description sibling) | that schema | Platform wraps refs this way |
 | `allOf` of several object schemas | one merged `class` | Properties and `required` united; a conflicting property fails generation |
@@ -192,15 +192,18 @@ union whose fields cannot tell every member apart this way (a member without
 `service` sharing its `type` with members that have one) stays closed.
 
 The `Other` member's `raw` field carries `@json.fallback`, so decoding needs
-no code here. BAML picks the member whose literal tags all match, and a member
-that does not decode after that is an error. An object no member's tags match
-is the `Other` member, with `raw` holding it, and it writes `raw` back. An
-object with no tag is an error. This is the same in `baml.json` and in the
-Rust SDK's `serde` impls:
+no code here. The `Other` member's literal field names the union's tag, and
+BAML decides by that tag: a known value is that member, read by the next
+literal field when several members share it (`service` in `ExternalBinding`).
+After that, anything wrong is an error, including a wrong value in another
+literal field. A value no member has is the `Other` member, with `raw` holding
+it, and it writes `raw` back. An object with no tag, or with a known tag and no
+second tag, is an error. `baml.json` and the Rust SDK's `serde` impls build the
+same tree:
 
 ```baml
 class SetupItemStatusSourceOther {
-    source: "UNKNOWN",
+    type: "UNKNOWN",
     raw: map<string, json> @json.fallback,
 }
 ```
@@ -294,7 +297,7 @@ parameter must use its location's default `style` and `explode`, without
 
 | 2xx responses | Return type | Decoding |
 |---|---|---|
-| JSON with one schema | `T` | `baml.json.decode<T>` (honors `FromJson`) |
+| JSON with one schema | `T` | `baml.json.decode<T>` (follows the `@json` attributes) |
 | JSON with several schemas | `A \| B` | first member that decodes |
 | JSON and an empty one (202 JSON / 204) | `T?` | `null` for an empty body |
 | no content | `null` | body read and discarded |
@@ -345,8 +348,7 @@ Manager authentication and errors, and explicit `null` in requests.
 filter opens decode as `string`; the import fails if either is no longer an
 enum, as that filter does) and `"none"`. Both keep every other enum a closed
 union of literals, single-value ones included. The SDK uses neither, and with
-BAML 0.23.0 their output does not compile: a class with its own
-`baml.FromJson` decodes such a field with
+BAML 0.23.0 their output does not compile: a field decodes with
 `baml.json.to<"aws" | "gcp" | …>(…)`, which BAML reads as comparisons
 (`operator | cannot be applied to bool and "gcp"`). The Rust generator would
 also skip every type with a non-identifier literal such as
