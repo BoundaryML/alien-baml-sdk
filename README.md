@@ -83,13 +83,13 @@ Tested on macOS arm64 with Node 24.22, pnpm 12.14, Python 3.14, uv 0.13,
 Go 1.27 and Rust 1.96.
 
 - `baml` on PATH: the BAML wrapper (`brew install boundaryml/baml/baml`). The
-  scripts install BAML 0.25.2 through it
+  scripts install BAML 0.25.3-nightly.20261106.a through it
 - Node and pnpm
 - Python 3.10+ and uv
 - Go 1.24+ with cgo (`CGO_ENABLED=1`, the default on macOS); `baml generate` runs `gofmt`
 - Rust 1.91+
 
-The scripts use BAML 0.25.2 (`BAML_PIN` in `scripts/lib.sh`), which the
+The scripts use BAML 0.25.3-nightly.20261106.a (`BAML_PIN` in `scripts/lib.sh`), which the
 manifests pin exactly (npm `@boundaryml/baml-bridge`, PyPI `baml-bridge`, Go
 `github.com/boundaryml/baml-go`, crates.io `baml_bridge`). The scripts keep
 all BAML state in the repository (`.baml_home/`, `.cache/`), never in
@@ -135,7 +135,7 @@ print(alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
 **Go.** Save as `sdk/go/cmd/quickstart/main.go`, then run
 `cd sdk/go && go run ./cmd/quickstart`.
 Go and Rust load BAML's runtime library at run time: the first program on a
-machine downloads it into `~/.baml/bridges/0.25.2/`, and later ones load that
+machine downloads it into `~/.baml/bridges/0.25.3-nightly.20261106.a/`, and later ones load that
 copy. [docs/runtime.md](docs/runtime.md) has how to provide it ahead of time.
 
 <!-- quickstart go sdk/go/cmd/quickstart/main.go :: cd sdk/go && go run ./cmd/quickstart -->
@@ -297,7 +297,7 @@ repository):
 - **Rust.** A path dependency:
   `alien_sdk = { path = "/path/to/alien-baml-sdk/sdk/rust" }`.
 
-Each recipe brings the published BAML 0.25.2 runtime package.
+Each recipe brings the published BAML 0.25.3-nightly.20261106.a runtime package.
 
 ## Telemetry
 
@@ -328,7 +328,7 @@ non-zero on the first failure.
 
 ## Building against an unreleased BAML
 
-The scripts use the published BAML 0.25.2. To try a BAML commit no release has
+The scripts use the published BAML 0.25.3-nightly.20261106.a. To try a BAML commit no release has
 yet (a BAML pull request, say), build it locally and run the scripts with
 `BAML_LOCAL_BUILD=1`; the toolchain and all four runtime packages then come
 from that build:
@@ -338,7 +338,7 @@ git clone https://github.com/BoundaryML/baml /path/to/baml
 git -C /path/to/baml checkout <commit>
 scripts/build_baml.sh /path/to/baml
 export BAML_SOURCE=/path/to/baml BAML_LOCAL_BUILD=1
-scripts/verify.sh --phase 2    # ==> BAML 0.25.2, local build of BAML commit <sha>
+scripts/verify.sh --phase 2    # ==> BAML 0.25.3-nightly.20261106.a, local build of BAML commit <sha>
 ```
 
 `build_baml.sh` runs, in the checkout's `baml_language/`:
@@ -353,7 +353,7 @@ cargo build --release -p baml_cli -p bridge_cffi
   checkout's HEAD, and refuse uncommitted changes under `baml_language/`
   (except the TypeScript bridge's `dist/` and generated protobuf code, which
   its build rewrites).
-- The build's `baml-cli --version` must report 0.25.2; another version needs
+- The build's `baml-cli --version` must report 0.25.3-nightly.20261106.a; another version needs
   the pins moved first (see `BAML_PIN` in `scripts/lib.sh`).
 - `generate.sh` links the TypeScript bridge into `node_modules`, installs the
   Python wheel into `.venv`, and points Go and Rust at the checkout's bridge
@@ -369,7 +369,7 @@ cargo build --release -p baml_cli -p bridge_cffi
   release has), set `BAML_COMMIT_PIN` in `scripts/lib.sh`; the comment there
   has the steps, and the way back to a release.
 - The scripts need a `baml` launcher on `PATH` whose `--version` reports
-  0.25.2 for the selected toolchain (`toolchain_is_pinned` in
+  0.25.3-nightly.20261106.a for the selected toolchain (`toolchain_is_pinned` in
   `scripts/lib.sh`). The Homebrew wrapper does, both 0.2.4 and 0.3.x.
 
 ## Known gaps

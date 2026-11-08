@@ -117,7 +117,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "other-baml-sdk"
 version = "0.0.0"
-dependencies = ["baml-bridge==$BAML_PIN", "pydantic>=2.6", "typing-extensions>=4.14.0"]
+dependencies = ["baml-bridge==$BAML_PIN_PYPI", "pydantic>=2.6", "typing-extensions>=4.14.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -131,7 +131,7 @@ other="$(echo "$WORK"/py/dist/other_baml_sdk-*.whl)"
 pyenv() {  # pyenv <venv> <first package> <second package>
   uv venv --quiet "$1" >&2
   if (( BAML_LOCAL_BUILD )); then  # first, so both packages keep it (they install its dependencies)
-    uv pip install --quiet --python "$1" --no-deps --no-index --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN" >&2
+    uv pip install --quiet --python "$1" --no-deps --no-index --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN_PYPI" >&2
   fi
   uv pip install --quiet --python "$1" "$2" >&2
   uv pip install --quiet --python "$1" "$3" >&2

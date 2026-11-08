@@ -76,7 +76,7 @@ if (( BAML_LOCAL_BUILD )); then
   ln -sfn "$BAML_LOCAL_SDKS/typescript/bridge_typescript" "$REPO/sdk/typescript/node_modules/@boundaryml/baml-bridge"
   # From --find-links, not a file path: `uv run` then keeps it instead of syncing back to PyPI's.
   uv pip install --quiet --python "$REPO/sdk/python/.venv" --reinstall --no-deps --no-index \
-    --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN" >&2
+    --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN_PYPI" >&2
   for ext in "$REPO"/sdk/python/.venv/lib/python*/site-packages/baml_bridge/baml_py*.so; do built_from_baml_commit "$ext"; done
   printf 'go 1.24\n\nuse .\n\nreplace github.com/boundaryml/baml-go => %s\n' "$BAML_LOCAL_SDKS/go/baml_go" >"$REPO/sdk/go/go.work"
   mkdir -p "$REPO/sdk/rust/.cargo"
