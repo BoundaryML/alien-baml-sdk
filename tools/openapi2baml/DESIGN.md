@@ -66,8 +66,7 @@ function put(client: root.platform.PlatformClient, id: string, name: string, bod
 - The helper is named after the service and what the response holds:
   `platform_json<T>` (JSON decoded as `T`), `platform_optional_json<T>` (`T?`:
   `null` for an empty body), `platform_empty` (no content), and
-  `platform_decoded<T>` with a `decode` function for an open union ("Open
-  unions" below); `manager_…` for the Manager.
+  `manager_…` for the Manager.
 - The path is a string, or a backtick string that interpolates each path
   parameter through `path_segment` (percent-encoded; "Parameters" below).
 - `query` and `headers` are map literals in the order they are sent; a
@@ -94,7 +93,7 @@ also imports twice into empty trees and compares them byte for byte.
 | `$ref: '#/components/schemas/X'` | `X` | Component names sanitized to valid identifiers. Scalar components (IDs, open enums) are inlined where used unless they are recursive |
 | object with `properties` | `class` | Component name, or a name derived from where it appears (below) |
 | object with only `additionalProperties: S` | `map<string, S>` | `true`/`{}` values become `map<string, json>` |
-| object with both | `class` plus `additionalProperties: map<string, S>` | Keys the schema does not list are kept in that field (Speakeasy's name for it), by generated `FromJson`/`ToJson`. A property named `additionalProperties` fails generation |
+| object with both | `class` plus `additionalProperties: map<string, S>` | Keys the schema does not list are kept in that field (Speakeasy's name for it), by `@json.flatten`. A property named `additionalProperties` fails generation |
 | free-form object, `{}`, untyped schema | `json` | |
 | `allOf` of one schema (with or without a description sibling) | that schema | Platform wraps refs this way |
 | `allOf` of several object schemas | one merged `class` | Properties and `required` united; a conflicting property fails generation |
@@ -146,9 +145,9 @@ word (`test`, `in`, `for`, … — the list is in `src/naming.rs`, established b
 compiling each candidate word with BAML 0.22.2; BAML 0.23.0 rejects the same
 words) gets a trailing underscore (`test` →
 `test_`, decision B14). A class with a field whose name differs from its wire
-name implements `baml.FromJson` and `baml.ToJson` mapping each field to its
-wire name, following `baml_std/openai/ns_internal/chat.baml:454`, so the JSON
-on the wire is unchanged. `@alias` is never used for wire names. Every renamed
+name carries `@json.rename` with its wire name, so the JSON on the wire is
+unchanged. `@alias` is never used for wire names: it is the name a model is
+shown. Every renamed
 field is listed in `docs/importer-coverage.md`, and a renamed field that would
 collide with an existing field fails generation. `tests/naming_oracle.rs`
 checks every field name against the names in the SDK's sources
@@ -156,10 +155,12 @@ checks every field name against the names in the SDK's sources
 camelCased there.
 
 **Request bodies omit unset optional fields.** A class reachable from a
-request body that has optional fields implements `baml.ToJson`, writing each
-set field under its wire name and leaving unset optional fields out (as both
-of Alien's SDKs do). Other classes use BAML's default encoding, which
-honors nested overrides. Values inside `json` fields are written as given,
+request body that has optional fields carries `@@json.omit_nulls`, leaving
+unset optional fields out (as both of Alien's SDKs do). A class with a
+required field that may be `null` has to send that `null`, so it keeps a
+`baml.ToJson` written for it instead (two classes, `CreateDeploymentTokenRequest`
+and `ReportLogExportDeliveryRequestBody`; serde does not run it). Other classes
+use BAML's default encoding. Values inside `json` fields are written as given,
 `null`s included. A request therefore cannot send an explicit `null` for an
 optional field (decision 5 in `docs/api-shape.md`, B13).
 
@@ -190,49 +191,24 @@ decodes as `Other`, and a known pair that does not decode still fails. A
 union whose fields cannot tell every member apart this way (a member without
 `service` sharing its `type` with members that have one) stays closed.
 
-BAML picks a union's member by shape, and the `Other` member's literal tag
-fits no value a server sends. So the importer decodes open unions itself, by
-the tag: every class with a field holding one gets a generated
-`baml.FromJson`, and every operation returning one passes a `decode` function
-to `platform_decoded`/`manager_decoded`. Each `match`es on the tag, decodes a
-known tag as its own class with `baml.json.to<Member>` (so a known member
-that does not decode still fails) and any other tag as the `Other` class; a
-union tagged by several fields nests one `match` per field. The class's
-other fields decode with `baml.json.to<T>` as usual:
+The `Other` member's `raw` field carries `@json.fallback`, so decoding needs
+no code here. The `Other` member's literal field names the union's tag, and
+BAML decides by that tag: a known value is that member, read by the next
+literal field when several members share it (`service` in `ExternalBinding`).
+After that, anything wrong is an error, including a wrong value in another
+literal field. A value no member has is the `Other` member, with `raw` holding
+it, and it writes `raw` back. An object with no tag, or with a known tag and no
+second tag, is an error. `baml.json` and the Rust SDK's `serde` impls build the
+same tree:
 
 ```baml
-class APIKeyDeploymentSetupConfigItemsItem {
-    item: string,
-    source: SetupItemStatusSourceProjectRelease | SetupItemStatusSourceBuiltIn | SetupItemStatusSourceOther,
-    …
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let object: map<string, baml.json.json> => APIKeyDeploymentSetupConfigItemsItem {
-                    item: baml.json.to<string>(baml.json.field(object, "item")),
-                    source: match (baml.json.field(object, "source")) {
-                        let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "type"))) {
-                            "project-release" => baml.json.to<SetupItemStatusSourceProjectRelease>(member),
-                            "built-in" => baml.json.to<SetupItemStatusSourceBuiltIn>(member),
-                            _ => SetupItemStatusSourceOther { type: "UNKNOWN", raw: member },
-                        },
-                        _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-                    },
-                    …
-                },
-                _ => throw baml.json.DecodeError { message: "APIKeyDeploymentSetupConfigItemsItem must be a JSON object", path: "" },
-            }
-        }
-    }
+class SetupItemStatusSourceOther {
+    type: "UNKNOWN",
+    raw: map<string, json> @json.fallback,
 }
 ```
 
-An optional union adds a `null => null` arm to the same `match`; a list of
-them decodes each item with `items.map((item) -> { … })`, a map each value.
-Each union is decoded where it is used rather than by a named function per
-union: BAML has no private functions (docs/gaps.md#b6), so such a function
-would be exported by all four generated SDKs. Encoding needs nothing
-new: the `Other` class's `baml.ToJson` writes `raw` back. The Go and Rust
+The Go and Rust
 generators name a union after its members (`…ReceiverOr…Sender`), so adding a
 member, `Other` or one Alien adds, renames that type. The importer refuses a
 spec where a member's tag is `"UNKNOWN"`. Request types get the member too:
@@ -321,7 +297,7 @@ parameter must use its location's default `style` and `explode`, without
 
 | 2xx responses | Return type | Decoding |
 |---|---|---|
-| JSON with one schema | `T` | `baml.json.decode<T>` (honors `FromJson`) |
+| JSON with one schema | `T` | `baml.json.decode<T>` (follows the `@json` attributes) |
 | JSON with several schemas | `A \| B` | first member that decodes |
 | JSON and an empty one (202 JSON / 204) | `T?` | `null` for an empty body |
 | no content | `null` | body read and discarded |
@@ -372,8 +348,7 @@ Manager authentication and errors, and explicit `null` in requests.
 filter opens decode as `string`; the import fails if either is no longer an
 enum, as that filter does) and `"none"`. Both keep every other enum a closed
 union of literals, single-value ones included. The SDK uses neither, and with
-BAML 0.23.0 their output does not compile: a class with its own
-`baml.FromJson` decodes such a field with
+BAML 0.23.0 their output does not compile: a field decodes with
 `baml.json.to<"aws" | "gcp" | …>(…)`, which BAML reads as comparisons
 (`operator | cannot be applied to bool and "gcp"`). The Rust generator would
 also skip every type with a non-identifier literal such as

@@ -1,7 +1,7 @@
 # The BAML runtime
 
 Each generated SDK runs the project's compiled BAML code inside an embedded
-runtime, version **0.25.2**, which every runtime package must match exactly
+runtime, version **0.25.3-nightly.20261106.a**, which every runtime package must match exactly
 (the generated code checks it at start-up).
 
 | Language | Runtime package | How it gets the native runtime |
@@ -16,14 +16,14 @@ runtime, version **0.25.2**, which every runtime package must match exactly
 Go and Rust look for `libbridge_cffi` in this order:
 
 1. `BAML_BRIDGE_PATH` (an absolute path; no fallback if it is wrong),
-2. the cache at `$BAML_HOME/bridges/0.25.2/<target>/` (`BAML_HOME` defaults
+2. the cache at `$BAML_HOME/bridges/0.25.3-nightly.20261106.a/<target>/` (`BAML_HOME` defaults
    to `~/.baml`),
 3. a download from Boundary's release manifest, verified by SHA-256, into that
    cache. `BAML_BRIDGE_DISABLE_DOWNLOAD=true` turns the download off.
 
 So the first Go or Rust program on a machine downloads the library (about
 34 MB for macOS arm64), and every later one loads the cached copy. Go also
-caches the manifest (`bridges/0.25.2/manifest.json`) and checks the library
+caches the manifest (`bridges/0.25.3-nightly.20261106.a/manifest.json`) and checks the library
 against it at every start; Rust trusts a cached library. Where a program must
 not download at run time (a container, CI without network), either fill that
 cache at build time by running the program once with the same `BAML_HOME`, or
@@ -47,8 +47,8 @@ crate, target `baml_bridge`, to whatever logger the program installs
 (`env_logger`, or a `tracing` subscriber with `tracing-log`, which
 `tracing-subscriber` enables by default): at `debug`, where it found the
 library (`Using BAML library path from BAML_BRIDGE_PATH: …`, `Found cached
-BAML library at …`) and `Loaded BAML v0.25.2 from …`; at `info`, a download
-(`Downloading BAML library v0.25.2 from …`, `Successfully downloaded and
+BAML library at …`) and `Loaded BAML v0.25.3-nightly.20261106.a from …`; at `info`, a download
+(`Downloading BAML library v0.25.3-nightly.20261106.a from …`, `Successfully downloaded and
 cached BAML library at …`). With `env_logger`, `RUST_LOG=baml_bridge=debug`
 shows them. `BAML_LOG` does not change them (it sets the level of `baml run`
 and `baml test`).

@@ -108,21 +108,9 @@ function getDomainBinding(client: root.platform.PlatformClient, id: string) -> r
 ///
 ///   Known values: `aws`, `gcp`, `azure`, `kubernetes`, `machines`, `local`, `test`. Others may appear.
 function getManagementConfig(client: root.platform.PlatformClient, id: string, platform: string) -> root.platform.DeploymentConfigManagementConfigAws | root.platform.DeploymentConfigManagementConfigGcp | root.platform.DeploymentConfigManagementConfigAzure | root.platform.DeploymentConfigManagementConfigKubernetes | root.platform.DeploymentConfigManagementConfigOther throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.DeploymentConfigManagementConfigAws | root.platform.DeploymentConfigManagementConfigGcp | root.platform.DeploymentConfigManagementConfigAzure | root.platform.DeploymentConfigManagementConfigKubernetes | root.platform.DeploymentConfigManagementConfigOther>(
+    root.internal.platform_json<root.platform.DeploymentConfigManagementConfigAws | root.platform.DeploymentConfigManagementConfigGcp | root.platform.DeploymentConfigManagementConfigAzure | root.platform.DeploymentConfigManagementConfigKubernetes | root.platform.DeploymentConfigManagementConfigOther>(
         client, "GET", `/v1/managers/${root.internal.path_segment(id)}/management-config`,
         query = { "workspace": client.workspace, "platform": platform },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "platform"))) {
-                    "aws" => baml.json.to<root.platform.DeploymentConfigManagementConfigAws>(member),
-                    "gcp" => baml.json.to<root.platform.DeploymentConfigManagementConfigGcp>(member),
-                    "azure" => baml.json.to<root.platform.DeploymentConfigManagementConfigAzure>(member),
-                    "kubernetes" => baml.json.to<root.platform.DeploymentConfigManagementConfigKubernetes>(member),
-                    _ => root.platform.DeploymentConfigManagementConfigOther { platform: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -180,20 +168,10 @@ function reportHeartbeat(client: root.platform.PlatformClient, id: string, body:
 ///
 /// - `id`: Unique identifier for a manager.
 function resolveGcpOAuthProvider(client: root.platform.PlatformClient, id: string, body: root.platform.ResolveManagerGcpOAuthProviderRequest? = null) -> root.platform.ResolveManagerGcpOAuthProviderResponse throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.ResolveManagerGcpOAuthProviderResponse>(
+    root.internal.platform_json<root.platform.ResolveManagerGcpOAuthProviderResponse>(
         client, "POST", `/v1/managers/${root.internal.path_segment(id)}/gcp-oauth-provider/resolve`,
         query = { "workspace": client.workspace },
         body = root.internal.json_body(body),
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "mode"))) {
-                    "alien-managed" => baml.json.to<root.platform.ResolveManagerGcpOAuthProviderResponseAlienManaged>(member),
-                    "custom" => baml.json.to<root.platform.ResolveManagerGcpOAuthProviderResponseCustom>(member),
-                    _ => root.platform.ProjectGcpOAuthProviderOther { mode: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 
@@ -203,19 +181,9 @@ function resolveGcpOAuthProvider(client: root.platform.PlatformClient, id: strin
 ///
 /// - `id`: Unique identifier for a manager.
 function retry(client: root.platform.PlatformClient, id: string) -> root.platform.ManagerRetryResponse throws root.errors.AlienError {
-    root.internal.platform_decoded<root.platform.ManagerRetryResponse>(
+    root.internal.platform_json<root.platform.ManagerRetryResponse>(
         client, "POST", `/v1/managers/${root.internal.path_segment(id)}/retry`,
         query = { "workspace": client.workspace },
-        decode = (response) -> {
-            match (response) {
-                let member: map<string, baml.json.json> => match (baml.json.to<string>(baml.json.field(member, "setupStatus"))) {
-                    "pending" => baml.json.to<root.platform.ManagerRetryResponseSetup>(member),
-                    "provisioning" => baml.json.to<root.platform.ManagerRetryDeploymentResponse>(member),
-                    _ => root.platform.ManagerRetryResponseOther { setupStatus: "UNKNOWN", raw: member },
-                },
-                _ => throw baml.json.DecodeError { message: "expected a JSON object", path: "" },
-            }
-        },
     )
 }
 

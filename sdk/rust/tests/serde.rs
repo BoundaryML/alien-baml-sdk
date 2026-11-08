@@ -1,23 +1,17 @@
-//! The generated types under `alien_api`'s `serde` feature (BAML #5375), read
-//! from and written to the JSON the Alien API sends and accepts. Payloads come
-//! from the conformance scenarios, so they are the ones every SDK is tested
-//! against.
+//! The generated types under `alien_api`'s `serde` feature, read from and
+//! written to the JSON the Alien API sends and accepts. Payloads come from the
+//! conformance scenarios, so they are the ones every SDK is tested against.
 //!
-//! The feature is on for the tests only (`[dev-dependencies]`): `alien_sdk`
-//! users do not get it, because the derived impls do not follow the SDK's JSON
-//! mapping (docs/gaps.md, B26). They are structural: keys are the BAML field
-//! names, an unset optional field is `null`, and a union takes the first member
-//! that fits; the `baml.FromJson`/`baml.ToJson` overrides the importer gives
-//! classes are not applied.
-//!
-//! Tests named `pinned_*` pin that KNOWN-WRONG behavior: each says what the
-//! SDK itself reads or writes instead. When BAML's generator applies the
-//! overrides, they fail; turn them into round trips against the wire JSON
-//! then, and reconsider turning the feature on for users.
+//! serde is generated Rust and the SDK's own decoding runs in the BAML engine,
+//! so `agrees` checks that they read a payload as the same value. Both follow
+//! the `@json` attributes the importer puts on classes.
 //!
 //! Only JSON and union variants are compared, never Rust field names.
 
+use alien_api::baml::json as baml_json;
 use alien_sdk::{manager, platform};
+use baml_bridge::{BamlValue, OptionalArg};
+use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
 
 /// The JSON at `pointer` in conformance scenario `name`.
@@ -30,6 +24,14 @@ fn scenario_json(name: &str, pointer: &str) -> Value {
         .pointer(pointer)
         .unwrap_or_else(|| panic!("{} has no {pointer}", path.display()))
         .clone()
+}
+
+/// serde reads `wire` to the value the SDK's own decoding reads.
+fn agrees<T: BamlValue + DeserializeOwned + PartialEq + std::fmt::Debug>(wire: &Value) -> T {
+    let serde: T = serde_json::from_value(wire.clone()).unwrap();
+    let baml = baml_json::to_sync::<T>(wire.clone(), OptionalArg::Unset).unwrap();
+    assert_eq!(serde, baml);
+    serde
 }
 
 /// A request body, as the SDK sends it in `createSetupLink.optional_fields`:
@@ -123,170 +125,129 @@ fn response_round_trips() {
     }
 }
 
-/// PINNED, known wrong (B13): writing a request puts `null` in every unset optional field,
-/// nested ones included. The SDK leaves them out of the request body (the
-/// scenario's wire JSON), and for some fields `null` means something else
-/// ("Null clears the destination; omit to keep it unchanged", docs/gaps.md B13).
-/// Do not send serde's output to the API as a request body.
+/// B13: writing a request leaves out every unset optional field, nested ones
+/// included. For some fields `null` means something else ("Null clears the
+/// destination; omit to keep it unchanged", docs/gaps.md B13).
 #[test]
-fn pinned_request_writes_null_for_unset_optional_fields() {
+fn request_writes_only_what_is_set() {
     let wire = setup_link_request_wire();
-    let req: platform::CreateSetupLinkRequest = serde_json::from_value(wire).unwrap();
-    assert_eq!(
-        serde_json::to_value(&req).unwrap(),
-        json!({
-            "externalId": "customer-0002",
-            "name": "customer-0002",
-            "project": "my-project",
-            "maxDeployments": 5,
-            "returnUrl": null,
-            "refreshUrl": null,
-            "description": null,
-            "expiresAt": "2026-11-01T00:00:00Z",
-            "deploymentSetupConfig": null,
-            "setupItems": null,
-            "entryPoint": {"item": "deployment", "provider": null},
-            "inputValues": null,
-            "recoveryDeploymentGroupId": null
-        })
-    );
+    let req: platform::CreateSetupLinkRequest = agrees(&wire);
+    assert_eq!(serde_json::to_value(&req).unwrap(), wire);
 }
 
-/// PINNED, known wrong (B14): `StackByPlatform`'s wire key `test` is the field `test_`, and
-/// serde knows only the field name. Reading drops `"test"` without an error;
-/// writing uses `"test_"` (and `null`s for the unset platforms). The SDK reads
-/// and writes `"test"` (scenario `compat.stack_by_platform.roundtrip`).
+/// B14: `StackByPlatform`'s wire key `test` is the field `test_`.
 #[test]
-fn pinned_reserved_word_field_uses_the_baml_name() {
+fn reserved_word_field_uses_the_wire_name() {
     let wire = json!({"aws": {"id": "example", "resources": []}, "test": {"id": "t"}});
-    let stack: platform::StackByPlatform = serde_json::from_value(wire).unwrap();
-    assert_eq!(
-        serde_json::to_value(&stack).unwrap(),
-        json!({
-            "aws": {"id": "example", "resources": []},
-            "gcp": null, "azure": null, "kubernetes": null, "machines": null, "local": null,
-            "test_": null
-        })
-    );
-    let from_baml_name: platform::StackByPlatform =
-        serde_json::from_value(json!({"test_": {"id": "t"}})).unwrap();
-    assert_eq!(
-        serde_json::to_value(&from_baml_name).unwrap()["test_"],
-        json!({"id": "t"})
-    );
+    let stack: platform::StackByPlatform = agrees(&wire);
+    assert_eq!(serde_json::to_value(&stack).unwrap(), wire);
 }
 
-/// PINNED, known wrong: a field the importer renamed from a snake_case wire name
-/// (docs/importer-coverage.md, 308 fields: `vpc_id` → `vpcId`, …) is read and
-/// written under the BAML name. Inside a tagged union this also picks the
-/// wrong member (next test).
+/// A field the importer renamed from a snake_case wire name
+/// (docs/importer-coverage.md: `vpc_id` → `vpcId`, …).
 #[test]
-fn pinned_snake_case_wire_field_uses_the_baml_name() {
+fn snake_case_wire_field_uses_the_wire_name() {
     let wire = json!({"type": "byo-vpc-aws", "vpc_id": "vpc-1", "public_subnet_ids": ["subnet-a"], "private_subnet_ids": ["subnet-b"]});
-    let err = serde_json::from_value::<manager::NetworkSettingsByoVpcAws>(wire).unwrap_err();
-    assert!(
-        err.to_string().contains("missing field `privateSubnetIds`"),
-        "{err}"
-    );
-    let baml_names = json!({"type": "byo-vpc-aws", "vpcId": "vpc-1", "publicSubnetIds": ["subnet-a"], "privateSubnetIds": ["subnet-b"], "securityGroupIds": null});
-    let n: manager::NetworkSettingsByoVpcAws = serde_json::from_value(baml_names.clone()).unwrap();
-    assert_eq!(serde_json::to_value(&n).unwrap(), baml_names);
+    let network: manager::NetworkSettingsByoVpcAws = agrees(&wire);
+    assert_eq!(serde_json::to_value(&network).unwrap(), wire);
 }
 
-/// PINNED, known wrong: a tagged union takes its first member that fits. Tags are plain
-/// strings in Rust and unlisted keys are ignored, so every `NetworkSettings`
-/// reads as its first member, `NetworkSettingsUseDefault`, keeping only
-/// `type`: the VPC is lost without an error, whatever the key casing. The SDK
-/// picks the member by `type` and reads an unknown one as
-/// `NetworkSettingsOther`.
+/// A tagged union picks its member by tag, and an unknown tag reads as the
+/// `Other` member, which writes what it read.
 #[test]
-fn pinned_tagged_union_reads_as_its_first_member() {
-    for wire in [
-        json!({"type": "use-default"}),
-        json!({"type": "byo-vpc-aws", "vpc_id": "vpc-1", "public_subnet_ids": ["a"], "private_subnet_ids": ["b"]}),
-        json!({"type": "byo-vpc-aws", "vpcId": "vpc-1", "publicSubnetIds": ["a"], "privateSubnetIds": ["b"]}),
-        json!({"type": "future-network-mode"}),
-    ] {
-        let n: manager::NetworkSettings = serde_json::from_value(wire.clone()).unwrap();
-        assert!(
-            matches!(n, manager::NetworkSettings::NetworkSettingsUseDefault(_)),
-            "{wire} read as {n:?}"
-        );
-        assert_eq!(
-            serde_json::to_value(&n).unwrap(),
-            json!({"type": wire["type"]}),
-            "{wire}"
-        );
+fn tagged_union_picks_the_member_by_its_tag() {
+    let default: manager::NetworkSettings = agrees(&json!({"type": "use-default"}));
+    assert!(matches!(default, manager::NetworkSettings::NetworkSettingsUseDefault(_)), "{default:?}");
+
+    let wire = json!({"type": "byo-vpc-aws", "vpc_id": "vpc-1", "public_subnet_ids": ["a"], "private_subnet_ids": ["b"]});
+    let vpc: manager::NetworkSettings = agrees(&wire);
+    assert!(matches!(vpc, manager::NetworkSettings::NetworkSettingsByoVpcAws(_)), "{vpc:?}");
+    assert_eq!(serde_json::to_value(&vpc).unwrap(), wire);
+
+    let wire = json!({"type": "future-network-mode", "x": 1});
+    let other: manager::NetworkSettings = agrees(&wire);
+    assert!(matches!(other, manager::NetworkSettings::NetworkSettingsOther(_)), "{other:?}");
+    assert_eq!(serde_json::to_value(&other).unwrap(), wire);
+}
+
+/// A known tag whose member does not decode is an error, not an `Other`, and so
+/// is an object with no tag.
+#[test]
+fn a_broken_member_is_an_error() {
+    for wire in [json!({"type": "byo-vpc-aws"}), json!({"kind": "no type"})] {
+        assert!(serde_json::from_value::<manager::NetworkSettings>(wire.clone()).is_err(), "{wire}");
+        assert!(baml_json::to_sync::<manager::NetworkSettings>(wire, OptionalArg::Unset).is_err());
     }
 }
 
-/// PINNED, known wrong: the same, nested in the request Alien asked about:
+/// The same, nested in the request Alien asked about:
 /// `deploymentSetupConfig.policy.stackSettings.defaults.network`.
 #[test]
-fn pinned_setup_link_request_loses_a_nested_network_setting() {
+fn setup_link_request_keeps_a_nested_network_setting() {
     let mut wire = setup_link_request_wire();
     let network = json!({"type": "byo-vpc-aws", "vpc_id": "vpc-1", "public_subnet_ids": ["a"], "private_subnet_ids": ["b"]});
     wire["deploymentSetupConfig"] =
         json!({"policy": {"stackSettings": {"defaults": {"network": network}}}});
-    let req: platform::CreateSetupLinkRequest = serde_json::from_value(wire).unwrap();
-    let written = serde_json::to_value(&req).unwrap();
-    assert_eq!(
-        written.pointer("/deploymentSetupConfig/policy/stackSettings/defaults/network"),
-        Some(&json!({"type": "byo-vpc-aws"}))
-    );
+    let req: platform::CreateSetupLinkRequest = agrees(&wire);
+    assert_eq!(serde_json::to_value(&req).unwrap(), wire);
 }
 
-/// PINNED, known wrong: a union member this SDK does not know (`storage` with service
-/// `minio`, scenario `deployments.get.external_binding_new_service`) reads as
-/// the first known member it fits, `ExternalBindingStorageS3`, not as
-/// `ExternalBindingOther`. A known one reads correctly.
+/// A union member this SDK does not know (`storage` with service `minio`,
+/// scenario `deployments.get.external_binding_new_service`) reads as
+/// `ExternalBindingOther`, tagged by two fields.
 #[test]
-fn pinned_unknown_union_member_reads_as_a_known_one() {
+fn unknown_union_member_reads_as_other() {
     let bindings = scenario_json(
         "ops.platform.deployments.get.external_binding_new_service",
         "/exchanges/0/respond/json/stackSettings/externalBindings",
     );
-    let s3: platform::ExternalBinding = serde_json::from_value(bindings["files"].clone()).unwrap();
-    assert!(
-        matches!(s3, platform::ExternalBinding::ExternalBindingStorageS3(_)),
-        "{s3:?}"
-    );
-    let minio: platform::ExternalBinding =
-        serde_json::from_value(bindings["media"].clone()).unwrap();
-    assert!(
-        matches!(
-            minio,
-            platform::ExternalBinding::ExternalBindingStorageS3(_)
-        ),
-        "{minio:?}"
-    );
-    assert_eq!(serde_json::to_value(&minio).unwrap()["service"], "minio");
+    let s3: platform::ExternalBinding = agrees(&bindings["files"]);
+    assert!(matches!(s3, platform::ExternalBinding::ExternalBindingStorageS3(_)), "{s3:?}");
+    assert_eq!(serde_json::to_value(&s3).unwrap(), bindings["files"]);
+
+    let minio: platform::ExternalBinding = agrees(&bindings["media"]);
+    assert!(matches!(minio, platform::ExternalBinding::ExternalBindingOther(_)), "{minio:?}");
+    assert_eq!(serde_json::to_value(&minio).unwrap(), bindings["media"]);
 }
 
-/// PINNED, known wrong: an `…Other` member is written as its two fields. The
-/// SDK writes `raw`, the member as the server sent it.
+/// A whole `Deployment` reads the same both ways, including the class that
+/// keeps keys its schema does not list (`stackState.resources.*.config`).
 #[test]
-fn pinned_other_member_writes_its_fields_not_raw() {
-    let fields = json!({"type": "UNKNOWN", "raw": {"type": "storage", "service": "minio", "bucketName": "media"}});
-    let other: platform::ExternalBindingOther = serde_json::from_value(fields.clone()).unwrap();
-    assert_eq!(serde_json::to_value(&other).unwrap(), fields);
-}
-
-/// PINNED, known wrong: a class that keeps keys its schema does not list
-/// (`additionalProperties`, 34 classes) expects them under an
-/// `"additionalProperties"` key, so wire JSON fails to read. Here a whole
-/// `Deployment` response fails on one such class deep inside it
-/// (`stackState.resources.*.config`).
-#[test]
-fn pinned_additional_properties_class_rejects_wire_json() {
+fn deployment_reads_and_keeps_extra_keys() {
     let wire = scenario_json(
         "ops.platform.deployments.get.external_binding_new_service",
         "/exchanges/0/respond/json",
     );
-    let err = serde_json::from_value::<platform::Deployment>(wire).unwrap_err();
-    assert!(
-        err.to_string()
-            .contains("missing field `additionalProperties`"),
-        "{err}"
-    );
+    let deployment: platform::Deployment = agrees(&wire);
+    let written = serde_json::to_value(&deployment).unwrap();
+    let config = "/stackState/resources/resources-key/config";
+    assert_eq!(written.pointer(config), wire.pointer(config));
+    assert_eq!(written["stackSettings"], wire["stackSettings"]);
+}
+
+/// Every `deployments.get` scenario reads the same in serde and in the engine,
+/// and a payload one of them refuses, the other refuses too.
+#[test]
+fn deployment_scenarios_agree() {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/scenarios");
+    let mut read = 0;
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        let name = path.file_name().unwrap().to_string_lossy().into_owned();
+        if !name.starts_with("ops.platform.deployments.get.") {
+            continue;
+        }
+        let scenario: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        for exchange in scenario["exchanges"].as_array().into_iter().flatten() {
+            let wire = &exchange["respond"]["json"];
+            if wire.get("stackSettings").is_none() {
+                continue;
+            }
+            let serde = serde_json::from_value::<platform::Deployment>(wire.clone()).ok();
+            let baml = baml_json::to_sync::<platform::Deployment>(wire.clone(), OptionalArg::Unset).ok();
+            assert_eq!(serde, baml, "{name}");
+            read += usize::from(serde.is_some());
+        }
+    }
+    assert!(read > 0);
 }

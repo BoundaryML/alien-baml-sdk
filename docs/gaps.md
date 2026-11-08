@@ -2,7 +2,7 @@
 
 What BAML could not do that this SDK needed, each with a minimal repro, what
 it means for Alien, and the workaround used here. IDs (`B1`, …) name each
-gap. The SDK uses BAML 0.25.2. B15, B16 and B19 are fixed in BAML 0.23.0,
+gap. The SDK uses BAML 0.25.3-nightly.20261106.a. B15, B16 and B19 are fixed in BAML 0.23.0,
 and B24 in 0.24.0; they need no workaround and stay listed because their
 sections say what changed and what remains. B13 is BAML's design, which the
 SDK works with.
@@ -18,19 +18,19 @@ SDK works with.
 | [B7](#b7) | Generated names follow BAML, not the host language | Fixed for Python and Rust (BAML #5481, `naming_convention = "language"`): both are snake_case everywhere. TypeScript and Go facades bind operations under host-cased names | Go types are `Platform<Name>` and `Manager<Name>` |
 | [B9](#b9) | A project cannot depend on another BAML package | One project, `ns_*` namespaces | — |
 | [B13](#b13) | An unset optional field and an explicit `null` are one value | Not changed in BAML; the SDK encodes request bodies by omission, so a request cannot send an explicit `null` | — |
-| [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` plus `baml.FromJson`/`baml.ToJson` mapping it to `"test"` | — |
+| [B14](#b14) | A wire field named `test` cannot be a class field | Field `test_` with `@json.rename("test")` | — |
 | [B15](#b15) | TypeScript rejects class arguments with an omitted nullable key | None: fixed in 0.23.0 (BAML #5291 and #5377) | — |
 | [B16](#b16) | Telemetry is lost on exit unless the host shuts the runtime down | None: fixed in 0.23.0 (BAML #5293); every facade exports `shutdown` | — |
 | [B17](#b17) | Constants are not exported to the generated SDKs | Error codes documented, not exported | — |
 | [B18](#b18) | `baml test` records telemetry into the project directory by default | Scripts run the CLI with `BAML_TELEMETRY=off`; `.baml/` is gitignored | `baml test` outside the scripts, and an editor's BAML language server, leave recordings in the working tree |
 | [B19](#b19) | The Rust generator skips `json` and everything that reaches it | None: fixed in 0.23.0 (BAML #5287) | — |
 | [B20](#b20) | The Rust generator skips unions of string literals that are not identifiers | None needed: only internal `compat` types | — |
-| [B21](#b21) | A decode failure inside a `baml.FromJson` override loses its location | None: `json_path` is absent or starts at that object; `decode_error` still says what failed | Some malformed responses report what failed without its full location |
+| [B21](#b21) | A decode failure inside a `baml.FromJson` override loses its location | None: fixed by `@json` attributes, with no overrides left to decode through | — |
 | [B22](#b22) | The generated client classes print their credential (Rust `Debug`, Go `fmt` and `encoding/json`) | The facade types hide it. Rust keeps the generated clients private; Go documents what to keep out of logs | Logging Go's generated client (`c.Platform`) writes the API key or Manager token |
 | [B23](#b23) | The Python bridge keeps each encoded call, API key included, in a local variable | None; the entry gives Sentry settings | Error reporters that record local variables (Sentry by default) store the API key |
 | [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None: fixed in 0.24.0 (BAML #5509) | — |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
-| [B26](#b26) | The Rust generator's `serde` impls ignore the SDK's JSON mapping (`baml.FromJson`/`baml.ToJson`) | The SDK leaves the `serde` feature off; `tests/serde.rs` pins what it does | Alien's Rust code cannot `serde_json::from_value` an SDK type, as it does with Progenitor's types |
+| [B26](#b26) | The Rust generator's `serde` impls ignored the SDK's JSON mapping | None: fixed by `@json` attributes (BAML #5563) | — |
 
 Not in the table: B8 (BAML has no OpenAPI importer) is filled by this
 repository's `tools/openapi2baml`. This SDK does not hit B10 (string-only
@@ -262,10 +262,9 @@ malformed arrays are rejected (`stored_secret_presence` in
 `baml/baml_src/ns_compat/`, and the `compat.stored_secret_presence.*`
 scenarios).
 
-**Encoding.** The SDK's request classes own their wire encoding. The importer
-gives every class reachable from a request body that has optional fields a
-`baml.ToJson` that leaves unset optional fields out, as both of Alien's SDKs
-do: Speakeasy omits `undefined`, and Progenitor skips `None`. Values inside
+**Encoding.** The importer gives every class reachable from a request body
+that has optional fields `@@json.omit_nulls`, which leaves unset optional fields
+out, as both of Alien's SDKs do: Speakeasy omits `undefined`, and Progenitor skips `None`. Values inside
 `json` fields are written as given, `null`s included.
 
 **Impact on Alien.** A request cannot send an explicit `null` for an optional
@@ -342,9 +341,9 @@ class StackByPlatform2 {
 Platform and Manager specs (the only collision with a BAML keyword in either).
 
 **Rule.** A wire field whose name is a reserved word gets a trailing
-underscore (`test` → `test_`), and the class implements `baml.FromJson` and
-`baml.ToJson` to map `test_` to and from `"test"`. This SDK does not use
-`@alias` for wire names. The same mapping gives a snake_case wire name its TypeScript SDK
+underscore (`test` → `test_`), with `@json.rename("test")` for its wire name.
+`@alias` is the name a model is shown, so this SDK does not use it for wire
+names. The same mapping gives a snake_case wire name its TypeScript SDK
 name (`custom_domains` ↔ `customDomains`). The importer applies the rule and
 lists every renamed field in `docs/importer-coverage.md`. The `stack_by_platform` tests in `ns_compat` run on
 the imported `platform.StackByPlatform`: decode, encode, round trips (unset
@@ -353,7 +352,7 @@ platforms omitted, `null`s inside a stack kept) and non-object input. The
 `on-other`) in both APIs.
 
 Decoding goes through `baml.json.decode`, and encoding through
-`baml.json.stringify`; both honor the overrides.
+`baml.json.stringify`; both follow the `@json` attributes.
 
 ## B15
 
@@ -496,50 +495,11 @@ types and nothing else.
 
 ## B21
 
-**A decode failure inside a `baml.FromJson` override loses its location.**
-`baml.json.DecodeError.path` says where in a JSON value decoding failed
-(`.items[1].id`), and `MALFORMED_RESPONSE` reports it as `context.json_path`
-([errors.md](errors.md#codes)). When a class provides `from_json`, BAML runs
-it with the value at that position, but a `DecodeError` the override throws
-reaches the caller with the override's own `path`: the position the walk had
-reached (`.items[1]`) is not prepended.
-
-```baml
-class Q {
-    id: string,
-    implements baml.FromJson {
-        function from_json(j: baml.json.json) -> Self throws baml.json.DecodeError {
-            match (j) {
-                let o: map<string, baml.json.json> => Q { id: baml.json.to<string>(baml.json.field(o, "id")) },
-                _ => throw baml.json.DecodeError { message: "expected object", path: "" },
-            }
-        }
-    }
-}
-class Page { items: Q[] }
-// baml.json.decode<Page>("{\"items\":[{\"id\":\"a\"},{\"id\":3}]}")
-//   DecodeError { path: "", message: "expected string" }    expected path: ".items[1].id"
-// The same class without the override:
-//   DecodeError { path: ".items[1].id", message: "expected string" }
-```
-
-The SDK's imported types provide `from_json` for 116 classes (71 Platform, 45
-Manager: those that hold an open union, or have renamed or extra keys; 15 of
-them because snake_case wire names are camelCased, such as `BillingFeatureFlags`
-and the stack settings networks), and the responses of 55 of the 332
-operations contain one, among them `billing.getEntitlements`,
-`deployments.get`, `deployments.list`, `events.list` and the Manager's
-`commands.createCommand` and `commands.getCommandStatus`. The test "B21: …" in
-`baml/baml_src/ns_internal/http_tests.baml` records today's behavior.
-
-**Impact on Alien.** Inside those classes, a response that does not decode
-says what failed (`decode_error`) but not where: `json_path` is absent, or
-names a field relative to the class.
-
-**Workaround.** None. A fix needs two parts: BAML prepends the walk's position
-to a `DecodeError` thrown by a provided `from_json`, and the importer's
-generated `from_json` bodies prepend each field's name (`.id`) to the errors
-of their own `baml.json.to` calls.
+**A decode failure inside a `baml.FromJson` override lost its location.** A
+`DecodeError` an override threw reached the caller without the position the
+walk had reached. The SDK's imported types no longer decode through overrides
+(`@json` attributes, [B26](#b26)), so `json_path` says where a response did not
+decode.
 
 ## B22
 
@@ -635,7 +595,7 @@ from.
 
 Fixed in BAML 0.24.0 by PR #5509: `baml_bridge` depends
 on a plain `serde_json`, and an application that wants either feature turns
-it on in its own dependency. With 0.25.2, `cargo tree -e features
+it on in its own dependency. With 0.25.3-nightly.20261106.a, `cargo tree -e features
 -i serde_json` in `sdk/rust` shows only `default` and `std`, and the repro
 below, linking `alien_sdk`, gives the "Without `alien_sdk`" column in every
 row.
@@ -691,51 +651,19 @@ unions).
 
 ## B26
 
-**The generated Rust types' serde impls do not read or write the API's
-JSON.** BAML 0.23.0 (BAML #5375) gives the generated crate an opt-in `serde`
-feature that derives `Serialize` and `Deserialize`. Alien asked for it, to
-build a request from a form as with Progenitor's types:
+**The generated Rust types' serde impls did not read or write the API's JSON.**
+The SDK's wire mapping lived in `baml.FromJson` and `baml.ToJson` overrides,
+which generated serde cannot run. BAML #5563 adds `@json.rename`,
+`@json.flatten`, `@json.fallback` and `@@json.omit_nulls`, the importer emits
+those instead of overrides, and `baml.json` and serde both follow them.
+`serde_json::from_value::<SdkType>(…)` and `serde_json::to_value(&sdk_value)`
+work on the API's JSON, and `tests/serde.rs` checks them against the SDK's own
+decoding.
 
-```rust
-let req: CreateSetupLinkRequest = serde_json::from_value(form)?;
-```
-
-The impls are structural, as the generated `Cargo.toml` says: keys are the BAML
-field names, an unset optional field is `null`, a union takes the first member
-that fits, and "a `baml.ToJson` override on one of your classes is not
-applied". `baml.FromJson` overrides are not applied either. The importer gives
-640 of the 1,574 Platform and Manager classes an override (571 `ToJson`, 116
-`FromJson`), because that is where the SDK's wire mapping lives (B13, B14 and
-the rules in [api-shape.md](api-shape.md#rules)). Measured with BAML canary
-`06e0854b7c` (`sdk/rust/tests/serde.rs`, every payload from the conformance
-scenarios):
-
-| | Wire JSON (what the SDK reads and writes) | serde |
-|---|---|---|
-| Renamed fields: 308 (292 Platform, 16 Manager; [importer-coverage.md](importer-coverage.md)) | `StackByPlatform` `{"test": {…}}`; `NetworkSettingsByoVpcAws` `{"vpc_id": "vpc-1", …}` | Reads and writes `"test_"` and `"vpcId"`. An optional field's wire key is dropped without an error (`{"test": {…}}` reads as `test_: None`); a required one fails (`missing field privateSubnetIds`) |
-| Unset optional fields (B13) | Left out of request bodies | Written as `null` in every unset field, nested ones included. For some fields `null` means "clear" ("Null clears the destination; omit to keep it unchanged", `returnUrl`) |
-| Tagged unions: 365 with an `Other` member (333 Platform, 32 Manager) | The member is picked by its tag; an unknown tag reads as `…Other { type: "UNKNOWN", raw }` | A tag is a plain `String` and unlisted keys are ignored, so the first member whose required fields are present wins. Every `manager::NetworkSettings`, `{"type": "byo-vpc-aws", "vpc_id": …}` and `{"type": "future-mode"}` included, reads as `NetworkSettingsUseDefault { type }`: the VPC is lost without an error. The `ExternalBinding` `{"type": "storage", "service": "minio", …}` reads as `ExternalBindingStorageS3`, not `ExternalBindingOther`. An `…Other` member would be written as `{"type": "UNKNOWN", "raw": {…}}`, not as `raw` |
-| Classes keeping unlisted keys: 34 (32 Platform, 2 Manager) | Unlisted keys go to `additionalProperties` | Expects an `"additionalProperties"` key, so wire JSON fails: a whole `platform::Deployment` response fails with `missing field additionalProperties` (on `stackState.resources.*.config`) |
-
-What does work: a class whose fields, nested ones included, have none of the
-above. A flat `CreateSetupLinkRequest` (`createSetupLink.optional_fields`)
-reads; `CreateSetupLinkResponse` round-trips exactly; open enums keep unknown
-values; a `string | T[]` union reads and writes either member. But the same
-request with `deploymentSetupConfig.policy.stackSettings.defaults.network`
-set loses the network setting, as above.
-
-**Impact on Alien.** `serde_json::from_value::<SdkType>(…)` and
-`serde_json::to_value(&sdk_value)` are not available. Code converting its own
-JSON into SDK types has to build the structs by hand.
-
-**Workaround.** None: `alien_sdk` leaves the feature off, so a type that would
-silently read the wrong value is not offered. `sdk/rust/Cargo.toml` turns it on
-for the tests only, and `tests/serde.rs` pins each row above (`pinned_*`); a
-generator that applies the overrides makes them fail, and the feature can be
-turned on then. A fix in BAML: have the derived impls follow `baml.FromJson`
-and `baml.ToJson` (or go through `baml.json`), or leave serde off any class
-that has an override, as the generator does today for classes it cannot
-derive.
+Two request classes keep a `baml.ToJson` written for them, because a required
+field that may be `null` has to be sent: `CreateDeploymentTokenRequest` and
+`ReportLogExportDeliveryRequestBody`. serde does not run it, so it writes their
+unset optional fields as `null`.
 
 ---
 
