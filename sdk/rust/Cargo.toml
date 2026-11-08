@@ -16,7 +16,7 @@ exclude = ["alien_api"]
 # The generated crate (package_name in baml/baml.toml). genops finds it as this
 # manifest's one path dependency.
 alien_api = { path = "alien_api", features = ["serde"] }
-baml_bridge = "=0.25.1"
+baml_bridge = "=0.25.2"
 serde = "1"
 
 [dev-dependencies]

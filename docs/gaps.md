@@ -2,7 +2,7 @@
 
 What BAML could not do that this SDK needed, each with a minimal repro, what
 it means for Alien, and the workaround used here. IDs (`B1`, …) name each
-gap. The SDK uses BAML 0.25.1. B15, B16 and B19 are fixed in BAML 0.23.0,
+gap. The SDK uses BAML 0.25.2. B15, B16 and B19 are fixed in BAML 0.23.0,
 and B24 in 0.24.0; they need no workaround and stay listed because their
 sections say what changed and what remains. B13 is BAML's design, which the
 SDK works with.
@@ -595,7 +595,7 @@ from.
 
 Fixed in BAML 0.24.0 by PR #5509: `baml_bridge` depends
 on a plain `serde_json`, and an application that wants either feature turns
-it on in its own dependency. With 0.25.1, `cargo tree -e features
+it on in its own dependency. With 0.25.2, `cargo tree -e features
 -i serde_json` in `sdk/rust` shows only `default` and `std`, and the repro
 below, linking `alien_sdk`, gives the "Without `alien_sdk`" column in every
 row.
