@@ -175,9 +175,12 @@ def test_keyword_arguments_and_fields_are_snake_case(stub, secrets) -> None:
     })
     page = alien.deployments.list(project="web", deployment_group="prod", limit=2)
     assert page.next_cursor == "c2"
-    # The wire names stay the pydantic aliases.
+    # Here the pydantic alias is the wire name (docs/gaps.md, B27, for where it is not).
     assert page.model_dump(by_alias=True) == {"items": [], "nextCursor": "c2"}
     requests(stub)
+    # The docstring names each argument by the keyword the method takes.
+    doc = alien.deployments.list.__doc__ or ""
+    assert "- `deployment_group`:" in doc and "`deploymentGroup`:" not in doc
 
 
 def test_a_wrong_keyword_raises_type_error(stub, secrets) -> None:
@@ -341,12 +344,29 @@ def _stub_signatures(module: types.ModuleType) -> dict[str, list[tuple[str, insp
     return out
 
 
+def _doc_by_keyword(module: types.ModuleType, op: str) -> str | None:
+    """The generated operation's docs with each argument (``- `deploymentGroup`:``)
+    named by the Python name the method takes (``- `deployment_group`:``), from
+    the ``param_aliases`` the generated module passes ``_define_function``."""
+    doc = inspect.getdoc(getattr(module, op))
+    tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
+    for node in tree.body:
+        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)
+                and [t.id for t in node.targets if isinstance(t, ast.Name)] == [op]):
+            aliases = [ast.literal_eval(kw.value) for kw in node.value.keywords if kw.arg == "param_aliases"]
+            python_names = {baml: python for python, baml in (aliases[0] if aliases else {}).items()}
+            if doc is not None:
+                doc = re.sub(r"^- `([^`]+)`:", lambda m: f"- `{python_names.get(m[1], m[1])}`:", doc, flags=re.M)
+    return doc
+
+
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["blocking", "async"])
 @pytest.mark.parametrize("module", [_gen.platform, _gen.manager], ids=lambda m: m.__name__)
 def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.ModuleType, asynchronous: bool) -> None:
     """Walks every generated operation: the client (``Alien``, ``AsyncAlien``,
     ``AlienManager``, ``AsyncAlienManager``) has a method for it under its
-    group, with the stub's parameters (without the client) and docs, and the
+    group, with the stub's parameters (without the client) and docs (each
+    argument named by its keyword), and the
     method calls the generated function (``<name>_sync`` when blocking,
     ``<name>`` when async) with the client and its arguments, leaving each
     optional one UNSET (not passed)."""
@@ -382,7 +402,7 @@ def test_every_generated_operation_is_bound(secrets, monkeypatch, module: types.
             assert inspect.iscoroutinefunction(method) is asynchronous, where
             parameters = list(inspect.signature(method).parameters.values())
             assert [(p.name, p.kind, p.default is not p.empty) for p in parameters] == stubs[op], where
-            assert inspect.getdoc(method) == inspect.getdoc(getattr(generated, op)), where
+            assert inspect.getdoc(method) == _doc_by_keyword(generated, op), where
             target = op if asynchronous else f"{op}_sync"
             monkeypatch.setattr(generated, target, recorder(f"{generated.__name__}.{target}"))
             required = [object() for p in parameters if p.default is p.empty]

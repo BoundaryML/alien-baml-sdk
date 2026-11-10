@@ -20,7 +20,11 @@ wrong keyword raises ``TypeError``. An optional argument defaults to
 out does what leaving it out of the generated call does.
 
 It reads the generated stubs (``__init__.pyi``) as text and imports nothing,
-so it holds no per-operation code and takes every name from them.
+so it holds no per-operation code and takes every name from them. A stub's
+docstring lists the arguments by their BAML names (``deploymentGroup``); the
+method's docstring lists them by the keyword the method takes
+(``deployment_group``), from the ``param_aliases`` the generated module
+(``__init__.py``, also read as text) declares for each function.
 
 ``alien_sdk.platform`` and ``alien_sdk.manager`` re-export every type of the
 generated service module (pydantic models, enums, type aliases) under its
@@ -39,6 +43,7 @@ from __future__ import annotations
 import ast
 import builtins
 import keyword
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -181,9 +186,48 @@ def environment(tree: ast.Module, module: str, is_package: bool) -> dict[str, st
     return env
 
 
+def param_aliases(path: Path) -> dict[str, dict[str, str]]:
+    """For each function of a generated module, its arguments whose BAML name
+    is not their Python name, BAML name first: ``{"list": {"deploymentGroup":
+    "deployment_group"}}``, from the ``param_aliases`` (Python name to BAML
+    name) each ``_define_function`` call passes."""
+    out: dict[str, dict[str, str]] = {}
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)):
+            continue
+        if not (isinstance(node.value.func, ast.Name) and node.value.func.id == "_define_function"):
+            continue
+        aliases: dict[str, str] = {}
+        for kw in node.value.keywords:
+            if kw.arg == "param_aliases":
+                aliases = ast.literal_eval(kw.value)
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                out[target.id] = {baml: python for python, baml in aliases.items()}
+    return out
+
+
+def argument_names(where: str, doc: str, aliases: dict[str, str], arguments: set[str]) -> str:
+    """``doc`` with each argument (a ``- `name`:`` line) named by its Python
+    name, which the method takes as a keyword. Fails on an argument line
+    naming no argument, so a change in the stubs' format cannot leave BAML
+    names behind."""
+    lines = []
+    for line in doc.splitlines():
+        m = re.match(r"- `([^`]+)`:", line)
+        if m:
+            name = aliases.get(m.group(1), m.group(1))
+            if name not in arguments:
+                die(f"{where}: its docstring lists {m.group(1)!r}, which is not one of its arguments")
+            line = f"- `{name}`:{line[m.end():]}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def read_module(package: str, directory: Path, service: str, group: str | None) -> tuple[Module, dict[str, str]]:
     path = directory / service / (group or "") / "__init__.pyi"
     tree = ast.parse(path.read_text(encoding="utf-8"))
+    aliases = param_aliases(path.with_suffix(".py"))
     dotted = f"{service}.{group}" if group else service
     env = environment(tree, f"{package}.{dotted}", is_package=True)
     defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
@@ -197,7 +241,11 @@ def read_module(package: str, directory: Path, service: str, group: str | None) 
         if ast.dump(twin.args) != ast.dump(node.args) or ast.dump(twin.returns) != ast.dump(node.returns):  # type: ignore[arg-type]
             die(f"{dotted}.{name} and {name + SYNC_SUFFIX} have different signatures")
         check(dotted, name, node, SERVICES[service])
-        functions.append(Function(name, node, ast.get_docstring(node, clean=True)))
+        doc = ast.get_docstring(node, clean=True)
+        if doc:
+            arguments = {arg.arg for arg in [*node.args.args[1:], *node.args.kwonlyargs[:-1]]}
+            doc = argument_names(f"{dotted}.{name}", doc, aliases.get(name, {}), arguments)
+        functions.append(Function(name, node, doc))
     groups = sorted(
         p.name for p in (directory / service).iterdir() if group is None and (p / "__init__.pyi").is_file()
     )
