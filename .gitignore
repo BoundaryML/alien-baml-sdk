@@ -19,11 +19,6 @@ baml_sdk/
 /sdk/rust/src/operations.rs
 /sdk/rust/tests/support/operations.rs
 
-# Local BAML build overrides, written by scripts/generate.sh (they hold local paths)
-/sdk/go/go.work
-/sdk/go/go.work.sum
-/sdk/rust/.cargo/
-
 # Build outputs and dependencies
 node_modules/
 dist/

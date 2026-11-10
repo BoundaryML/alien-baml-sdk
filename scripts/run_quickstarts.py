@@ -12,13 +12,11 @@ the caller's environment, so telemetry is on (the SDK default) and records
 locally: files may appear under BAML_HOME/btel, nowhere else.
 
 Go and Rust load BAML's runtime library at run time, and may not download it
-here. With the published release, their BAML_HOME starts with the library
-already in its cache (bridges/<version>/, linked to --bridge-lib and the
-release manifest next to it), as it is for a user after the first run, which
-downloads it. With a local BAML build, BAML_BRIDGE_PATH names --bridge-lib,
-as the README tells users of a local build to do.
+here. Their BAML_HOME starts with the library already in its cache
+(bridges/<version>/, linked to --bridge-lib and the release manifest next to
+it), as it is for a user after the first run, which downloads it.
 
-Usage: run_quickstarts.py --out DIR --bridge-lib PATH --local-build 0|1
+Usage: run_quickstarts.py --out DIR --bridge-lib PATH
 """
 
 from __future__ import annotations
@@ -53,7 +51,6 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
     parser.add_argument("--bridge-lib", required=True)
-    parser.add_argument("--local-build", required=True, choices=["0", "1"])
     args = parser.parse_args()
     bridge_lib = Path(args.bridge_lib)
     readme = (REPO / "README.md").read_text(encoding="utf-8")
@@ -81,10 +78,7 @@ def main() -> int:
         seeded = []
         if lang in ("go", "rust"):
             env.update({"BAML_BRIDGE_DISABLE_DOWNLOAD": "true", "CGO_ENABLED": "1"})
-            if args.local_build == "1":
-                env["BAML_BRIDGE_PATH"] = str(bridge_lib)
-            else:
-                seeded = seed_bridge_cache(home, bridge_lib)
+            seeded = seed_bridge_cache(home, bridge_lib)
         proc = subprocess.run(["bash", "-c", command], cwd=REPO, env=env, capture_output=True, text=True, timeout=900)
         got = proc.stdout.strip()
         files = [p.relative_to(home) for p in home.rglob("*") if p.is_file() and p not in seeded]

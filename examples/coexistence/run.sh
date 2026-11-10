@@ -8,9 +8,7 @@
 # would, calls both, and asserts what happens today. The other project keeps
 # BAML's default package name, baml_sdk; the Alien SDK names its own
 # (package_name in baml/baml.toml). It fails if the observed
-# behavior changes, so a BAML fix shows up here first. With a local BAML build
-# (scripts/lib.sh), every install gets its runtime packages instead of the
-# published ones.
+# behavior changes, so a BAML fix shows up here first.
 source "$(dirname "$0")/../../scripts/lib.sh"
 
 HERE="$REPO/examples/coexistence"
@@ -48,19 +46,7 @@ SAME_NAME="not an AWS link: the other project"
 
 # ---------------------------------------------------------------------------
 note "typescript: build and pack both SDKs"
-# Fresh: a previous run may have left node_modules linked to a deleted bridge
-# copy, and pnpm keeps an existing node_modules as it is.
-rm -rf "$HERE/other/typescript/node_modules"
 (cd "$HERE/other/typescript" && pnpm install --frozen-lockfile >&2)
-if (( BAML_LOCAL_BUILD )); then
-  # As generate.sh does for the Alien SDK, but a copy rather than a link: in
-  # the link: case below, each SDK must load its own copy of the bridge.
-  bridge="$BAML_LOCAL_SDKS/typescript/bridge_typescript"
-  mkdir -p "$WORK/other-bridge"
-  cp -R "$bridge/package.json" "$bridge/dist" "$WORK/other-bridge/"
-  ln -s "$bridge/node_modules" "$WORK/other-bridge/node_modules"
-  ln -sfn "$WORK/other-bridge" "$HERE/other/typescript/node_modules/@boundaryml/baml-bridge"
-fi
 (cd "$HERE/other/typescript" && rm -rf dist && pnpm run build >&2)
 (cd "$REPO/sdk/typescript" && pnpm pack --pack-destination "$WORK/packs" >&2)
 (cd "$HERE/other/typescript" && pnpm pack --pack-destination "$WORK/packs" >&2)
@@ -69,10 +55,6 @@ note "typescript: one app installs both packages (one shared @boundaryml/baml-br
 mkdir -p "$WORK/ts-installed"
 cp "$HERE/typescript/app.mjs" "$REPO/sdk/typescript/pnpm-workspace.yaml" "$WORK/ts-installed/"
 printf '{ "name": "ts-installed", "private": true, "type": "module" }\n' >"$WORK/ts-installed/package.json"
-if (( BAML_LOCAL_BUILD )); then
-  printf 'overrides:\n  "@boundaryml/baml-bridge": "file:%s"\n' "$BAML_LOCAL_SDKS/typescript/bridge_typescript" \
-    >>"$WORK/ts-installed/pnpm-workspace.yaml"
-fi
 (cd "$WORK/ts-installed" && pnpm add "$WORK/packs/alien-baml-sdk-0.0.0.tgz" "$WORK/packs/other-baml-sdk-0.0.0.tgz" >&2)
 bridges="$(find "$WORK/ts-installed/node_modules/.pnpm" -maxdepth 1 -name '@boundaryml+baml-bridge@*' | wc -l | tr -d ' ')"
 echo "typescript, installed: $bridges copy of @boundaryml/baml-bridge"
@@ -130,9 +112,6 @@ other="$(echo "$WORK"/py/dist/other_baml_sdk-*.whl)"
 
 pyenv() {  # pyenv <venv> <first package> <second package>
   uv venv --quiet "$1" >&2
-  if (( BAML_LOCAL_BUILD )); then  # first, so both packages keep it (they install its dependencies)
-    uv pip install --quiet --python "$1" --no-deps --no-index --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN_PYPI" >&2
-  fi
   uv pip install --quiet --python "$1" "$2" >&2
   uv pip install --quiet --python "$1" "$3" >&2
 }

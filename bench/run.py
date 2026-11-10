@@ -194,24 +194,12 @@ def npm_install_size(tarballs: list[Path], workdir: Path) -> dict:
     return {"total_kb": du_kb(nm), "packages_kb": breakdown(nm)}
 
 
-def typescript_size(build: dict, packs: Path) -> dict:
+def typescript_size(packs: Path) -> dict:
     subprocess.run(["pnpm", "pack", "--pack-destination", str(packs)], cwd=REPO / "sdk" / "typescript", check=True, capture_output=True)
-    tarballs = [next(packs.glob("alien-baml-sdk-*.tgz"))]
-    if build["baml_local_build"]:
-        # The local runtime package as npm would install it: package.json and dist/
-        # (its `files`), packed from a copy so nothing is written into BAML_SOURCE.
-        src = Path(build["baml_local_sdks"]) / "typescript" / "bridge_typescript"
-        copy = CACHE / "bridge-pack"
-        shutil.rmtree(copy, ignore_errors=True)
-        copy.mkdir(parents=True)
-        shutil.copy2(src / "package.json", copy / "package.json")
-        shutil.copytree(src / "dist", copy / "dist")
-        subprocess.run(["npm", "pack", "--ignore-scripts", "--pack-destination", str(packs)], cwd=copy, check=True, capture_output=True)
-        tarballs.append(next(packs.glob("boundaryml-baml-bridge-*.tgz")))
-    return npm_install_size(tarballs, CACHE / "size-ts")
+    return npm_install_size([next(packs.glob("alien-baml-sdk-*.tgz"))], CACHE / "size-ts")
 
 
-def python_size(build: dict, workdir: Path) -> dict:
+def python_size(workdir: Path) -> dict:
     shutil.rmtree(workdir, ignore_errors=True)
     pkg = workdir / "alien-pkg"
     pkg.mkdir(parents=True)
@@ -225,9 +213,6 @@ def python_size(build: dict, workdir: Path) -> dict:
         '[tool.setuptools.packages.find]\nwhere = ["."]\n')
     venv = workdir / "venv"
     subprocess.run(["uv", "venv", "--quiet", "--python", str(REPO / "sdk" / "python" / ".venv" / "bin" / "python"), str(venv)], check=True)
-    if build["baml_local_build"]:
-        wheel = next((Path(build["baml_local_sdks"]) / "python" / "dist").glob("baml_bridge-*.whl"))
-        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(venv), str(wheel)], check=True)
     subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(venv), str(pkg)], check=True)
     site = next(venv.glob("lib/python*/site-packages"))
     return {"total_kb": du_kb(site), "packages_kb": breakdown(site, depth_scoped=False)}
@@ -257,7 +242,7 @@ def lines(paths) -> int:
     return sum(p.read_bytes().count(b"\n") for p in paths)
 
 
-def rust_builds(runs: int, build: dict, log) -> dict:
+def rust_builds(runs: int, log) -> dict:
     """Seconds for a clean build of each program in a fresh target directory (every
     dependency compiled; downloads fetched first) and for rebuilding only the SDK crate
     and the program, dev and release; and the lines of Rust each SDK generates."""
@@ -265,11 +250,7 @@ def rust_builds(runs: int, build: dict, log) -> dict:
     env = {**os.environ, "CARGO_TARGET_DIR": str(target)}
     out: dict = {"runs": runs, "programs": {}, "lines": {}}
     for name, (directory, extra, crates) in BUILDS.items():
-        patch = []
-        if name == "rust" and build["baml_local_build"]:  # as bench/build.sh
-            patch = ["--config", f'patch.crates-io.baml_bridge.path="{build["baml_local_sdks"]}/rust/bridge_rust"']
-        extra = [*patch, *extra]
-        subprocess.run(["cargo", "fetch", "--quiet", *patch], cwd=directory, env=env, check=True)
+        subprocess.run(["cargo", "fetch", "--quiet"], cwd=directory, env=env, check=True)
         out["programs"][name] = {}
         for profile in ("dev", "release"):
             release = ["--release"] if profile == "release" else []
@@ -343,7 +324,7 @@ def main() -> int:
     home = CACHE / "baml_home"
     raw: dict = {
         "date": time.strftime("%Y-%m-%d %H:%M %Z"), "machine": machine(),
-        "build": {k: build[k] for k in ("baml_build", "baml_local_build", "alien_commit")},  # no local paths
+        "build": {k: build[k] for k in ("baml_build", "alien_commit")},  # no local paths
         "settings": {"runs": args.runs, "procs": args.procs, "calls": calls, "pages": {str(k): v for k, v in pages.items()}, "quick": args.quick,
                      "builds": args.builds, "quiet_wait_min": args.quiet_wait},
         "load": {"start": [round(x, 2) for x in os.getloadavg()]},
@@ -429,7 +410,7 @@ def main() -> int:
         raw["builds"] = json.loads(out_file.read_text())["builds"]
     else:
         block("rust builds", wait=True)
-        raw["builds"] = rust_builds(args.builds, build, log)
+        raw["builds"] = rust_builds(args.builds, log)
     if args.skip_sizes:
         raw["sizes"] = json.loads(out_file.read_text())["sizes"]
     else:
@@ -439,9 +420,9 @@ def main() -> int:
         packs.mkdir(parents=True)
         lib = Path(build["bridge_lib"])
         sizes: dict = {
-            "typescript": typescript_size(build, packs),
+            "typescript": typescript_size(packs),
             "incumbent-typescript": npm_install_size([next(INCUMBENTS.glob("alienplatform-platform-api-*.tgz"))], CACHE / "size-ts-incumbent"),
-            "python": python_size(build, CACHE / "size-py"),
+            "python": python_size(CACHE / "size-py"),
         }
         for lang, exe in [("go", "bench-go"), ("rust", "bench-rust")]:
             sizes[lang] = {"total_kb": du_kb(CACHE / exe) + du_kb(lib), "packages_kb": {"bench program": du_kb(CACHE / exe), lib.name: du_kb(lib)}}

@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
     *) die "unknown argument: $1 (usage: scripts/verify.sh --phase N)" ;;
   esac
 done
-# Later phases add steps; until they do, accepting them would pass vacuously.
+# There are two phases: a higher number would add no step and pass vacuously.
 [[ "$PHASE" =~ ^[12]$ ]] || die "usage: scripts/verify.sh --phase N (N = 1 or 2)"
 
 OUT="$REPO/.verify"
@@ -64,8 +64,7 @@ versions() {
   echo "go     $(go version | cut -d' ' -f3)"
   echo "rustc  $(rustc --version | cut -d' ' -f2)"
   echo "cargo  $(cargo --version | cut -d' ' -f2)"
-  echo "baml   $(BAML_HOME="$CLI_HOME" BAML_VERSION="$CLI_SELECTOR" BAML_TOOLCHAIN="$CLI_SELECTOR" baml --version 2>&1 | tr '\n' ' ')"
-  echo "build  $BAML_BUILD"
+  echo "baml   $(BAML_HOME="$CLI_HOME" BAML_VERSION="$BAML_PIN" BAML_TOOLCHAIN="$BAML_PIN" baml --version 2>&1 | tr '\n' ' ')"
 }
 
 # Fails on any error, and on any warning located in our own baml_src files.
@@ -128,17 +127,9 @@ suite() {
   [[ "$count" == 0 ]]
 }
 
-suite_typescript() {
-  # Any `pnpm install` replaces generate.sh's link to a local build's bridge with npm's.
-  if (( BAML_LOCAL_BUILD )); then
-    [[ "$(cd "$REPO/sdk/typescript/node_modules/@boundaryml/baml-bridge" && pwd -P)" == "$(cd "$BAML_LOCAL_SDKS/typescript/bridge_typescript" && pwd -P)" ]] \
-      || die "sdk/typescript uses npm's @boundaryml/baml-bridge, not the local build's: run scripts/generate.sh"
-  fi
-  suite typescript pnpm -C "$REPO/sdk/typescript" test
-}
+suite_typescript() { suite typescript pnpm -C "$REPO/sdk/typescript" test; }
 suite_python() { suite python uv run --frozen --directory "$REPO/sdk/python" pytest; }
 suite_go() { (cd "$REPO/sdk/go" && suite go go test -count=1 ./...); }
-# Cargo finds sdk/rust/.cargo/config.toml (local BAML build) from the working directory.
 suite_rust() { (cd "$REPO/sdk/rust" && suite rust cargo test); }
 
 shared_fixture() {
@@ -152,7 +143,7 @@ shared_fixture() {
 }
 
 quickstarts() {
-  python3 -I "$REPO/scripts/run_quickstarts.py" --out "$OUT" --bridge-lib "$BRIDGE_LIB" --local-build "$BAML_LOCAL_BUILD"
+  python3 -I "$REPO/scripts/run_quickstarts.py" --out "$OUT" --bridge-lib "$BRIDGE_LIB"
 }
 
 # Binaries the telemetry checks run directly (no rebuilds inside the checks).
@@ -174,7 +165,7 @@ for line in sys.stdin:
 telemetry() {
   local cli_env
   cli_env="$(python3 -I -c 'import json,sys; print(json.dumps(dict(zip(["BAML_HOME","BAML_VERSION","BAML_TOOLCHAIN","BAML_CLI_ALLOW_DIRECT","DO_NOT_TRACK","BAML_TELEMETRY"], sys.argv[1:]))))' \
-    "$CLI_HOME" "$CLI_SELECTOR" "$CLI_SELECTOR" 1 1 off)"
+    "$CLI_HOME" "$BAML_PIN" "$BAML_PIN" 1 1 off)"
   python3 -I "$REPO/scripts/telemetry_checks.py" --phase "$PHASE" --out "$OUT" --bridge-lib "$BRIDGE_LIB" --baml-cli-env "$cli_env"
 }
 
