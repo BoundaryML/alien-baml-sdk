@@ -252,11 +252,9 @@ lines += [
     "",
     "## Installed size",
     "",
-    "What an application installs. TypeScript: `npm install` of the packed SDK"
-    + (" and the packed local BAML runtime package" if raw["build"]["baml_local_build"] else "")
-    + " (production dependencies; only this platform's native addon). Python: `uv pip install` of a package built from `sdk/python`"
-    + (" with the local runtime wheel" if raw["build"]["baml_local_build"] else "")
-    + ". Go and Rust: the release-built bench program plus the runtime library it loads (Go built with default flags, symbols kept).",
+    "What an application installs. TypeScript: `npm install` of the packed SDK (production dependencies; only this "
+    "platform's native addon). Python: `uv pip install` of a package built from `sdk/python`. Go and Rust: the "
+    "release-built bench program plus the runtime library it loads (Go built with default flags, symbols kept).",
     "",
     "| Package | Installed MB | Biggest parts (MB) |",
     "|---|---|---|",

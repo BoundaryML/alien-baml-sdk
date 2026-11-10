@@ -11,7 +11,6 @@
  },
  "build": {
   "baml_build": "0.23.0 (release)",
-  "baml_local_build": false,
   "alien_commit": "c5c3a30b3a71e819f55eb3dd8729b51dfd0db57f"
  },
  "settings": {

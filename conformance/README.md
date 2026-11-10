@@ -140,9 +140,7 @@ Control endpoints:
 run them by hand after `scripts/verify.sh`, give each run a fresh
 `BAML_HOME`. Every suite refuses to start when `BAML_HOME` is unset or is
 `~/.baml`. Go and Rust take the runtime library `verify.sh` fetched into
-`.cache/bridge-home/bridges/0.25.3-nightly.20261109.a/` (with a
-[local BAML build](../README.md#building-against-an-unreleased-baml), that
-build's library):
+`.cache/bridge-home/bridges/0.25.3-nightly.20261109.a/`:
 
 ```sh
 export BAML_HOME="$(mktemp -d)"   # never the developer's ~/.baml

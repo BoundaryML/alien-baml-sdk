@@ -8,9 +8,7 @@
 # ALIEN_REF is a checkout of github.com/alienplatform/alien. Its HEAD commit is
 # exported with `git archive` into .cache/incumbents/alien (nothing is written
 # inside ALIEN_REF) and the incumbents are built there. They are rebuilt only
-# when that commit changes. The SDKs use the published BAML release, or the
-# local BAML build in BAML_SOURCE with BAML_LOCAL_BUILD=1 (README "Building
-# against an unreleased BAML"). Writes .cache/bench/build.json for bench/run.py.
+# when that commit changes. Writes .cache/bench/build.json for bench/run.py.
 source "$(dirname "$0")/../scripts/lib.sh"
 
 [[ -n "${ALIEN_REF:-}" && -d "$ALIEN_REF/client-sdks/platform" ]] || die "set ALIEN_REF to a checkout of the Alien repository"
@@ -23,22 +21,10 @@ note "SDKs (scripts/generate.sh)"
 ensure_bridge_lib
 
 note "go bench"
-if (( BAML_LOCAL_BUILD )); then
-  # The bench module's own go.work: the local runtime package, as in sdk/go.
-  printf 'go 1.24\n\nuse %s\n\nreplace github.com/boundaryml/baml-go => %s\n' \
-    "$REPO/bench/go" "$BAML_LOCAL_SDKS/go/baml_go" >"$CACHE/go.work"
-  GOWORK_FILE="$CACHE/go.work"
-else
-  GOWORK_FILE=off
-fi
-(cd "$REPO/bench/go" && GOWORK="$GOWORK_FILE" CGO_ENABLED=1 go build -o "$CACHE/bench-go" .)
+(cd "$REPO/bench/go" && CGO_ENABLED=1 go build -o "$CACHE/bench-go" .)
 
 note "rust bench (release)"
-RUST_PATCH=()
-if (( BAML_LOCAL_BUILD )); then
-  RUST_PATCH=(--config "patch.crates-io.baml_bridge.path=\"$BAML_LOCAL_SDKS/rust/bridge_rust\"")
-fi
-(cd "$REPO/bench/rust" && CARGO_TARGET_DIR="$CACHE/rust-target" cargo build --release --quiet "${RUST_PATCH[@]}")
+(cd "$REPO/bench/rust" && CARGO_TARGET_DIR="$CACHE/rust-target" cargo build --release --quiet)
 cp "$CACHE/rust-target/release/alien_bench" "$CACHE/bench-rust"
 
 ALIEN_COMMIT="$(git -C "$ALIEN_REF" rev-parse HEAD)"
@@ -78,10 +64,8 @@ cp "$CACHE/incumbent-rust-target/release/incumbent_bench" "$CACHE/bench-incumben
 python3 -I - "$CACHE/build.json" <<PY
 import json, sys
 json.dump({
-    "baml_build": "$BAML_BUILD",
-    "baml_local_build": bool($BAML_LOCAL_BUILD),
+    "baml_build": "$BAML_PIN",
     "bridge_lib": "$BRIDGE_LIB",
-    "baml_local_sdks": "${BAML_LOCAL_SDKS:-}",
     "alien_commit": "$ALIEN_COMMIT",
 }, open(sys.argv[1], "w"), indent=1)
 PY

@@ -9,9 +9,7 @@ examples/coexistence/run.sh
 ```
 
 `other/` has one function, `greet`, and one function whose fully qualified
-name (`setup.cloudformation_launch_url`) matches one of the Alien SDK's. With a
-[local BAML build](../../README.md#building-against-an-unreleased-baml), every
-install uses that build's runtime packages instead of the published ones.
+name (`setup.cloudformation_launch_url`) matches one of the Alien SDK's.
 
 `other/` keeps BAML's default package name, `baml_sdk`, as most BAML projects
 do; the Alien SDK names its own (`package_name` in `baml/baml.toml`). In

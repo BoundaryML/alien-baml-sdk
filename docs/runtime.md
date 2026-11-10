@@ -32,9 +32,7 @@ put the library anywhere and point `BAML_BRIDGE_PATH` at it.
 The scripts fetch the library once into `.cache/bridge-home/bridges/`, with
 `cargo run --example provision_bridge` in `sdk/rust`, then the manifest, and
 run the Go and Rust tests with downloads disabled and the README quickstarts as
-written, with that library already in their `BAML_HOME`'s cache. With a local
-BAML build ([Building against an unreleased BAML](../README.md#building-against-an-unreleased-baml)),
-they point `BAML_BRIDGE_PATH` at the build's library instead. Do not set
+written, with that library already in their `BAML_HOME`'s cache. Do not set
 `BAML_BRIDGE_PATH` for TypeScript: its bridge reads the same variable as the
 path of its `.node` addon.
 

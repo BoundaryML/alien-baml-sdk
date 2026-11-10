@@ -233,7 +233,7 @@ page = alien.deployments.list(project="my-project", deployment_group="prod", lim
 page.next_cursor   # groups, methods, keywords and fields are snake_case
 # Methods are typed (mypy and editors see each signature); a wrong keyword raises TypeError.
 from alien_sdk.platform import CreateSetupLinkRequest   # request and response types, per API
-request = CreateSetupLinkRequest.model_validate(form)   # camelCase (wire) or snake_case keys
+request = CreateSetupLinkRequest.model_validate(form)   # camelCase keys (the API's, with the exceptions in docs/gaps.md#b27) or snake_case
 ```
 
 ```go
@@ -332,52 +332,6 @@ coexistence repro and a secret scan, and prints a summary table. It exits
 non-zero on the first failure. `--phase 1` leaves out the importer checks and
 runs only the 49 hand-written scenarios, not the 834 generated ones that call
 each operation ([conformance/README.md](conformance/README.md)).
-
-## Building against an unreleased BAML
-
-The scripts use the published BAML 0.25.3-nightly.20261109.a. To try a BAML commit no release has
-yet (a BAML pull request, say), build it locally and run the scripts with
-`BAML_LOCAL_BUILD=1`; the toolchain and all four runtime packages then come
-from that build:
-
-```sh
-git clone https://github.com/BoundaryML/baml /path/to/baml
-git -C /path/to/baml checkout <commit>
-scripts/build_baml.sh /path/to/baml
-export BAML_SOURCE=/path/to/baml BAML_LOCAL_BUILD=1
-scripts/verify.sh --phase 2    # ==> BAML 0.25.3-nightly.20261109.a, local build of BAML commit <sha>
-```
-
-`build_baml.sh` runs, in the checkout's `baml_language/`:
-
-```sh
-cargo build --release -p baml_cli -p bridge_cffi
-(cd sdks/typescript/bridge_typescript && pnpm install --ignore-workspace --ignore-scripts --frozen-lockfile && pnpm build:release)
-(cd sdks/python && rm -f dist/baml_bridge-*.whl && uvx --from 'maturin>=1.10,<2.0' maturin build --release --strip --out dist)
-```
-
-- The scripts fail unless the CLI and every bridge were built from the
-  checkout's HEAD, and refuse uncommitted changes under `baml_language/`
-  (except the TypeScript bridge's `dist/` and generated protobuf code, which
-  its build rewrites).
-- The build's `baml-cli --version` must report 0.25.3-nightly.20261109.a; another version needs
-  the pins moved first (see `BAML_PIN` in `scripts/lib.sh`).
-- `generate.sh` links the TypeScript bridge into `node_modules`, installs the
-  Python wheel into `.venv`, and points Go and Rust at the checkout's bridge
-  sources with the gitignored `sdk/go/go.work` and `sdk/rust/.cargo/config.toml`.
-  It also records that local `baml_bridge` in `sdk/rust/Cargo.lock`; don't
-  commit that, or restore it with `git checkout sdk/rust/Cargo.lock`.
-- Go and Rust programs you run yourself need
-  `BAML_BRIDGE_PATH=$BAML_SOURCE/baml_language/target/release/libbridge_cffi.dylib`
-  (`.so` on Linux), or they download the published library. Set it per
-  command, not with `export`: the TypeScript bridge reads the same variable as
-  the path of its own addon.
-- To make every script use one BAML commit (when the SDKs need a change no
-  release has), set `BAML_COMMIT_PIN` in `scripts/lib.sh`; the comment there
-  has the steps, and the way back to a release.
-- The scripts need a `baml` launcher on `PATH` whose `--version` reports
-  0.25.3-nightly.20261109.a for the selected toolchain (`toolchain_is_pinned` in
-  `scripts/lib.sh`). The Homebrew wrapper does, both 0.2.4 and 0.3.x.
 
 ## Known gaps
 

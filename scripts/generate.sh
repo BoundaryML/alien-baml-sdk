@@ -29,45 +29,11 @@ if [[ -n "$skipped" ]]; then
   die "baml generate skipped $(wc -l <<<"$skipped" | tr -d ' ') items of this project (see docs/gaps.md)"
 fi
 
-# A local BAML build replaces the runtime packages the manifests pin, without
-# changing a manifest: TypeScript and Python get its bridges installed over
-# the released ones; Go and Rust build its bridge sources, through the
-# gitignored sdk/go/go.work and sdk/rust/.cargo/config.toml. A release build
-# undoes that first: pnpm leaves an existing node_modules (and its link to the
-# local bridge) as it is, and uv keeps an installed bridge of the same version.
-# The local crate also replaces baml_bridge's entry in sdk/rust/Cargo.lock
-# (a path dependency: no source, no checksum, no local path). The committed
-# lockfile records crates.io's baml_bridge, which a release build needs; while
-# BAML_COMMIT_PIN is set, it records the pinned local build's instead.
-if (( ! BAML_LOCAL_BUILD )); then
-  rm -rf "$REPO/sdk/typescript/node_modules"
-  rm -f "$REPO/sdk/go/go.work" "$REPO/sdk/go/go.work.sum" "$REPO/sdk/rust/.cargo/config.toml"
-  grep -A2 '^name = "baml_bridge"$' "$REPO/sdk/rust/Cargo.lock" | grep -q '^source = "registry+' \
-    || die "sdk/rust/Cargo.lock records a local baml_bridge, as a local BAML build leaves it: record crates.io's (cd sdk/rust && cargo update -p baml_bridge), and commit it with BAML_COMMIT_PIN unset"
-fi
-
 note "typescript: pnpm install"
 (cd "$REPO/sdk/typescript" && pnpm install --frozen-lockfile >&2)
 
 note "python: uv sync"
-if (( BAML_LOCAL_BUILD )); then
-  (cd "$REPO/sdk/python" && uv sync --frozen >&2)
-else
-  (cd "$REPO/sdk/python" && uv sync --frozen --reinstall-package baml-bridge >&2)
-fi
-
-if (( BAML_LOCAL_BUILD )); then
-  note "runtime packages: local build of BAML commit $BAML_COMMIT"
-  for addon in "$BAML_LOCAL_SDKS"/typescript/bridge_typescript/dist/baml_node.*.node; do built_from_baml_commit "$addon"; done
-  ln -sfn "$BAML_LOCAL_SDKS/typescript/bridge_typescript" "$REPO/sdk/typescript/node_modules/@boundaryml/baml-bridge"
-  # From --find-links, not a file path: `uv run` then keeps it instead of syncing back to PyPI's.
-  uv pip install --quiet --python "$REPO/sdk/python/.venv" --reinstall --no-deps --no-index \
-    --find-links "$BAML_LOCAL_SDKS/python/dist" "baml-bridge==$BAML_PIN_PYPI" >&2
-  for ext in "$REPO"/sdk/python/.venv/lib/python*/site-packages/baml_bridge/baml_py*.so; do built_from_baml_commit "$ext"; done
-  printf 'go 1.24\n\nuse .\n\nreplace github.com/boundaryml/baml-go => %s\n' "$BAML_LOCAL_SDKS/go/baml_go" >"$REPO/sdk/go/go.work"
-  mkdir -p "$REPO/sdk/rust/.cargo"
-  printf '[patch.crates-io]\nbaml_bridge = { path = "%s" }\n' "$BAML_LOCAL_SDKS/rust/bridge_rust" >"$REPO/sdk/rust/.cargo/config.toml"
-fi
+(cd "$REPO/sdk/python" && uv sync --frozen >&2)
 
 note "typescript: tsc"
 (cd "$REPO/sdk/typescript" && rm -rf dist && pnpm run build >&2)
@@ -92,18 +58,12 @@ note "go: alien/operations.go"
 note "go: build + vet"
 (cd "$REPO/sdk/go" && CGO_ENABLED=1 go build ./... >&2 && CGO_ENABLED=1 go vet ./alien/... ./internal/... >&2)
 
-# Not --locked with a local build of another commit than BAML_COMMIT_PIN (or of
-# any commit, without a pin): Cargo.lock records the dependencies of the pinned
-# commit's bridge crate, or crates.io's.
-locked=(--locked)
-if (( BAML_LOCAL_BUILD )) && [[ "$BAML_COMMIT" != "$BAML_COMMIT_PIN" ]]; then locked=(); fi
-
 note "rust: src/operations.rs"
 # The facade's builders (alien.deployments().list()), generated from alien_api/src.
-(cd "$REPO/sdk/rust" && cargo run --quiet ${locked[@]+"${locked[@]}"} -p genops >&2) \
-  || die "rust: genops failed. If cargo says the lock file needs to be updated: a cargo run without sdk/rust/.cargo/config.toml (the local bridge) rewrote sdk/rust/Cargo.lock, so restore it (git checkout sdk/rust/Cargo.lock); or, when moving BAML_COMMIT_PIN, see scripts/lib.sh"
+(cd "$REPO/sdk/rust" && cargo run --quiet --locked -p genops >&2) \
+  || die "rust: genops failed. If cargo says the lock file needs to be updated, sdk/rust/Cargo.lock records another baml_bridge than $BAML_PIN: (cd sdk/rust && cargo update -p baml_bridge --precise $BAML_PIN)"
 
 note "rust: cargo build"
-(cd "$REPO/sdk/rust" && cargo build ${locked[@]+"${locked[@]}"} --all-targets >&2)
+(cd "$REPO/sdk/rust" && cargo build --locked --all-targets >&2)
 
 note "generated and built all four SDKs"
