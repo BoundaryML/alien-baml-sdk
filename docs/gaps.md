@@ -3,8 +3,9 @@
 What BAML could not do that this SDK needed, each with a minimal repro, what
 it means for Alien, and the workaround used here. IDs (`B1`, …) name each
 gap. The SDK uses BAML 0.25.3-nightly.20261106.a. B15, B16 and B19 are fixed in BAML 0.23.0,
-and B24 in 0.24.0; they need no workaround and stay listed because their
-sections say what changed and what remains. B13 is BAML's design, which the
+B24 in 0.24.0, and B21 and B26 by `@json` attributes (BAML #5563, in
+0.25.3-nightly.20261106.a); they need no workaround and stay listed because
+their sections say what changed and what remains. B13 is BAML's design, which the
 SDK works with.
 
 | ID | Gap | Workaround here | Impact |
@@ -31,6 +32,7 @@ SDK works with.
 | [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None: fixed in 0.24.0 (BAML #5509) | — |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
 | [B26](#b26) | The Rust generator's `serde` impls ignored the SDK's JSON mapping | None: fixed by `@json` attributes (BAML #5563) | — |
+| [B27](#b27) | The generated pydantic models do not follow `@json` attributes | None; the SDK's own requests and responses are not affected | `model_validate` of the API's JSON fails or drops values for renamed fields, unlisted keys and unknown union members, and `model_dump(by_alias=True)` does not write the API's JSON for them |
 
 Not in the table: B8 (BAML has no OpenAPI importer) is filled by this
 repository's `tools/openapi2baml`. This SDK does not hit B10 (string-only
@@ -369,10 +371,6 @@ await alien.deployments.pinRelease(id, { body: {} })
 Values the SDK returns type a nullable field `T | null | undefined`, as
 Alien's TypeScript SDK does; at run time it holds `null`.
 
-**What remains.** Rust's generated structs still need every field, with
-`None` for unset ones (no `Default`: a blanket one would fill required fields
-with `""` and `0`).
-
 ## B16
 
 **Telemetry is lost when a process exits without shutting the runtime down.**
@@ -663,7 +661,55 @@ decoding.
 Two request classes keep a `baml.ToJson` written for them, because a required
 field that may be `null` has to be sent: `CreateDeploymentTokenRequest` and
 `ReportLogExportDeliveryRequestBody`. serde does not run it, so it writes their
-unset optional fields as `null`.
+unset optional fields as `null`, where the SDK leaves `expiresAt` and
+`statusCode` out (`pinned_to_json_requests_write_null_for_unset_optional_fields`
+in `tests/serde.rs`).
+
+## B27
+
+**The generated pydantic models do not follow the `@json` attributes.** The
+Python generator gives each field its BAML name as the pydantic alias and
+does not read `@json.rename`, `@json.flatten` or `@json.fallback`. The SDK
+sends and reads the API's JSON through `baml.json`, which follows all three,
+as Rust's serde impls do ([B26](#b26)); pydantic's `model_validate` and
+`model_dump(by_alias=True)` do not:
+
+```python
+import pydantic
+from alien_sdk import platform
+
+counts = {"updated": 1, "updating": 0, "failed": 0, "pending": 0, "superseded": 0,
+          "waiting-on-owner": 0, "waiting-on-inputs": 0, "pinned-other": 0, "on-other": 2}
+platform.ReleaseRolloutStateCounts.model_validate(counts)
+# ValidationError: waitingOnOwner, waitingOnInputs, pinnedOther, onOther: Field required
+platform.StackByPlatform.model_validate({"test": {"id": "t"}}).test_
+# None
+platform.StackByPlatform(test_={"id": "t"}).model_dump(by_alias=True, exclude_none=True)
+# {'test_': {'id': 't'}}; the API's JSON is {"test": {"id": "t"}}
+platform.DeploymentStackStateResourcesValueConfig.model_validate({"id": "r1", "type": "function", "memoryMb": 512})
+# ValidationError: additionalProperties: Field required
+pydantic.TypeAdapter(platform.ComputePoolSelection).validate_python({"mode": "future-mode", "x": 1})
+# ValidationError: … ComputePoolSelectionOther.mode: Input should be 'UNKNOWN'; ComputePoolSelectionOther.raw: Field required
+```
+
+A wire name that is also the field's Python name validates through
+`populate_by_name` (`vpc_id`), but `model_dump(by_alias=True)` writes the
+alias (`vpcId`).
+
+**Impact on Alien.** Data in the API's JSON shape does not validate as it
+should with these models: a field with `@json.rename` whose wire name is not
+its Python name (`on-other`, `test`) is reported missing or dropped, a class
+with `@json.flatten` (4) fails, and a union member this SDK does not know
+matches no member. `model_dump(by_alias=True)` does not write the API's JSON
+for the 47 fields with `@json.rename`, those 4 classes or the 79 `Other`
+union members. Calls through the SDK are not affected.
+`sdk/python/tests/test_types.py` pins this behaviour.
+
+**Workaround.** None in the SDK. For these types, validate with the Python
+names (`on_other`, `test_`, an `additional_properties` map, an `Other`
+member as `{"<tag>": "UNKNOWN", "raw": {…}}`) instead of the API's JSON. A
+fix needs the Python generator to alias each field by its `@json.rename` key
+and to read `@json.flatten` and `@json.fallback`.
 
 ---
 

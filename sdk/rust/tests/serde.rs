@@ -95,8 +95,7 @@ fn open_enum_keeps_an_unknown_value() {
 }
 
 /// A union of a string and a list (`setupItems: string | DeploymentSetupItemSelection[]`)
-/// reads and writes either member (every optional field set: see
-/// `pinned_request_writes_null_for_unset_optional_fields`).
+/// reads and writes either member.
 #[test]
 fn untagged_union_round_trips_each_member() {
     let selection = json!([{"item": "deployment", "required": true, "releaseChannel": "stable", "providerAllowlist": ["aws"]}]);
@@ -133,6 +132,26 @@ fn request_writes_only_what_is_set() {
     let wire = setup_link_request_wire();
     let req: platform::CreateSetupLinkRequest = agrees(&wire);
     assert_eq!(serde_json::to_value(&req).unwrap(), wire);
+}
+
+/// PINNED (B26): the two request classes with a `baml.ToJson` of their own,
+/// which serde does not run, write every unset optional field as `null`. The
+/// SDK sends `description` and `error` as `null` too, but leaves `expiresAt`
+/// and `statusCode` out.
+#[test]
+fn pinned_to_json_requests_write_null_for_unset_optional_fields() {
+    assert_eq!(
+        serde_json::to_value(platform::CreateDeploymentTokenRequest::new()).unwrap(),
+        json!({"description": null, "expiresAt": null})
+    );
+    assert_eq!(
+        serde_json::to_value(platform::ReportLogExportDeliveryRequestBody::new(
+            "revision-value".into(),
+            true
+        ))
+        .unwrap(),
+        json!({"revision": "revision-value", "succeeded": true, "error": null, "statusCode": null})
+    );
 }
 
 /// B14: `StackByPlatform`'s wire key `test` is the field `test_`.
@@ -180,8 +199,8 @@ fn a_broken_member_is_an_error() {
     }
 }
 
-/// The same, nested in the request Alien asked about:
-/// `deploymentSetupConfig.policy.stackSettings.defaults.network`.
+/// The same, nested in a request body:
+/// `CreateSetupLinkRequest.deploymentSetupConfig.policy.stackSettings.defaults.network`.
 #[test]
 fn setup_link_request_keeps_a_nested_network_setting() {
     let mut wire = setup_link_request_wire();

@@ -1,7 +1,8 @@
 //! Compile-time checks that the Rust calls docs/api-shape.md and the README
 //! show type-check: one required argument, optional arguments as setters, no
 //! arguments, no response body, a Manager operation, per-call options, the
-//! setup helper and `shutdown`, with `send()` returning `alien_sdk::Error`, and
+//! setup helper and `shutdown`, with `send()` returning `alien_sdk::Error`, a
+//! request body built from the generated `new` with struct update syntax, and
 //! a match on a union's catch-all. Nothing here runs.
 
 use alien_sdk::{Alien, AlienManager, BamlOptions, Error, Options, manager, platform};
@@ -46,6 +47,15 @@ async fn documented_calls(
         .launch_url_for_project("my-project", "us-east-1", "alien-setup", [])
         .await?;
     let _key_from_env = Alien::new(Options::default())?;
+
+    // A request body: the required fields go to `new`, optional ones are set
+    // over it, so the code keeps compiling when the API adds an optional field.
+    let body = platform::CreateSetupLinkRequest {
+        max_deployments: Some(5),
+        ..platform::CreateSetupLinkRequest::new("cust-1".into(), "Customer".into(), "web".into())
+    };
+    let _link: platform::CreateSetupLinkResponse = alien.setup_links().create(body).send().await?;
+
     alien_sdk::shutdown()?;
     Ok(())
 }

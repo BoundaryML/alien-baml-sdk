@@ -260,12 +260,14 @@ impl Alien {
         }
         Ok(Self {
             client: alien_api::platform::PlatformClient {
-                base_url: options
-                    .server_url
-                    .unwrap_or_else(|| DEFAULT_SERVER_URL.to_string()),
-                api_key,
                 workspace: options.workspace,
                 timeout_ms: timeout_ms(options.timeout),
+                ..alien_api::platform::PlatformClient::new(
+                    options
+                        .server_url
+                        .unwrap_or_else(|| DEFAULT_SERVER_URL.to_string()),
+                    api_key,
+                )
             },
         })
     }
@@ -306,9 +308,8 @@ impl AlienManager {
         let token = token.filter(|token| !token.is_empty());
         Self {
             client: alien_api::manager::ManagerClient {
-                base_url: server_url.into(),
                 token,
-                timeout_ms: None,
+                ..alien_api::manager::ManagerClient::new(server_url.into())
             },
         }
     }

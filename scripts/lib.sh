@@ -5,10 +5,11 @@
 #
 # While BAML_COMMIT_PIN is set (below), the toolchain and every runtime
 # package come from a local build of that BAML commit (scripts/build_baml.sh;
-# README "Building BAML"). Without it, they are the published BAML $BAML_PIN:
-# the CLI is installed into .baml_home/cli, the runtime packages come from
-# npm, PyPI, the Go proxy and crates.io, and BAML_LOCAL_BUILD=1 takes all of
-# them from a local build instead, to test BAML fixes that are not released yet.
+# README "Building against an unreleased BAML"). Without it, they are the
+# published BAML $BAML_PIN: the CLI is installed into .baml_home/cli, the
+# runtime packages come from npm, PyPI, the Go proxy and crates.io, and
+# BAML_LOCAL_BUILD=1 takes all of them from a local build instead, to test
+# BAML fixes that are not released yet.
 #
 # Knobs:
 #   BAML_LOCAL_BUILD 1: use the local build in BAML_SOURCE. Default 1 while
@@ -31,8 +32,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Moving to another BAML release: set BAML_PIN, pin the same version in every
 # manifest that names a runtime package (sdk/typescript/package.json,
 # sdk/python/pyproject.toml (as BAML_PIN_PYPI), sdk/go/go.mod, sdk/rust/Cargo.toml,
-# examples/coexistence/other/typescript/package.json, bench/go/go.mod), update
-# their lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
+# examples/coexistence/other/typescript/package.json, bench/go/go.mod) and in
+# the minimumReleaseAgeExclude entries of sdk/typescript/pnpm-workspace.yaml
+# and examples/coexistence/other/typescript/pnpm-workspace.yaml, update their
+# lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
 BAML_PIN="0.25.3-nightly.20261106.a"     # what the toolchain reports and sdk/*/ pin
 # PyPI spells a nightly as a dev release (PEP 440); for a release it is BAML_PIN.
 BAML_PIN_PYPI="0.25.3.dev2026110600"
@@ -63,7 +66,7 @@ BAML_UNPINNED="${BAML_UNPINNED:-0}"
 [[ "$BAML_LOCAL_BUILD" =~ ^[01]$ ]] || die "BAML_LOCAL_BUILD must be 0 or 1, got \"$BAML_LOCAL_BUILD\""
 [[ "$BAML_UNPINNED" =~ ^[01]$ ]] || die "BAML_UNPINNED must be 0 or 1, got \"$BAML_UNPINNED\""
 if [[ -n "$BAML_COMMIT_PIN" ]] && (( ! BAML_LOCAL_BUILD )); then
-  die "BAML_LOCAL_BUILD=0 asks for the published BAML $BAML_PIN, which cannot build this repository: it needs BAML commit $BAML_COMMIT_PIN (BAML_COMMIT_PIN in scripts/lib.sh), built locally. Unset BAML_LOCAL_BUILD and set BAML_SOURCE (README \"Building BAML\")"
+  die "BAML_LOCAL_BUILD=0 asks for the published BAML $BAML_PIN, which cannot build this repository: it needs BAML commit $BAML_COMMIT_PIN (BAML_COMMIT_PIN in scripts/lib.sh), built locally. Unset BAML_LOCAL_BUILD and set BAML_SOURCE (README \"Building against an unreleased BAML\")"
 fi
 if (( ! BAML_LOCAL_BUILD )) && [[ -n "${BAML_SOURCE:-}" ]]; then
   die "BAML_SOURCE is set, but the scripts use the published BAML $BAML_PIN unless BAML_LOCAL_BUILD=1: set BAML_LOCAL_BUILD=1 to use the local build, or unset BAML_SOURCE"
@@ -80,7 +83,7 @@ esac
 # --- Local BAML build ---------------------------------------------------------
 BAML_BUILD="$BAML_PIN (release)"
 if (( BAML_LOCAL_BUILD )); then
-  [[ -n "${BAML_SOURCE:-}" ]] || die "set BAML_SOURCE to a BAML checkout${BAML_COMMIT_PIN:+ at commit $BAML_COMMIT_PIN}, built with scripts/build_baml.sh (README \"Building BAML\")"
+  [[ -n "${BAML_SOURCE:-}" ]] || die "set BAML_SOURCE to a BAML checkout${BAML_COMMIT_PIN:+ at commit $BAML_COMMIT_PIN}, built with scripts/build_baml.sh (README \"Building against an unreleased BAML\")"
   BAML_COMMIT="$(git -C "$BAML_SOURCE" rev-parse HEAD)" || die "BAML_SOURCE=$BAML_SOURCE is not a BAML checkout"
   if [[ -n "$BAML_COMMIT_PIN" && "$BAML_COMMIT" != "$BAML_COMMIT_PIN" ]] && (( ! BAML_UNPINNED )); then
     die "BAML_SOURCE is at BAML commit $BAML_COMMIT, not at the pinned $BAML_COMMIT_PIN (BAML_COMMIT_PIN in scripts/lib.sh). Check that out and build it:

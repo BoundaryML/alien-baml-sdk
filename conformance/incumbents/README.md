@@ -98,8 +98,8 @@ this commit the SDKs have every operation of the specs. 775 behave the same.
   (retryable).
 - **Closed enums.** The SDK rejects a Manager whose `status` or `targets`
   holds a value it does not know (`ResponseValidationError`); it accepts
-  unknown fields. Alien's Rust client opens these enums, and the BAML SDKs
-  follow it.
+  unknown fields. Alien's Rust client rejects them too (see below); the BAML
+  SDKs open every enum (docs/api-shape.md, decision 1).
 - **Closed unions.** An external binding with a new `service` for a known
   `type` (`storage`/`minio`), or a new `type`, fails the whole
   `deployments.get` (`ResponseValidationError`); the BAML SDKs decode it as
@@ -140,10 +140,11 @@ By category (`full-api` scenarios):
   before sending, where the BAML SDKs send it and report the server's 400.
   The spec's own ID examples are four characters short of their patterns, so
   the client refuses them; the scenarios use values that satisfy the spec.
-- **Responses are validated, and enums are closed.** A `platform` of
-  `future-cloud` in a Manager fails the whole response
+- **Responses are validated, and enums are closed.** A Manager whose
+  `targets` holds `future-cloud` fails the whole response
   (`INVALID_RESPONSE_PAYLOAD`); Alien's filter opens three fields
-  (`DeploymentResource.status` and two package-type lists). The BAML SDKs
+  (`DeploymentResource.status` and two package-type lists), and neither
+  `Manager.targets` nor `Manager.status` is one of them. The BAML SDKs
   open every enum (decision 1). Unions are closed too: an external binding
   with a new `service` or `type` fails `deployments.get` ("data did not
   match any variant of untagged enum ExternalBinding"), where the BAML SDKs

@@ -12,20 +12,6 @@ source "$(dirname "$0")/lib.sh"
 ensure_baml_cli
 command -v gofmt >/dev/null || die "go is not on PATH (baml generate runs gofmt)"
 
-# Output of earlier `baml generate` runs under BAML's default name, before
-# package_name named each SDK. BAML only warns that it is no longer updated;
-# a stale sdk/python/baml_sdk would still be importable, and sdk/go/baml_sdk
-# still built by `go build ./...`. Only a directory `baml generate` created
-# (it holds BAML's ownership marker) is removed.
-for stale in "$REPO"/sdk/*/baml_sdk; do
-  [[ -d "$stale" ]] || continue
-  if [[ ! -e "$stale/.baml-generator-output-root" ]]; then
-    die "${stale#"$REPO/"} exists but baml generate did not create it; move it aside"
-  fi
-  note "removing ${stale#"$REPO/"} (generated before package_name named the SDK)"
-  rm -rf "$stale"
-done
-
 note "baml generate"
 # Skip warnings only print with display_all_warnings. Each generator prints
 # its warnings before its "Generated <language>" line. Standard-library items
@@ -51,8 +37,8 @@ fi
 # local bridge) as it is, and uv keeps an installed bridge of the same version.
 # The local crate also replaces baml_bridge's entry in sdk/rust/Cargo.lock
 # (a path dependency: no source, no checksum, no local path). The committed
-# lockfile is the one the pinned build (BAML_COMMIT_PIN) leaves; a release
-# build needs crates.io's entry back.
+# lockfile records crates.io's baml_bridge, which a release build needs; while
+# BAML_COMMIT_PIN is set, it records the pinned local build's instead.
 if (( ! BAML_LOCAL_BUILD )); then
   rm -rf "$REPO/sdk/typescript/node_modules"
   rm -f "$REPO/sdk/go/go.work" "$REPO/sdk/go/go.work.sum" "$REPO/sdk/rust/.cargo/config.toml"

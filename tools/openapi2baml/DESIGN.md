@@ -344,10 +344,12 @@ object) become `json` and are counted in `docs/importer-coverage.md`.
 all made: open enums and unions, incumbent-style naming, the argument rule,
 Manager authentication and errors, and explicit `null` in requests.
 
-`open_enums` also supports `"rust-filter"` (only the two fields Alien's Rust
-filter opens decode as `string`; the import fails if either is no longer an
-enum, as that filter does) and `"none"`. Both keep every other enum a closed
-union of literals, single-value ones included. The SDK uses neither, and with
+`open_enums` also supports `"rust-filter"` (only the two fields in
+`RUST_FILTER_OPEN`, `src/lower.rs`, decode as `string`; the import fails if
+either is no longer an enum, as Alien's Rust filter does) and `"none"`.
+Both keep every other enum a closed union of literals, single-value ones
+included. Alien's filter also opens a third field, `DeploymentResource.status`,
+which `RUST_FILTER_OPEN` does not list. The SDK uses neither, and with
 BAML 0.23.0 their output does not compile: a field decodes with
 `baml.json.to<"aws" | "gcp" | …>(…)`, which BAML reads as comparisons
 (`operator | cannot be applied to bool and "gcp"`). The Rust generator would
