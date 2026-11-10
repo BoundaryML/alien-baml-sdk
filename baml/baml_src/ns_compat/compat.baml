@@ -91,14 +91,7 @@ class DeploymentConfig {
     storedSecretInputIds: string[]?,
     inputValues: map<string, json>?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.storedSecretInputIds != null) { out["storedSecretInputIds"] = baml.json.from(self.storedSecretInputIds); }
-            if (self.inputValues != null) { out["inputValues"] = baml.json.from(self.inputValues); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 /// How a typed decode sees `storedSecretInputIds`: "null" (absent or null),
@@ -197,32 +190,13 @@ class EventError {
     context: json?,
     source: json?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["code"] = baml.json.from(self.code);
-            out["message"] = baml.json.from(self.message);
-            out["internal"] = baml.json.from(self.internal);
-            if (self.retryable != null) { out["retryable"] = baml.json.from(self.retryable); }
-            if (self.hint != null) { out["hint"] = baml.json.from(self.hint); }
-            if (self.httpStatusCode != null) { out["httpStatusCode"] = baml.json.from(self.httpStatusCode); }
-            if (self.context != null) { out["context"] = baml.json.from(self.context); }
-            if (self.source != null) { out["source"] = baml.json.from(self.source); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class EventFailure {
     error: EventError?,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            if (self.error != null) { out["error"] = baml.json.from(self.error); }
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 class EventFailed {
@@ -237,16 +211,7 @@ class Event {
     state: EventState,
     createdAt: string,
 
-    implements baml.ToJson {
-        function to_json(self) -> baml.json.json throws baml.json.SerializationError {
-            let out: map<string, baml.json.json> = {};
-            out["id"] = baml.json.from(self.id);
-            if (self.deploymentId != null) { out["deploymentId"] = baml.json.from(self.deploymentId); }
-            out["state"] = baml.json.from(self.state);
-            out["createdAt"] = baml.json.from(self.createdAt);
-            out
-        }
-    }
+    @@json.omit_nulls
 }
 
 function roundtrip_event(json: string) -> string throws root.errors.AlienError {
