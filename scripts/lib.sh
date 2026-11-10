@@ -21,6 +21,9 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # generated crate sdk/rust/alien_api pins baml_bridge too, so run
 # scripts/generate.sh once (it regenerates the crate, then stops at Rust), then
 # `cargo update -p baml_bridge --precise <version>` in sdk/rust and bench/rust.
+# The checked-in agent skill (.claude/skills/, .agents/skills/) names the
+# toolchain it came from: write the new one with
+# `bash -c 'source scripts/lib.sh; ensure_baml_cli; cd "$REPO" && baml_cli agent install'`.
 BAML_PIN="0.25.3-nightly.20261109.a"     # what the toolchain reports and sdk/*/ pin
 # PyPI spells a nightly as a dev release (PEP 440); for a release it is BAML_PIN.
 BAML_PIN_PYPI="0.25.3.dev2026110900"

@@ -77,6 +77,11 @@ the imported `baml/baml_src/ns_platform/` and `ns_manager/`: change the
 importer or its config and run `scripts/import.sh`, or change the hand-written
 namespaces, then run `scripts/generate.sh`.
 
+For coding agents, BAML's agent skill is checked in: `.claude/skills/baml-core/`
+for Claude Code and `.agents/skills/baml-core/` for Codex and OpenCode. It
+teaches the BAML language and CLI of the pinned toolchain, and
+`baml agent install` at the repository root writes it.
+
 ## Requirements
 
 Tested on macOS arm64 with Node 24.22, pnpm 12.14, Python 3.14, uv 0.13,

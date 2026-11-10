@@ -39,3 +39,6 @@ telemetry/.baml_home/
 /examples/coexistence/**/.venv/
 
 .DS_Store
+
+# `baml agent install` keeps the skill it replaces here
+baml-old_skills/
