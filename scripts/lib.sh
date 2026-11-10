@@ -17,7 +17,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # examples/coexistence/other/typescript/package.json, bench/go/go.mod) and in
 # the minimumReleaseAgeExclude entries of sdk/typescript/pnpm-workspace.yaml
 # and examples/coexistence/other/typescript/pnpm-workspace.yaml, update their
-# lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
+# lockfiles, then run scripts/verify.sh. The two Rust lockfiles come last: the
+# generated crate sdk/rust/alien_api pins baml_bridge too, so run
+# scripts/generate.sh once (it regenerates the crate, then stops at Rust), then
+# `cargo update -p baml_bridge --precise <version>` in sdk/rust and bench/rust.
 BAML_PIN="0.25.3-nightly.20261109.a"     # what the toolchain reports and sdk/*/ pin
 # PyPI spells a nightly as a dev release (PEP 440); for a release it is BAML_PIN.
 BAML_PIN_PYPI="0.25.3.dev2026110900"

@@ -3,8 +3,8 @@
 What BAML could not do that this SDK needed, each with a minimal repro, what
 it means for Alien, and the workaround used here. IDs (`B1`, …) name each
 gap. The SDK uses BAML 0.25.3-nightly.20261109.a. B15, B16 and B19 are fixed in BAML 0.23.0,
-B24 in 0.24.0, and B21 and B26 by `@json` attributes (BAML #5563, in
-0.25.3-nightly.20261109.a); they need no workaround and stay listed because
+B24 in 0.24.0, and B21 and B26 by `@json` attributes (BAML #5563, which no
+numbered release has yet); they need no workaround and stay listed because
 their sections say what changed and what remains. B13 is BAML's design, which the
 SDK works with.
 
