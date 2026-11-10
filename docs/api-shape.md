@@ -35,7 +35,8 @@ serverURL, token, timeoutMs })` (`token` as in `@alienplatform/commands`; Alien'
 SDK calls it `bearer`). Calls are async and camelCase.
 Required arguments are positional. Optional arguments go in a trailing options
 object, which can be omitted. Request bodies are plain objects; their types
-are in the exported `platform` and `manager` namespaces, which hold types only.
+are in the exported `platform` and `manager` namespaces, which hold types only:
+the SDK exports no runtime schema (Zod or another) to validate input with.
 A union member this SDK does not know (see Unions below) has the tag
 `"UNKNOWN"`, so a `switch` on the tag covers it like any other member, and
 TypeScript checks that the switch is exhaustive.
@@ -120,18 +121,36 @@ alien.setup_links.create(request)
 ```
 
 `model_validate` (and `model_validate_json`) accept both spellings of a
-field: the wire name, which is each field's pydantic alias
+field: its pydantic alias, which is the BAML name
 (`{"externalId": …, "maxDeployments": 5}`), and the Python name
 (`{"external_id": …, "max_deployments": 5}`); the models set
-`populate_by_name`. Use the wire spelling for data in the API's shape (JSON
-bodies, forms built from the API reference), which is also what
-`model_dump(by_alias=True)` writes and what a `ValidationError` names
-(`externalId: Field required`), and the Python spelling for keyword
-arguments in Python code (`CreateSetupLinkRequest(external_id=…)`). Do not
-send both for one field: the wire name wins. Unknown keys are ignored
-(`extra="ignore"`), so a misspelled optional field is dropped without an
-error; values are converted as pydantic's default (lax) mode does
-(`"5"` → `5`). `sdk/python/tests/test_types.py` checks each of these.
+`populate_by_name`. For most fields the BAML name is the wire name, so data
+in the API's shape (JSON bodies, forms built from the API reference)
+validates as it is, `model_dump(by_alias=True)` writes it, and a
+`ValidationError` names the field by it (`externalId: Field required`). Use
+the Python spelling for keyword arguments in Python code
+(`CreateSetupLinkRequest(external_id=…)`). Do not send both for one field:
+the alias wins. Unknown keys are ignored (`extra="ignore"`), so a misspelled
+optional field is dropped without an error; values are converted as
+pydantic's default (lax) mode does (`"5"` → `5`).
+`sdk/python/tests/test_types.py` checks each of these.
+
+Three kinds of field do not follow the API's JSON in pydantic
+([B27](gaps.md#b27)):
+
+- A field with `@json.rename`. Its alias is the BAML name (`onOther` for the
+  wire name `on-other`, `vpcId` for `vpc_id`), or it has none (`test_`, wire
+  name `test`), so `model_validate` reads the wire name only where it is also
+  the Python name (`vpc_id`), and `model_dump(by_alias=True)` writes the
+  alias.
+- `additionalProperties`, which holds the keys a class does not list:
+  pydantic requires them under an `additionalProperties` key and ignores
+  them beside the listed fields, where the API sends them.
+- A union's `Other` member: pydantic accepts it only as
+  `{"<tag>": "UNKNOWN", "raw": {…}}`, not as the member the server sent.
+
+The SDK's own requests and responses are not affected: it reads and writes
+them through BAML, which follows the `@json` attributes.
 
 **Go.** Calls take the form `c.<Group>.<Method>(ctx, …)`, grouped and named
 as in Alien's TypeScript SDK with Go's initialisms (`c.APIKeys.Revoke`,
@@ -205,15 +224,32 @@ alien.api_keys().revoke(key_id).send().await?;
 let cmd = AlienManager::new(manager_url, Some(token)).commands().create_command(req).send().await?;
 ```
 
-Before, the same `deployments.list` call took every optional argument
-positionally, as the generated function still does:
+**Rust: request bodies.** A request body is a generated struct, passed
+whole (`alien.setup_links().create(body)`). Every generated struct has a
+`new` that takes its required fields, in declaration order, and sets every
+optional field to `None`:
+`CreateSetupLinkRequest::new(external_id: String, name: String, project: String)`.
+Set optional fields with struct update syntax over it:
 
 ```rust
-let page = platform::deployments::list(alien.platform(), Some("my-project".into()),
-    None, None, None, None, None, None, None, None, Some(10), None).await?;
+use alien_sdk::platform::CreateSetupLinkRequest;
+
+let body = CreateSetupLinkRequest {
+    max_deployments: Some(5),
+    ..CreateSetupLinkRequest::new("cust-1".into(), "Customer".into(), "web".into())
+};
+let link = alien.setup_links().create(body).send().await?;
 ```
 
-`tests/shape.rs` compiles these calls.
+When Alien adds an optional field (v3.3.43 added `returnUrl` and `refreshUrl`
+to `CreateSetupLinkRequest`), this code keeps compiling and the new field is
+`None`. A struct literal that names every field stops compiling: the structs
+are not `#[non_exhaustive]`, so the compiler accepts such a literal until a
+field is added. A required field Alien adds is one more argument of `new`, so
+both forms stop compiling. There is no `Default`, which would have to fill
+required fields with `""` and `0`.
+
+`tests/shape.rs` compiles the calls and the request body above.
 
 ## Rules
 
@@ -228,7 +264,7 @@ let page = platform::deployments::list(alien.platform(), Some("my-project".into(
 | Types | Component schemas keep their names. Operation-level schemas use Alien's names: `<OperationId>Response`, plus `<OperationId>Request` for a body that is the only argument, else `<OperationId>RequestBody`. Other inline schemas are named `<Parent><Field>`. Identical classes are merged |
 | Optional fields | Unset optionals are omitted from request bodies. A request cannot send an explicit `null` (decision 5; [B13](gaps.md#b13) lists the fields where the spec gives `null` a meaning) |
 | Extra keys | An object with both `properties` and `additionalProperties` keeps the unlisted keys in an `additionalProperties` map, as Speakeasy names it (34 schemas) |
-| Field and argument names | BAML names as in Alien's TypeScript SDK (decisions 11 and 12), which TypeScript and Go use as they are and Python and Rust snake_case (Python and Rust names, above): a wire name with separators is camelCased (`custom_domains` → `customDomains`, `vpc_id` → `vpcId`, `on-other` → `onOther`, `_internal` → `internal`; 21 Platform and 14 Manager wire names), any other is kept. A BAML reserved word then gets a trailing underscore (`test` → `test_`, B14). Requests and responses keep the wire names on the wire, through a `baml.FromJson`/`baml.ToJson` mapping; `docs/importer-coverage.md` lists every renamed field. Arguments follow the same rule: the Manager's path parameters `command_id`, `lease_id` and `vault_name` are `commandId`, `leaseId` and `vaultName`, and the Platform header `If-Match` is `ifMatch` (`alien.dynamicContainers.put(id, name, body, { ifMatch: etag })`). `tests/naming_oracle.rs` checks every field and argument name against the SDK's sources |
+| Field and argument names | BAML names as in Alien's TypeScript SDK (decisions 11 and 12), which TypeScript and Go use as they are and Python and Rust snake_case (Python and Rust names, above): a wire name with separators is camelCased (`custom_domains` → `customDomains`, `vpc_id` → `vpcId`, `on-other` → `onOther`, `_internal` → `internal`; 21 Platform and 14 Manager wire names), any other is kept. A BAML reserved word then gets a trailing underscore (`test` → `test_`, B14). Requests and responses keep the wire names on the wire, through `@json.rename`; `docs/importer-coverage.md` lists every renamed field. Arguments follow the same rule: the Manager's path parameters `command_id`, `lease_id` and `vault_name` are `commandId`, `leaseId` and `vaultName`, and the Platform header `If-Match` is `ifMatch` (`alien.dynamicContainers.put(id, name, body, { ifMatch: etag })`). `tests/naming_oracle.rs` checks every field and argument name against the SDK's sources |
 | Enums | Open: a string enum becomes `string`, so values a newer server adds still decode. Its values are listed in the doc comment. A single-value enum or constant stays a literal only where it tags a union member, so the union decodes unambiguously; anywhere else it becomes its base type (`string`, `int`, `bool`), with its value in the doc comment |
 | Unions | Open: a union whose members share a tag field (`type`, `platform`, …) has one more member, last, named `<Owner><Field>Other` (`EventDataOther`). Its tag is always `"UNKNOWN"` and `raw` holds the member as the server sent it (the server's tag is `raw.type`), as in Speakeasy's forward-compatible unions. So a member a newer server adds decodes instead of failing the call, and a switch on the tag handles it like any other member: TypeScript `case "UNKNOWN":` (exhaustiveness-checked with a `never` default), Python `match` on the class or the tag, Go a type switch (`case alienapi.PlatformEventDataOther:`), Rust a `match` on the union's `EventDataOther` variant. A known tag that does not decode still fails with `MALFORMED_RESPONSE`. A union tagged by two fields has the same one catch-all (decision 13): `ExternalBinding` is tagged by `type`, then by `service` where several bindings share a `type`, and a new `type`, or a known `type` with a new `service` (`{"type": "storage", "service": "minio", …}`), decodes as `ExternalBindingOther { type: "UNKNOWN", raw }`, with the server's `type` and `service` in `raw`: TypeScript `if (b.type === "UNKNOWN") b.raw.service`, Python `case platform.ExternalBindingOther(raw=raw):`, Go `case alienapi.PlatformExternalBindingOther:`, Rust `platform::ExternalBinding::ExternalBindingOther(o) => o.raw["service"]`. A known pair that does not decode (`storage`/`s3` with `forcePathStyle: "yes"`) still fails with `MALFORMED_RESPONSE`. Unions without such tags stay closed |
 | Responses | 2xx JSON → the type; JSON or empty → `T?`; no content → `null`. Unknown fields are ignored. A required field the spec leaves untyped (`json`) may be missing, and is then `null`. A number too large for a 64-bit float (`1e400`), even in an ignored field, fails the body with `MALFORMED_RESPONSE` |
@@ -241,7 +277,7 @@ let page = platform::deployments::list(alien.platform(), Some("my-project".into(
 |---|---|---|
 | Required parameters without a body | Request object: `managers.get({ id })` | Positional: `managers.get(id)` |
 | Optional body | Second positional argument: `createToken(id, body?)` | Options object: `createToken(id, { body })` |
-| Request bodies | Plain objects; unset keys can be left out | TypeScript: plain objects or generated classes; unset keys can be left out. Python and Go default unset fields. Rust structs need every field (`None` when unset), so an optional field Alien adds breaks Rust code that builds the struct (`returnUrl` and `refreshUrl` in `CreateSetupLinkRequest`, Alien v3.3.43) |
+| Request bodies | Plain objects; unset keys can be left out | TypeScript: plain objects or generated classes; unset keys can be left out. Python and Go default unset fields. Rust: `T::new` takes the required fields and leaves the optional ones `None`, and struct update syntax over it sets the others, so an optional field Alien adds does not break code that builds a body that way ([Rust: request bodies](#calling-an-operation)) |
 | Explicit `null` in a request | Possible (Alien's Rust SDK cannot) | Not possible: unset fields are left out (decision 5) |
 | Enums | Closed: an unknown `Manager.status` fails decoding | Open (decision 1) |
 | Responses the server leaves fields out of | Fills in the spec's default (`maxDeployments: 100`) | Leaves them unset (`null`) |
@@ -267,21 +303,22 @@ follows the TypeScript SDK. The table lists where they differ from this SDK.
 | Calls | Builders, flat: `client.list_deployments().project(p).limit(10).send().await?.into_inner()`; `workspace` is an argument of each call; authentication is a `reqwest::Client` with a default `Authorization` header | Builders, grouped as in the other SDKs: `alien.deployments().list().project(p).limit(10).send().await?`; `workspace` and the API key are client options |
 | An optional request body left out | Sent anyway, as the body type's default: `{}`, or `INVALID_REQUEST` before sending when that type has required fields (98 operations) | Not sent |
 | String constraints (`pattern`, `minLength`, `maxLength`, `format: uuid`) | Checked on arguments (refused before sending) and on responses (`INVALID_RESPONSE_PAYLOAD`) | Not checked: the server decides |
-| Enums | Closed, apart from three fields Alien opens: an unknown `Manager.platform` fails the response | Open (decision 1) |
+| Enums | Closed, apart from the three response fields Alien's filter opens (`DeploymentResource.status` and two lists of package types): an unknown value in `Manager.targets` fails the response | Open (decision 1) |
 | Unions | Closed: an external binding with a new `service` or `type` fails `deployments.get` | Open (decisions 1 and 13) |
 | Fields Alien's compatibility overlay re-adds (`operations.listPlugins` `installations`, `operations.publishPlugin` `enabled`, `permissionDiff`) | Dropped: the client is generated without the overlay | Kept, as in the TypeScript SDK |
 | Keys a type does not list | Kept by the Platform client, dropped by the Manager client | Kept under `additionalProperties` |
 | An error on a status the operation does not declare | `UNEXPECTED_RESPONSE`, body not read; retryable at 5xx only (Manager: also 408, 425 and 429) | The server's code; `PLATFORM_HTTP_ERROR` (retryable on 408, 429, 5xx) or `MANAGER_HTTP_ERROR` without an Alien error body |
 | A body that is not JSON, or a malformed 200 | `INVALID_RESPONSE_PAYLOAD`, without the HTTP status | `PLATFORM_HTTP_ERROR` or `MALFORMED_RESPONSE`, with the status |
 | Manager error bodies | Read when they are a whole Alien error (`code`, `message`, `retryable`, `internal`); a 5xx is retryable | Read when they have `code` and `message`; never retryable |
-| serde on the generated types | `Serialize` and `Deserialize` in the wire format: `serde_json::from_value::<CreateSetupLinkRequest>(form)` works | Not available: the generator's derived impls ignore the SDK's JSON mapping (renamed fields, omitted unset fields, tagged unions, unlisted keys), so `alien_sdk` leaves BAML's `serde` feature off ([B26](gaps.md#b26)) |
+| serde on the generated types | `Serialize` and `Deserialize` in the wire format: `serde_json::from_value::<CreateSetupLinkRequest>(form)` works | The same: `alien_sdk` turns on BAML's `serde` feature, so every type in `alien_sdk::platform` and `alien_sdk::manager` implements both, following the `@json` attributes, and reads and writes the JSON the SDK sends and receives (`tests/serde.rs`); `alien_sdk::serde_json` is the `serde_json` they use. Two request classes differ: serde writes `expiresAt` (`CreateDeploymentTokenRequest`) and `statusCode` (`ReportLogExportDeliveryRequestBody`) as `null` when unset, where the SDK leaves them out ([B26](gaps.md#b26)) |
 
 ## Decisions
 
 The choices behind the shape above, with the alternative where there was one.
 
 1. **Enums.** Decided: open every enum (implemented). Alien's TypeScript
-   SDK opens none and its Rust filter opens two, so both reject an unknown
+   SDK opens one (`DeploymentResource.status`) and its Rust filter opens
+   three (that one and two lists of package types), so both reject an unknown
    `Manager.status`. The conformance scenario
    `platform.getManager.success_unknown_fields` requires accepting one.
    Alternative: open only what Alien's Rust filter opens, and change that
@@ -325,7 +362,7 @@ The choices behind the shape above, with the alternative where there was one.
 8. **Python and Rust casing (B7).** Decided: BAML's `language` naming
    (BAML #5481), so Python and Rust names are snake_case everywhere
    (`deployment_groups.create_token`, `page.next_cursor`,
-   `deployments.list(deployment_group="prod")`), as Alien asked. The wire
+   `deployments.list(deployment_group="prod")`). The wire
    names do not change. Earlier the generators supported only
    `preserve-case` for both, so Python fields and keywords and all Rust names
    were camelCase.

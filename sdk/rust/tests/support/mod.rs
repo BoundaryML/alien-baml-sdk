@@ -1,5 +1,4 @@
 //! Stub-server driver and JSON conversions for the conformance harness.
-//! The generated types have no serde support, so results are converted by hand.
 
 use std::{
     io::{self, BufRead, BufReader, Read, Write},
@@ -237,15 +236,10 @@ pub fn create_setup_link_request(v: &Value) -> platform::CreateSetupLinkRequest 
         ],
     );
     platform::CreateSetupLinkRequest {
-        external_id: s(&v["externalId"]),
-        name: s(&v["name"]),
-        project: s(&v["project"]),
         max_deployments: opt(&v["maxDeployments"], |n| {
             n.as_i64()
                 .unwrap_or_else(|| panic!("maxDeployments must be an integer, got {n}"))
         }),
-        return_url: None,
-        refresh_url: None,
         description: opt_s(&v["description"]),
         expires_at: opt_s(&v["expiresAt"]),
         deployment_setup_config: opt(&v["deploymentSetupConfig"], |config| {
@@ -259,55 +253,49 @@ pub fn create_setup_link_request(v: &Value) -> platform::CreateSetupLinkRequest 
                         .into_iter()
                         .collect()
                 }),
-                policy: None,
-                environment_variables: None,
-                validated_release_selection: None,
-                public_subdomain: None,
+                ..platform::DeploymentSetupConfigInput::new()
             }
         }),
-        setup_items: None,
         entry_point: opt(&v["entryPoint"], |entry| {
             only_keys(entry, &["item", "provider"]);
             platform::SetupLinkEntryPoint {
-                item: s(&entry["item"]),
                 provider: opt_s(&entry["provider"]),
+                ..platform::SetupLinkEntryPoint::new(s(&entry["item"]))
             }
         }),
-        input_values: None,
         recovery_deployment_group_id: opt_s(&v["recoveryDeploymentGroupId"]),
+        ..platform::CreateSetupLinkRequest::new(
+            s(&v["externalId"]),
+            s(&v["name"]),
+            s(&v["project"]),
+        )
     }
 }
 
 pub fn bootstrap_request(v: &Value) -> platform::CommandBootstrapRequest {
     if v["role"] == "receiver" {
-        platform::CommandBootstrapRequestReceiver {
-            deployment_id: s(&v["deploymentId"]),
-            role: s(&v["role"]),
-            target: s(&v["target"]),
-        }
+        platform::CommandBootstrapRequestReceiver::new(
+            s(&v["deploymentId"]),
+            s(&v["role"]),
+            s(&v["target"]),
+        )
         .into()
     } else {
-        platform::CommandBootstrapRequestSender {
-            deployment_id: s(&v["deploymentId"]),
-            role: s(&v["role"]),
-        }
-        .into()
+        platform::CommandBootstrapRequestSender::new(s(&v["deploymentId"]), s(&v["role"])).into()
     }
 }
 
 pub fn launch_input(v: &Value) -> alien_api::setup::CloudFormationLaunch {
-    alien_api::setup::CloudFormationLaunch {
-        template_url: s(&v["templateUrl"]),
-        region: s(&v["region"]),
-        stack_name: s(&v["stackName"]),
-        parameters: string_map(&v["parameters"]),
-    }
+    alien_api::setup::CloudFormationLaunch::new(
+        s(&v["templateUrl"]),
+        s(&v["region"]),
+        s(&v["stackName"]),
+        string_map(&v["parameters"]),
+    )
 }
 
 pub fn key_setup_action(v: &Value) -> compat::KeySetupAction {
-    compat::KeySetupAction {
-        action: s(&v["action"]),
-    }
+    compat::KeySetupAction::new(s(&v["action"]))
 }
 
 // ---------------------------------------------------------------------------

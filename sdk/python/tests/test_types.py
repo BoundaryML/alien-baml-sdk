@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import json
 import sys
 
 import pydantic
@@ -74,3 +75,42 @@ def test_the_two_apis_types_do_not_clash() -> None:
     assert "CreateCommandRequest" in shared
     assert alien_sdk.platform.CreateCommandRequest is not alien_sdk.manager.CreateCommandRequest
     assert not {"platform", "manager"} & (set(alien_sdk.platform.__all__) | set(alien_sdk.manager.__all__))
+
+
+def test_json_attributes_are_not_followed_by_pydantic() -> None:
+    """B27 (docs/gaps.md): the pydantic models do not follow the ``@json``
+    attributes, so for a renamed field, a class's unlisted keys and a union's
+    ``Other`` member, ``model_validate`` does not read the API's JSON and
+    ``model_dump(by_alias=True)`` does not write it. The SDK's own encoding,
+    ``baml.json``, does."""
+    rollout = {"updated": 1, "updating": 0, "failed": 0, "pending": 0, "superseded": 0,
+               "waiting-on-owner": 0, "waiting-on-inputs": 0, "pinned-other": 0, "on-other": 2}
+    # @json.rename: the alias is the BAML name (onOther), not the wire name (on-other).
+    with pytest.raises(pydantic.ValidationError) as caught:
+        alien_sdk.platform.ReleaseRolloutStateCounts.model_validate(rollout)
+    assert [e["loc"] for e in caught.value.errors()] == [("waitingOnOwner",), ("waitingOnInputs",), ("pinnedOther",), ("onOther",)]
+    counts = _gen.baml.json.to_sync(rollout, _types={"T": alien_sdk.platform.ReleaseRolloutStateCounts})
+    assert counts.on_other == 2
+    assert counts.model_dump(by_alias=True)["onOther"] == 2 and "on-other" not in counts.model_dump(by_alias=True)
+    assert json.loads(_gen.baml.json.stringify_sync(counts)) == rollout
+    # A reserved word (wire `test`, field `test_`) has no alias: the wire key is dropped.
+    assert alien_sdk.platform.StackByPlatform.model_validate({"test": {"id": "t"}}).test_ is None
+    stack = alien_sdk.platform.StackByPlatform(test_={"id": "t"})
+    assert stack.model_dump(by_alias=True, exclude_none=True) == {"test_": {"id": "t"}}
+    assert json.loads(_gen.baml.json.stringify_sync(stack)) == {"test": {"id": "t"}}
+    # A wire name that is also the Python name validates, but dumps as the alias.
+    network = alien_sdk.manager.NetworkSettingsByoVpcAws.model_validate(
+        {"type": "byo-vpc-aws", "vpc_id": "vpc-1", "public_subnet_ids": ["a"], "private_subnet_ids": ["b"]})
+    assert network.vpc_id == "vpc-1" and "vpcId" in network.model_dump(by_alias=True)
+    # @json.flatten: the unlisted keys are wanted under `additionalProperties`.
+    config = {"id": "r1", "type": "function", "memoryMb": 512}
+    with pytest.raises(pydantic.ValidationError, match="additionalProperties"):
+        alien_sdk.platform.DeploymentStackStateResourcesValueConfig.model_validate(config)
+    decoded = _gen.baml.json.to_sync(config, _types={"T": alien_sdk.platform.DeploymentStackStateResourcesValueConfig})
+    assert decoded.additional_properties == {"memoryMb": 512}
+    # @json.fallback: a member this SDK does not know fits no member in pydantic.
+    unknown = {"mode": "future-mode", "x": 1}
+    with pytest.raises(pydantic.ValidationError):
+        pydantic.TypeAdapter(alien_sdk.platform.ComputePoolSelection).validate_python(unknown)
+    other = _gen.baml.json.to_sync(unknown, _types={"T": alien_sdk.platform.ComputePoolSelection})
+    assert other == alien_sdk.platform.ComputePoolSelectionOther(mode="UNKNOWN", raw=unknown)

@@ -8,12 +8,12 @@ use alien_sdk::{Alien, CloudFormationLaunch, Options};
 const ID: &str = "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr";
 
 fn input() -> CloudFormationLaunch {
-    CloudFormationLaunch {
-        template_url: "https://example.com/setup.yaml".into(),
-        region: "us-east-1".into(),
-        stack_name: "alien-setup".into(),
-        parameters: [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
-    }
+    CloudFormationLaunch::new(
+        "https://example.com/setup.yaml".into(),
+        "us-east-1".into(),
+        "alien-setup".into(),
+        [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
+    )
 }
 
 fn client(server_url: &str) -> Result<Alien, alien_sdk::Error> {

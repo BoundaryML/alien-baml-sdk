@@ -8,7 +8,7 @@
 # with BAML_UNPINNED=1, with no uncommitted changes under baml_language/. It
 # never checks out, fetches or resets anything: on a mismatch it prints the
 # git commands to run and fails. Then export BAML_SOURCE=/path/to/baml for the
-# other scripts (README "Building BAML").
+# other scripts (README "Building against an unreleased BAML").
 [[ $# -eq 1 ]] || { echo "usage: scripts/build_baml.sh <path to BAML checkout>" >&2; exit 1; }
 [[ -d "$1/baml_language" ]] || { echo "error: $1 is not a BAML checkout (no baml_language/)" >&2; exit 1; }
 # lib.sh checks the checkout's commit and tree, as for every other script.

@@ -161,10 +161,9 @@ async fn opt<T: BamlValue>(a: &Value, name: &str) -> Result<Option<T>, Error> {
 fn platform_client(client: &Value) -> alien_api::platform::PlatformClient {
     let (base_url, api_key, workspace) = client_args(client);
     alien_api::platform::PlatformClient {
-        base_url,
-        api_key,
         workspace,
         timeout_ms: client["timeout_ms"].as_i64(),
+        ..alien_api::platform::PlatformClient::new(base_url, api_key)
     }
 }
 

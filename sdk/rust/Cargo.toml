@@ -17,8 +17,8 @@ exclude = ["alien_api"]
 # manifest's one path dependency.
 alien_api = { path = "alien_api", features = ["serde"] }
 baml_bridge = "=0.25.3-nightly.20261106.a"
-serde = "1"
 
 [dev-dependencies]
+serde = "1"
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

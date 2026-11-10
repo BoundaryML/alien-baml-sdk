@@ -136,12 +136,13 @@ _DEFINITION = re.compile(
 
 
 @functools.cache
-def _bindings() -> dict[str, tuple[list[str], str, dict[str, str]]]:
+def _bindings() -> dict[str, tuple[list[str], str, dict[str, str], dict[str, str]]]:
     """Every generated operation by its BAML path (``platform.deploymentGroups.createToken``):
     its group module and function as the generator named them (``["deployment_groups"]``,
-    ``create_token``), and its keyword names by BAML name (``{"deploymentGroup":
-    "deployment_group"}``). Read from the generated modules, which record each
-    function's BAML path."""
+    ``create_token``), its keyword names by BAML name (``{"deploymentGroup":
+    "deployment_group"}``), and the Python name of every argument whose BAML name
+    differs, required ones included. Read from the generated modules, which
+    record each function's BAML path."""
     root = Path(generated_sdk.__file__).parent
     out = {}
     for service in ("platform", "manager"):
@@ -150,7 +151,7 @@ def _bindings() -> dict[str, tuple[list[str], str, dict[str, str]]]:
             for name, path, _required, optional, aliases in _DEFINITION.findall(init.read_text(encoding="utf-8")):
                 wire = ast.literal_eval(aliases) if aliases else {}
                 keywords = {wire.get(python, python): python for python in ast.literal_eval(optional or "[]")}
-                out[path] = (groups, name, keywords)
+                out[path] = (groups, name, keywords, {baml: python for python, baml in wire.items()})
     return out
 
 
@@ -161,7 +162,7 @@ def _operation(call: dict) -> Any:
     in order and the optional ones that are set as keywords, under the
     generated names. Class arguments are built as the generated pydantic types."""
     service = call["op"].split(".")[0]
-    groups, name, keywords_by_wire = _bindings()[call["op"]]
+    groups, name, keywords_by_wire, _ = _bindings()[call["op"]]
     args = call["args"]
     target: Any = _alien_manager(args["client"]) if service == "manager" else _alien(args["client"])
     for group in groups:
@@ -185,18 +186,23 @@ def _operation(call: dict) -> Any:
 def test_every_operation_is_bound() -> None:
     """Every operation the scenarios call resolves through the facade: 279
     Platform and 53 Manager operations, each a method with the generated
-    function's docs (test_facade.py walks what each calls)."""
+    function's docs, which name each argument (``- `deploymentGroup`:``) by the
+    keyword the method takes (``- `deployment_group`:``; test_facade.py walks
+    what each calls)."""
     bindings = _bindings()
     assert sum(op.startswith("platform.") for op in bindings) == 279
     assert sum(op.startswith("manager.") for op in bindings) == 53
     clients = {"platform": Alien("key", server_url="http://127.0.0.1:1"), "manager": AlienManager("http://127.0.0.1:1")}
-    for op, (groups, name, _) in bindings.items():
+    for op, (groups, name, _, python_names) in bindings.items():
         service = op.split(".")[0]
         target: Any = clients[service]
         generated: Any = getattr(generated_sdk, service)
         for group in groups:
             target, generated = getattr(target, group), getattr(generated, group)
-        assert inspect.getdoc(getattr(target, name)) == inspect.getdoc(getattr(generated, name)), op
+        doc = inspect.getdoc(getattr(generated, name))
+        if doc is not None:
+            doc = re.sub(r"^- `([^`]+)`:", lambda m: f"- `{python_names.get(m[1], m[1])}`:", doc, flags=re.M)
+        assert inspect.getdoc(getattr(target, name)) == doc, op
 
 
 def _to_json(value: Any) -> Any:

@@ -9,8 +9,7 @@
 /sdk/python/alien_sdk/_generated/
 /sdk/go/alienapi/
 /sdk/rust/alien_api/
-# BAML's default name: the coexistence example's second SDK, and output from
-# before package_name (scripts/generate.sh removes that)
+# BAML's default name: the coexistence example's second SDK
 baml_sdk/
 /sdk/go/alien/operations.go
 /sdk/python/alien_sdk/_operations.py

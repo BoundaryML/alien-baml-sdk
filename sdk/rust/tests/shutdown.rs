@@ -4,12 +4,12 @@
 use alien_sdk::{CloudFormationLaunch, Error};
 
 fn input() -> CloudFormationLaunch {
-    CloudFormationLaunch {
-        template_url: "https://example.com/setup.yaml".into(),
-        region: "us-east-1".into(),
-        stack_name: "alien-setup".into(),
-        parameters: Default::default(),
-    }
+    CloudFormationLaunch::new(
+        "https://example.com/setup.yaml".into(),
+        "us-east-1".into(),
+        "alien-setup".into(),
+        Default::default(),
+    )
 }
 
 async fn shutdown() -> Result<(), Error> {

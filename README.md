@@ -87,11 +87,14 @@ Go 1.27 and Rust 1.96.
 - Node and pnpm
 - Python 3.10+ and uv
 - Go 1.24+ with cgo (`CGO_ENABLED=1`, the default on macOS); `baml generate` runs `gofmt`
-- Rust 1.91+
+- Rust 1.91.1+
 
 The scripts use BAML 0.25.3-nightly.20261106.a (`BAML_PIN` in `scripts/lib.sh`), which the
 manifests pin exactly (npm `@boundaryml/baml-bridge`, PyPI `baml-bridge`, Go
-`github.com/boundaryml/baml-go`, crates.io `baml_bridge`). The scripts keep
+`github.com/boundaryml/baml-go`, crates.io `baml_bridge`). It is a nightly
+build of BAML, not a numbered release: the imported types use `@json`
+attributes (BAML #5563), which no numbered release contains. PyPI spells the
+version `0.25.3.dev2026110600`. The scripts keep
 all BAML state in the repository (`.baml_home/`, `.cache/`), never in
 `~/.baml`.
 
@@ -179,11 +182,10 @@ runtime library) or a `tracing` subscriber with `tracing-log`, which
 ```rust
 #[tokio::main]
 async fn main() -> Result<(), alien_sdk::Error> {
-    let url = alien_sdk::cloudformation_launch_url(alien_sdk::CloudFormationLaunch {
-        template_url: "https://example.com/setup.yaml".into(), region: "us-east-1".into(),
-        stack_name: "alien-setup".into(),
-        parameters: [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
-    }).await?;
+    let url = alien_sdk::cloudformation_launch_url(alien_sdk::CloudFormationLaunch::new(
+        "https://example.com/setup.yaml".into(), "us-east-1".into(), "alien-setup".into(),
+        [("ExternalId".to_string(), "customer-0001".to_string())].into_iter().collect(),
+    )).await?;
     println!("{url}");
     Ok(())
 }
@@ -318,13 +320,18 @@ statements: [docs/telemetry.md](docs/telemetry.md).
 ## Verifying
 
 ```sh
-scripts/verify.sh --phase 1   # or --phase 2: also tests the importer, checks the imported BAML and operation scenarios are current, and runs every operation
+scripts/verify.sh --phase 2
 ```
 
-Runs `baml check` and `baml test`, regenerates and builds the four SDKs, runs
-every conformance scenario in all four languages, runs the README quickstarts,
-the telemetry checks and a secret scan, and prints a summary table. It exits
-non-zero on the first failure.
+Runs every check: tests the importer and checks that the imported BAML and
+the generated operation scenarios are current, runs `baml check` and
+`baml test`, regenerates and builds the four SDKs, runs all 883 conformance
+scenarios in all four languages, checks the shared setup fixture, runs the
+README quickstarts, the telemetry checks, the [B4](docs/gaps.md#b4)
+coexistence repro and a secret scan, and prints a summary table. It exits
+non-zero on the first failure. `--phase 1` leaves out the importer checks and
+runs only the 49 hand-written scenarios, not the 834 generated ones that call
+each operation ([conformance/README.md](conformance/README.md)).
 
 ## Building against an unreleased BAML
 

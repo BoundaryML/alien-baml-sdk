@@ -32,7 +32,6 @@ version = "0.0.0"
 dependencies = [
  "alien_api",
  "baml_bridge",
- "serde",
 ]
 
 [[package]]
