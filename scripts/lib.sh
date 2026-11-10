@@ -36,9 +36,9 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # the minimumReleaseAgeExclude entries of sdk/typescript/pnpm-workspace.yaml
 # and examples/coexistence/other/typescript/pnpm-workspace.yaml, update their
 # lockfiles (and bench/rust/Cargo.lock), then run scripts/verify.sh.
-BAML_PIN="0.25.3-nightly.20261106.a"     # what the toolchain reports and sdk/*/ pin
+BAML_PIN="0.25.3-nightly.20261109.a"     # what the toolchain reports and sdk/*/ pin
 # PyPI spells a nightly as a dev release (PEP 440); for a release it is BAML_PIN.
-BAML_PIN_PYPI="0.25.3.dev2026110600"
+BAML_PIN_PYPI="0.25.3.dev2026110900"
 # Empty: the scripts use the published BAML $BAML_PIN. To build against one
 # unreleased BAML commit instead (when the SDKs need a change no release has
 # yet), set it to that commit, built locally: check
@@ -142,8 +142,8 @@ baml_cli() {
 }
 
 # True when `baml --version` (with the given selector) reports toolchain
-# $BAML_PIN: "baml toolchain 0.25.3-nightly.20261106.a …" or "baml toolchain baml-cli 0.25.3-nightly.20261106.a …"
-# from wrapper 0.2, "baml-cli 0.25.3-nightly.20261106.a" from wrapper 0.3.
+# $BAML_PIN: "baml toolchain 0.25.3-nightly.20261109.a …" or "baml toolchain baml-cli 0.25.3-nightly.20261109.a …"
+# from wrapper 0.2, "baml-cli 0.25.3-nightly.20261109.a" from wrapper 0.3.
 toolchain_is_pinned() {
   BAML_HOME="$CLI_HOME" BAML_VERSION="$1" BAML_TOOLCHAIN="$1" baml --version 2>&1 \
     | grep -Eq "^(baml toolchain (baml-cli )?|baml-cli )${BAML_PIN//./\\.}( |$)"

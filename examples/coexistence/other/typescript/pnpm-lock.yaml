@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@boundaryml/baml-bridge':
-        specifier: 0.25.3-nightly.20261106.a
-        version: 0.25.3-nightly.20261106.a
+        specifier: 0.25.3-nightly.20261109.a
+        version: 0.25.3-nightly.20261109.a
     devDependencies:
       '@types/node':
         specifier: 24.10.1
@@ -21,48 +21,52 @@ importers:
 
 packages:
 
-  '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-lWtP1Vm/vpYgHbCmVaMo1K0yfnDvOvNWcHajrKSEtKW9j13dvIDbqYazyM1EW9foPd0PqMeD0VpK4F2RD5f+RA==}
+  '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-WEvHra960Yupd2m2mn4fuWQtOqrj/a0UoUCjTWW4vyGPBaOcxOX4Y7KXU539SGFgDas5cYMNUoA4fS+kPiIWXQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-NCzJ3e87Lam6wmbbfcVdzwyuRwhkB3wDiU1Kx3oRPujzTwrKplRDoh5vy8HXOL50CBBW7nbkZI3DBLKLLPqFlQ==}
+  '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-MU7xo6MO7NOY4ATUjmlHYqb27gy0Bs8ZtuZNiMIAfyZ4XwYmevPtNjuMKTuN4P/VMB8XoJU4GhYdlEM8zIfwiA==}
     cpu: [x64]
     os: [darwin]
 
-  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-vauLiFLAep7nn1G9daovKMhDeb5YVdT+xhPulJvDxybQdmj70U96xhSgFafleUpJ+cQ6K5dCGwr47F29Rc41sQ==}
+  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-AHqtxCjDznx7R/mN0fTzj0AoH1E/0MhmqFa54NlR9kYqeBXnvAOD8kGoqqVNcbLiG3yD25htBdgbM1n7zKWMKQ==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
-  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-rab2+SYxWY4hi/CWgfJg4V7vlesrzoqtzuDDgbKWDZ5yA89OT0pKoX+su/CToJT2ICmOq5Ba+5Dwl0EOX3BmTg==}
+  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-VptG0IE6zqO3lev2U85FvvX0L+oh0rfM8C5IUbt/gM77+mBV20WYBU7FFMR2WYX32TC/qadfQqjS4xx/9BfUoA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
-  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-wdj/8kEKsiOZuZ4oBPGWDJU4Teo2ixGPSGFfa/BUUZYNU6AOi7WKYD3KHsQPt2uNT1KiancI1/gVY4TaeKHcuw==}
+  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-AZiuzqyLcxgG914F5QaligtFMtqR0W6N92z1rwZt8VciLzOy+GSuCg/lh0WbCunLHf/6+nhfOaei3tRCSmnMXA==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
-  '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-YAvTfDnwuUxOZH5rSrI1AwDjb+Euwu5YJDWlTrwKjuRxN41ma4iGhm6ojsURJtxZkpy3r93WFM4x3KJt/h5i3A==}
+  '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-MFZfpLiIGy0mqK2BAwVT+6ityqMol5ZLQlQWe6Jnz438ntpPX1rGUUM5k5lrnJd173qXB9zGvA4UpS3pjHQcNw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
-  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-I9iQjscHHKh6o/yhD7FaCkKJSkMAfrWSH7p8ZN3mFIkrNBXY8yBmhkKZjZc614mFT02Sdd/BPP2KCd1R83T5Wg==}
+  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-z3oZmQs97vGgGEnLjBQSdskqTunLTYs2aL/qUqJ6dcg7mRzUuA2JsW/tiTEltCucI853YZpsDFnMlAA9a415Qw==}
     cpu: [arm64]
     os: [win32]
 
-  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-AmSyFq/tvauFca4KUDuxih3xRrnfWg1J3MRvD+6sL3mAoKK8GEQyJaQD2CXQXhYfv9Q9SCHjX6lX19O8urkDkQ==}
+  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-47//WRULIRo8bum0vEO89v0PAifnxIGnvP0vsE7kJRTp+LIOtfPf0Ifw9yyFRd/wuS90qy+d9yWx0xOxUmYm0Q==}
     cpu: [x64]
     os: [win32]
 
-  '@boundaryml/baml-bridge@0.25.3-nightly.20261106.a':
-    resolution: {integrity: sha512-UK6B3IFz7w6EqZoLbPdrmBtb1jLYsoWr/HI9ck3XI81k5bEwYALDDvGh5w458ZQuhPOKkpFJEFhU0rhLAB1czA==}
+  '@boundaryml/baml-bridge@0.25.3-nightly.20261109.a':
+    resolution: {integrity: sha512-Vl0t17yZmD74G66m/5I0awvzf24opcQcQ3npzGVUjqakJwTHio8Fy52y7oHK4OEseejTpD+xxOYNomLXohnBuw==}
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -111,42 +115,42 @@ packages:
 
 snapshots:
 
-  '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261109.a':
     optional: true
 
-  '@boundaryml/baml-bridge@0.25.3-nightly.20261106.a':
+  '@boundaryml/baml-bridge@0.25.3-nightly.20261109.a':
     dependencies:
       protobufjs: 7.6.6
     optionalDependencies:
-      '@boundaryml/baml-bridge-darwin-arm64': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-darwin-x64': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-linux-arm64-gnu': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-linux-arm64-musl': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-linux-x64-gnu': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-linux-x64-musl': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-win32-arm64-msvc': 0.25.3-nightly.20261106.a
-      '@boundaryml/baml-bridge-win32-x64-msvc': 0.25.3-nightly.20261106.a
+      '@boundaryml/baml-bridge-darwin-arm64': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-darwin-x64': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-linux-arm64-gnu': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-linux-arm64-musl': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-linux-x64-gnu': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-linux-x64-musl': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-win32-arm64-msvc': 0.25.3-nightly.20261109.a
+      '@boundaryml/baml-bridge-win32-x64-msvc': 0.25.3-nightly.20261109.a
 
   '@protobufjs/aspromise@1.1.2': {}
 

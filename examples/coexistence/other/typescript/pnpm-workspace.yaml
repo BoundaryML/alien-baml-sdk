@@ -5,12 +5,12 @@ allowBuilds:
   esbuild: false
   protobufjs: false
 minimumReleaseAgeExclude:
-  - '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261106.a'
-  - '@boundaryml/baml-bridge@0.25.3-nightly.20261106.a'
+  - '@boundaryml/baml-bridge-darwin-arm64@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-darwin-x64@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-linux-arm64-gnu@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-linux-arm64-musl@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-linux-x64-gnu@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-linux-x64-musl@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-win32-arm64-msvc@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge-win32-x64-msvc@0.25.3-nightly.20261109.a'
+  - '@boundaryml/baml-bridge@0.25.3-nightly.20261109.a'
