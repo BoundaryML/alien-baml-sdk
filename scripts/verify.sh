@@ -7,7 +7,9 @@
 # is current and reproducible, and that the generated operation scenarios
 # (conformance/README.md) are current. Then it runs baml check/test, generates and
 # builds the four SDKs, runs every conformance scenario with phase <= N in all
-# four languages, checks the shared setup fixture and the README quickstarts,
+# four languages (Rust a second time without its default `alien-error`
+# feature), checks that feature in a workspace shaped like Alien's
+# (scripts/alien_error_workspace.sh), the shared setup fixture and the README quickstarts,
 # runs the telemetry checks (docs/telemetry.md), the B4 coexistence repro and a
 # secret scan. Exits non-zero on the first failure and prints a summary table.
 # Logs: .verify/logs/<step>.log
@@ -131,6 +133,10 @@ suite_typescript() { suite typescript pnpm -C "$REPO/sdk/typescript" test; }
 suite_python() { suite python uv run --frozen --directory "$REPO/sdk/python" pytest; }
 suite_go() { (cd "$REPO/sdk/go" && suite go go test -count=1 ./...); }
 suite_rust() { (cd "$REPO/sdk/rust" && suite rust cargo test); }
+# The crate without its default feature, `alien-error`: it must build and pass
+# the same tests with no `alien-error` crate in its dependencies
+# (tests/alien_error.rs is then empty).
+suite_rust_bare() { (cd "$REPO/sdk/rust" && suite rust-no-default-features cargo test --no-default-features); }
 
 shared_fixture() {
   local expected="$OUT/shared_fixture.expected" lang
@@ -211,6 +217,8 @@ step suite-typescript suite_typescript
 step suite-python suite_python
 step suite-go suite_go
 step suite-rust suite_rust
+step suite-rust-bare suite_rust_bare
+step alien-error-workspace "$REPO/scripts/alien_error_workspace.sh"
 step shared-fixture shared_fixture
 step quickstarts quickstarts
 step telemetry-binaries telemetry_binaries

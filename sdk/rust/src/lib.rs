@@ -23,6 +23,24 @@
 //! a timeout for example), and an async `send()`. Request and response types
 //! are in [`platform`] and [`manager`]. [`init`] and [`shutdown`] block.
 //!
+//! Every call fails with [`Error`]. With the cargo feature `alien-error`, on
+//! by default, it converts to Alien's own `alien_error::AlienError` with every
+//! field kept: `?` in a function that returns `alien_error::Result<T>`, or
+//! [`SdkResultExt::into_sdk_error`] to chain `.context(..)` onto it. Use
+//! those, not `alien_error`'s `.into_alien_error()`, which keeps only the
+//! error's text.
+//!
+//! ```no_run
+//! # #[cfg(feature = "alien-error")]
+//! # mod with_the_feature {
+//! use alien_sdk::alien_error;
+//!
+//! async fn manager_name(alien: &alien_sdk::Alien, id: &str) -> alien_error::Result<String> {
+//!     Ok(alien.managers().get(id).send().await?.name)
+//! }
+//! # }
+//! ```
+//!
 //! Telemetry is on (`medium`) unless `ALIEN_TELEMETRY=off`; see [`shutdown`]
 //! for when to call it.
 
@@ -46,6 +64,22 @@ pub use alien_api::BamlOptions;
 /// The types generated fields use: `json` fields are [`Json`]
 /// (`serde_json::Value`), maps are [`Map`] (an insertion-ordered map).
 pub use baml_bridge::{Json, Map, serde_json};
+
+/// The conversion of the SDK's errors to `alien_error::AlienError`
+/// (`src/alien_error.rs`; the module is not named `alien_error` because the
+/// crate is re-exported under that name).
+#[cfg(feature = "alien-error")]
+#[path = "alien_error.rs"]
+mod conversion;
+
+#[cfg(feature = "alien-error")]
+pub use conversion::SdkResultExt;
+
+/// The `alien-error` crate the SDK was built against (cargo feature
+/// `alien-error`): name its types through here, so that they are the ones the
+/// conversion gives.
+#[cfg(feature = "alien-error")]
+pub use ::alien_error;
 
 /// The Platform API used when [`Options::server_url`] is `None`.
 pub const DEFAULT_SERVER_URL: &str = "https://api.alien.dev";

@@ -9,6 +9,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "alien-error"
+version = "3.3.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f77255f20b211397dfd92fe7de639e1bbaf44affff97ad6e250f7c91ead7adfa"
+dependencies = [
+ "alien-error-derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alien-error-derive"
+version = "3.3.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71cff6f090d54ff51f391a07694515fe1e60636967fde342970fd3f62b1ddf0b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "alien_api"
 version = "0.1.0"
 dependencies = [
@@ -30,6 +53,7 @@ dependencies = [
 name = "alien_sdk"
 version = "0.0.0"
 dependencies = [
+ "alien-error",
  "alien_api",
  "baml_bridge",
 ]
