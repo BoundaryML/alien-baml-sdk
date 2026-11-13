@@ -39,8 +39,7 @@
     "retryable": true,
     "http_status": null,
     "context": {
-      "method": "GET",
-      "path": "/v1/commands/cmd_1"
+      "method": "GET"
     }
   },
   "assert": []

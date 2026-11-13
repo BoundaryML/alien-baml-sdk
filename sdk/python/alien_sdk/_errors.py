@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Mapping
-from typing import ParamSpec, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, ParamSpec, TypeVar
 
 from baml_bridge import BamlError
 from ._gen import errors as _errors
@@ -16,6 +16,12 @@ class AlienError(Exception):
     ``str(error)`` is ``"<code>: <message>"``; the fields are ``code``,
     ``message``, ``retryable``, ``http_status``, ``context``, ``hint``,
     ``request_id``, ``source`` and ``internal``.
+
+    ``context`` is JSON data, typed ``Any`` as the generated SDK types
+    ``json``: for a server error, the error body's ``context`` exactly as sent
+    (a ``dict``, ``list``, ``str``, ``int``, ``float``, ``bool`` or ``None``);
+    for an error the SDK raises itself, ``None`` or a ``dict`` with the SDK's
+    own keys (docs/errors.md). It is stored as given, not copied.
 
     ``source`` is the error the server names as this one's cause (its own
     ``source`` in turn, at most 8 levels below the raised error), and
@@ -33,7 +39,7 @@ class AlienError(Exception):
         message: str,
         retryable: bool,
         http_status: int | None = None,
-        context: Mapping[str, str] | None = None,
+        context: Any = None,
         hint: str | None = None,
         request_id: str | None = None,
         source: AlienError | None = None,
@@ -45,7 +51,7 @@ class AlienError(Exception):
         self.message = message
         self.retryable = retryable
         self.http_status = http_status
-        self.context = dict(context) if context is not None else None
+        self.context = context
         self.hint = hint
         self.request_id = request_id
         self.source = source

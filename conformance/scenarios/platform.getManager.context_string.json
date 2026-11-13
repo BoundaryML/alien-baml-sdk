@@ -1,0 +1,78 @@
+{
+  "id": "platform.getManager.context_string",
+  "phase": 1,
+  "notes": "A context that is a JSON string arrives as that string, on the error and on a source level: it is not wrapped in an object and not parsed. The inner one is JSON text, and stays text; the innermost is empty.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 422,
+        "json": {
+          "code": "VALIDATION_FAILED",
+          "message": "The request is not valid.",
+          "retryable": false,
+          "internal": false,
+          "context": "name must be at most 64 characters",
+          "source": {
+            "code": "INNER",
+            "message": "The inner error.",
+            "internal": false,
+            "context": "{\"looks\":\"like JSON\"}",
+            "source": {
+              "code": "INNERMOST",
+              "message": "The innermost error.",
+              "internal": false,
+              "context": ""
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "VALIDATION_FAILED",
+    "retryable": false,
+    "http_status": 422,
+    "context": "name must be at most 64 characters",
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "INNER",
+      "message": "The inner error.",
+      "retryable": false,
+      "http_status": null,
+      "context": "{\"looks\":\"like JSON\"}",
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "INNERMOST",
+        "message": "The innermost error.",
+        "retryable": false,
+        "http_status": null,
+        "context": "",
+        "hint": null,
+        "request_id": null,
+        "internal": false,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

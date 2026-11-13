@@ -60,6 +60,14 @@ requested.
   and a listed `source` is compared whole, level by level: every field of
   each level, `message` included, and a field the scenario leaves out must
   be null. Every harness reports every field, under these names.
+- A `context` is JSON data and is compared as it is, with nothing dropped:
+  a null member is not an absent one, `1` is not `"1"`, `0` is not `false`
+  or `null`, and an array keeps its order. Two things do not count: the
+  order of an object's keys, and whether a number is written `1` or `1.0`
+  (the comparison runs in JavaScript, which has one number type; each
+  language's own suite checks the number types it gets). The Rust harness
+  loads a scenario with its object keys sorted, so the stub sends them in
+  that order; nothing compared depends on it.
 
 The comparison lives in the stub (`stub-server/normalize.mjs`), so every
 language uses the same one.
@@ -84,8 +92,10 @@ script, or the specs and importer it reads, and rerun it.
 - `ops.<op>.success` sets every argument; `ops.<op>.required_only` (when the
   operation has optional arguments) sets none of them; `ops.<op>.api_error`
   answers with the service's error body (Platform `APIError`, Manager
-  `ErrorResponse`) and the error status the operation declares first, and
-  expects an `AlienError` with the server's code. `EXTRA_CASES` in the
+  `ErrorResponse`, each with a `context` and a one-level `source`) and the
+  error status the operation declares first, and expects an `AlienError`
+  with the server's code, hint, request ID, `internal` flag, context as
+  sent and source. `EXTRA_CASES` in the
   script adds other error mapping cases for a few representative operations,
   and `UNION_CASES` three `deployments.get` responses with external bindings
   this SDK does not know: a known `type` with a new `service`

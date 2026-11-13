@@ -35,7 +35,8 @@
   "expect_error": {
     "code": "FORBIDDEN",
     "retryable": false,
-    "http_status": 403
+    "http_status": 403,
+    "context": null
   },
   "assert": []
 }

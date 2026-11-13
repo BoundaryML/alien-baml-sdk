@@ -1,0 +1,122 @@
+{
+  "id": "platform.getManager.context_numbers_in_object",
+  "phase": 1,
+  "notes": "Numbers inside a context object keep their values and stay numbers: integers, a float, negative ones, zero, and digits in a string that stay a string; the same inside an array on a source level. A boolean context arrives as a boolean.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 422,
+        "json": {
+          "code": "VALIDATION_FAILED",
+          "message": "The request is not valid.",
+          "retryable": false,
+          "internal": false,
+          "context": {
+            "count": 3,
+            "ratio": 0.25,
+            "delta": -7,
+            "negativeRatio": -1.5,
+            "zero": 0,
+            "digits": "3",
+            "limits": {
+              "max": 64,
+              "weights": [
+                0.5,
+                -0.125,
+                0.001
+              ]
+            }
+          },
+          "source": {
+            "code": "INNER",
+            "message": "The inner error.",
+            "internal": false,
+            "context": [
+              3,
+              0.25,
+              -7,
+              -1.5,
+              0,
+              "3"
+            ],
+            "source": {
+              "code": "INNERMOST",
+              "message": "The innermost error.",
+              "internal": false,
+              "context": true
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "VALIDATION_FAILED",
+    "retryable": false,
+    "http_status": 422,
+    "context": {
+      "count": 3,
+      "ratio": 0.25,
+      "delta": -7,
+      "negativeRatio": -1.5,
+      "zero": 0,
+      "digits": "3",
+      "limits": {
+        "max": 64,
+        "weights": [
+          0.5,
+          -0.125,
+          0.001
+        ]
+      }
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "INNER",
+      "message": "The inner error.",
+      "retryable": false,
+      "http_status": null,
+      "context": [
+        3,
+        0.25,
+        -7,
+        -1.5,
+        0,
+        "3"
+      ],
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "INNERMOST",
+        "message": "The innermost error.",
+        "retryable": false,
+        "http_status": null,
+        "context": true,
+        "hint": null,
+        "request_id": null,
+        "internal": false,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

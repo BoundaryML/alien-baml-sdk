@@ -31,7 +31,8 @@
   "expect_error": {
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": true,
-    "http_status": 502
+    "http_status": 502,
+    "context": null
   },
   "assert": []
 }

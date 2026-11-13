@@ -19,8 +19,7 @@ class ApiErrorBody {
 
 /// The Manager API error body: its `ErrorResponse` (`code`, `message`,
 /// `details`), and the fields of Alien's own error, which a Manager can send
-/// as well. `context` is accepted and not kept: the error's context stays
-/// `path` and `details`.
+/// as well.
 class ManagerErrorBody {
     code: string,
     message: string,
@@ -159,15 +158,15 @@ function communication_error(method: string, path: string, status: int?, detail:
         message: `HTTP request ${method} ${path} failed: ${detail}`,
         retryable: true,
         http_status: status,
-        context: { "method": method, "path": path },
+        context: { "method": method },
     }
 }
 
 /// The error for a 2xx response whose body does not decode. `json_path` is
 /// where in the body decoding failed (`baml.json.DecodeError.path`, such as
 /// `.items[3].status`; "" when BAML gives none) and `reason` the decoder's
-/// message. The message leads with both; the context keeps `reason` whole
-/// (`decode_error`), however long, and `json_path` when there is one.
+/// message. The message leads with both; the context (`decode_context`)
+/// keeps `reason` whole, however long, and `json_path` when there is one.
 function malformed_response(status: int, path: string, json_path: string, reason: string) -> root.errors.AlienError {
     let at = match (json_path) {
         "" => "",
@@ -178,13 +177,14 @@ function malformed_response(status: int, path: string, json_path: string, reason
         message: `Response from ${path} did not match the expected shape${at}: ${decode_summary(reason)}`,
         retryable: false,
         http_status: status,
-        context: with_decode_error({ "path": path }, json_path, reason),
+        context: decode_context(json_path, reason),
     }
 }
 
-/// `context` plus where and why a body did not decode: `json_path` when it
-/// is known, and `decode_error`, the decoder's whole message.
-function with_decode_error(context: map<string, string>, json_path: string, reason: string) -> map<string, string> {
+/// The context that says where and why a body did not decode: `json_path`
+/// when it is known, and `decode_error`, the decoder's whole message.
+function decode_context(json_path: string, reason: string) -> json {
+    let context: map<string, json> = {};
     if (json_path != "") {
         context["json_path"] = json_path;
     }
@@ -204,13 +204,13 @@ function decode_summary(reason: string) -> string {
 }
 
 /// The context of an error response whose body is not the API's error body:
-/// its first 1,000 characters, and, when the body is JSON of another shape,
-/// where and why it did not decode as the error body (`with_decode_error`).
-function error_body_context(path: string, body: string, mismatch: baml.json.DecodeError?) -> map<string, string> {
-    let context: map<string, string> = { "path": path, "body": body.slice(0, 1000) };
+/// when the body is JSON of another shape, where and why it did not decode
+/// as the error body (`decode_context`); null otherwise. The body itself is
+/// not kept: it can hold anything, a credential included.
+function error_body_context(mismatch: baml.json.DecodeError?) -> json {
     match (mismatch) {
-        let e: baml.json.DecodeError => with_decode_error(context, e.path, e.message),
-        null => context,
+        let e: baml.json.DecodeError => decode_context(e.path, e.message),
+        null => null,
     }
 }
 
@@ -246,21 +246,6 @@ function json_http_status(value: json) -> int? {
     }
 }
 
-/// The context of a `source` level: its `context` as JSON text under
-/// `details`, as a Platform API error keeps its own; null when it has none.
-function chain_context(value: json) -> map<string, string>? {
-    match (value) {
-        null => null,
-        _ => {
-            // Parsed from JSON text, so it always has a JSON form.
-            let text = baml.json.stringify(value) catch (e) {
-                _ => return null,
-            };
-            { "details": text }
-        },
-    }
-}
-
 /// The error an API error body's `source` describes, with its own `source`
 /// chain; null when `value` is not a JSON object. `level` is how far below
 /// the thrown error it sits: levels 1 to `max_source_depth()` are kept, the
@@ -270,8 +255,8 @@ function chain_context(value: json) -> map<string, string>? {
 /// of the error that carries it. As in Alien's own clients
 /// (`parse_source_error`), `code` defaults to `NESTED_ERROR`, `message` to
 /// `Nested error` and `retryable` to false, also when the field has another
-/// type. Unlike them, it reads `hint`, `httpStatusCode`, `requestId` and
-/// `internal` on every level too.
+/// type, and `context` is the level's own, as sent. Unlike them, it reads
+/// `hint`, `httpStatusCode`, `requestId` and `internal` on every level too.
 function error_chain(value: json, level: int = 1) -> root.errors.AlienError? {
     if (level > max_source_depth()) {
         return null;
@@ -282,7 +267,7 @@ function error_chain(value: json, level: int = 1) -> root.errors.AlienError? {
             message: json_string(baml.json.field(fields, "message")) ?? "Nested error",
             retryable: json_bool(baml.json.field(fields, "retryable")) ?? false,
             http_status: json_http_status(baml.json.field(fields, "httpStatusCode")),
-            context: chain_context(baml.json.field(fields, "context")),
+            context: baml.json.field(fields, "context"),
             hint: json_string(baml.json.field(fields, "hint")),
             request_id: json_string(baml.json.field(fields, "requestId")),
             source: error_chain(baml.json.field(fields, "source"), level = level + 1),
@@ -293,10 +278,10 @@ function error_chain(value: json, level: int = 1) -> root.errors.AlienError? {
 }
 
 /// A non-2xx Platform API response. Alien's API error body keeps its code,
-/// message, retryable flag, hint, request ID, `internal` flag and `source`
-/// chain (`error_chain`), and puts its request ID, hint and context (as JSON
-/// text, `details`) in the error's context as well; anything else becomes
-/// `PLATFORM_HTTP_ERROR`, retryable on 408, 429 and 5xx.
+/// message, retryable flag, hint, request ID, `internal` flag, `source`
+/// chain (`error_chain`) and context, which is the body's `context` exactly
+/// as sent, whatever JSON it is; anything else becomes `PLATFORM_HTTP_ERROR`,
+/// retryable on 408, 429 and 5xx.
 function platform_http_error(status: int, path: string, body: string) -> root.errors.AlienError {
     let mismatch: baml.json.DecodeError? = null;
     let api = baml.json.decode<ApiErrorBody>(body) catch (e) {
@@ -307,46 +292,33 @@ function platform_http_error(status: int, path: string, body: string) -> root.er
         baml.json.ParseError => null,
     };
     match (api) {
-        let parsed: ApiErrorBody => {
-            let context: map<string, string> = { "path": path };
-            if let id: string = parsed.requestId {
-                context["requestId"] = id;
-            }
-            if let hint: string = parsed.hint {
-                context["hint"] = hint;
-            }
-            if (parsed.context != null) {
-                // Parsed from JSON text, so it always has a JSON form: no NaN, no cycle.
-                context["details"] = baml.json.stringify(parsed.context) catch (e) {
-                    _ => throw malformed_response(status, path, e.path, e.message),
-                };
-            }
-            root.errors.AlienError {
-                code: parsed.code,
-                message: parsed.message,
-                retryable: parsed.retryable ?? false,
-                http_status: status,
-                context: context,
-                hint: parsed.hint,
-                request_id: parsed.requestId,
-                source: error_chain(parsed.source),
-                internal: parsed.internal,
-            }
+        let parsed: ApiErrorBody => root.errors.AlienError {
+            code: parsed.code,
+            message: parsed.message,
+            retryable: parsed.retryable ?? false,
+            http_status: status,
+            context: parsed.context,
+            hint: parsed.hint,
+            request_id: parsed.requestId,
+            source: error_chain(parsed.source),
+            internal: parsed.internal,
         },
         null => root.errors.AlienError {
             code: "PLATFORM_HTTP_ERROR",
             message: `Platform API returned HTTP ${status} for ${path}`,
             retryable: status == 408 || status == 429 || status >= 500,
             http_status: status,
-            context: error_body_context(path, body, mismatch),
+            context: error_body_context(mismatch),
         },
     }
 }
 
 /// A non-2xx Manager API response. The Manager's error body keeps its code,
 /// message, hint, request ID, `internal` flag and `source` chain
-/// (`error_chain`); `details` goes to context. Anything else becomes
-/// `MANAGER_HTTP_ERROR`. Neither is retryable, as in `@alienplatform/commands`.
+/// (`error_chain`). Its context is the body's `context` as sent when it has
+/// one, else `{"details": details}` when it has `details`, else null.
+/// Anything else becomes `MANAGER_HTTP_ERROR`. Neither is retryable, as in
+/// `@alienplatform/commands`.
 function manager_http_error(status: int, path: string, body: string) -> root.errors.AlienError {
     let mismatch: baml.json.DecodeError? = null;
     let api = baml.json.decode<ManagerErrorBody>(body) catch (e) {
@@ -357,30 +329,40 @@ function manager_http_error(status: int, path: string, body: string) -> root.err
         baml.json.ParseError => null,
     };
     match (api) {
-        let parsed: ManagerErrorBody => {
-            let context: map<string, string> = { "path": path };
-            if let details: string = parsed.details {
-                context["details"] = details;
-            }
-            root.errors.AlienError {
-                code: parsed.code,
-                message: parsed.message,
-                retryable: false,
-                http_status: status,
-                context: context,
-                hint: parsed.hint,
-                request_id: parsed.requestId,
-                source: error_chain(parsed.source),
-                internal: parsed.internal,
-            }
+        let parsed: ManagerErrorBody => root.errors.AlienError {
+            code: parsed.code,
+            message: parsed.message,
+            retryable: false,
+            http_status: status,
+            context: manager_context(parsed),
+            hint: parsed.hint,
+            request_id: parsed.requestId,
+            source: error_chain(parsed.source),
+            internal: parsed.internal,
         },
         null => root.errors.AlienError {
             code: "MANAGER_HTTP_ERROR",
             message: `Manager returned HTTP ${status} for ${path}`,
             retryable: false,
             http_status: status,
-            context: error_body_context(path, body, mismatch),
+            context: error_body_context(mismatch),
         },
+    }
+}
+
+/// The context of a Manager error: the body's `context` as sent when it has
+/// one; else its `details`, the `ErrorResponse` field, under that name; else
+/// null.
+function manager_context(body: ManagerErrorBody) -> json {
+    if (body.context != null) {
+        return body.context;
+    }
+    match (body.details) {
+        let details: string => {
+            let context: json = { "details": details };
+            context
+        },
+        null => null,
     }
 }
 

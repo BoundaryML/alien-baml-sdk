@@ -138,9 +138,12 @@
     "retryable": true,
     "http_status": 409,
     "context": {
-      "path": "/v1/deployments?workspace=my-workspace",
-      "details": "{\"field\":\"name\"}"
-    }
+      "field": "name"
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": null
   },
   "assert": []
 }

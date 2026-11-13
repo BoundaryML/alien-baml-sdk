@@ -204,6 +204,92 @@ fn every_operation_has_a_builder() {
     );
 }
 
+/// The error of `alien.managers().get("mgr_x")` when the stub answers 400
+/// with `body`, sent as written (JSON text).
+async fn error_for_body(stub: &Stub, body: &str) -> Error {
+    let loaded = stub.post(
+        "/__load",
+        &json!({ "scenario": {
+            "id": "error_context", "phase": 0,
+            "call": { "fn": "platform.getManager", "args": { "client": { "base_url": "${stub.base}", "api_key": "${secrets.apiKey}" } } },
+            "exchanges": [{
+                "expect": { "method": "GET", "path": "/v1/managers/mgr_x" },
+                "respond": { "status": 400, "text": body, "headers": { "content-type": "application/json" } },
+            }],
+        } }),
+    );
+    alien(&loaded["call"]["args"]["client"])
+        .managers()
+        .get("mgr_x")
+        .send()
+        .await
+        .expect_err("the stub answers 400")
+}
+
+/// What a thrown `json` context is in Rust: `serde_json::Value`, at the top
+/// and on every `source` level, an integer an integer and a float a float.
+#[tokio::test(flavor = "multi_thread")]
+async fn context_is_the_servers_json() {
+    require_isolated_baml_home();
+    alien_sdk::init().expect("start the BAML runtime");
+    let stub = Stub::start();
+    let nested = r#"{"s":"t","i":7,"neg":-7,"f":2.5,"whole":1.0,"zero":0,"b":true,"n":null,"past_2_53":9007199254740993,"arr":[1,"a",null,{"k":[2.5,-0.125]}],"obj":{"z":1,"a":{"deep":[]}}}"#;
+    let body = format!(
+        r#"{{"code":"TOP","message":"m","context":{nested},"source":{{"code":"L1","message":"m","context":[1,{nested}],"source":{{"code":"L2","message":"m","context":"just text","source":{{"code":"L3","message":"m","context":-0.5,"source":{{"code":"L4","message":"m","context":7,"source":{{"code":"L5","message":"m","context":false,"source":{{"code":"L6","message":"m","context":null}}}}}}}}}}}}}}"#
+    );
+    let Error::Alien(error) = error_for_body(&stub, &body).await else {
+        panic!("expected an AlienError");
+    };
+    let want: Value = serde_json::from_str(nested).expect("nested");
+    let mut contexts = Vec::new();
+    let mut level = Some(&error);
+    while let Some(e) = level {
+        contexts.push(e.context.clone());
+        level = e.source.as_deref();
+    }
+    assert_eq!(
+        contexts,
+        [
+            Some(want.clone()),
+            Some(json!([1, want])),
+            Some(json!("just text")),
+            Some(json!(-0.5)),
+            Some(json!(7)),
+            Some(json!(false)),
+            // A JSON null context is no context.
+            None,
+        ]
+    );
+    let context = error.context.as_ref().expect("a context");
+    // Value's equality already tells 1 from 1.0; spelled out:
+    assert!(context["i"].is_i64() && context["neg"].is_i64() && context["zero"].is_i64());
+    assert!(context["f"].is_f64() && context["whole"].is_f64());
+    assert_ne!(context["whole"], json!(1));
+    // An integer above 2^53 is exact.
+    assert_eq!(context["past_2_53"].as_i64(), Some(9_007_199_254_740_993));
+    assert_eq!(serde_json::to_value(context).expect("serializable"), want);
+
+    // An integer outside the i64/u64 range has no serde_json::Value form:
+    // the call fails with Error::Runtime, whatever else the error held
+    // (docs/gaps.md#b19). 2^64 - 1 is the largest that fits.
+    let fits = error_for_body(&stub, r#"{"code":"X","message":"m","context":{"n":18446744073709551615}}"#).await;
+    match fits {
+        Error::Alien(e) => assert_eq!(e.context, Some(json!({ "n": u64::MAX }))),
+        other => panic!("expected an AlienError, got {other}"),
+    }
+    for too_large in ["18446744073709551616", "-9223372036854775809", "123456789012345678901234567890"] {
+        for body in [
+            format!(r#"{{"code":"X","message":"m","context":{{"n":{too_large}}}}}"#),
+            format!(r#"{{"code":"X","message":"m","source":{{"code":"Y","message":"m","context":[{too_large}]}}}}"#),
+        ] {
+            match error_for_body(&stub, &body).await {
+                Error::Runtime(error) => println!("{too_large}: Error::Runtime: {error}"),
+                other => panic!("{too_large}: expected Error::Runtime, got {other:?}"),
+            }
+        }
+    }
+}
+
 /// An error as the stub compares it: every field, under its BAML name,
 /// `source` level by level.
 fn error_outcome(e: &AlienError) -> Value {

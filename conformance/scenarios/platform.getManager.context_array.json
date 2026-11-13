@@ -1,0 +1,120 @@
+{
+  "id": "platform.getManager.context_array",
+  "phase": 1,
+  "notes": "A context that is a JSON array arrives as that array, on the error and on a source level, with its strings, numbers, booleans, nulls, nested arrays and objects in place; an empty array stays an empty array.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 422,
+        "json": {
+          "code": "VALIDATION_FAILED",
+          "message": "The request is not valid.",
+          "retryable": false,
+          "internal": false,
+          "context": [
+            "name",
+            64,
+            true,
+            null,
+            [
+              "nested",
+              -1
+            ],
+            {
+              "field": "name",
+              "missing": null
+            }
+          ],
+          "source": {
+            "code": "INNER",
+            "message": "The inner error.",
+            "internal": false,
+            "context": [
+              {
+                "step": 1
+              },
+              {
+                "step": 2,
+                "skipped": false
+              }
+            ],
+            "source": {
+              "code": "INNERMOST",
+              "message": "The innermost error.",
+              "internal": false,
+              "context": []
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "VALIDATION_FAILED",
+    "retryable": false,
+    "http_status": 422,
+    "context": [
+      "name",
+      64,
+      true,
+      null,
+      [
+        "nested",
+        -1
+      ],
+      {
+        "field": "name",
+        "missing": null
+      }
+    ],
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "INNER",
+      "message": "The inner error.",
+      "retryable": false,
+      "http_status": null,
+      "context": [
+        {
+          "step": 1
+        },
+        {
+          "step": 2,
+          "skipped": false
+        }
+      ],
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "INNERMOST",
+        "message": "The innermost error.",
+        "retryable": false,
+        "http_status": null,
+        "context": [],
+        "hint": null,
+        "request_id": null,
+        "internal": false,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

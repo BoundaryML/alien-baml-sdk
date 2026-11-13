@@ -17,7 +17,10 @@
   "expect_error": {
     "code": "SETUP_INVALID_STACK_NAME",
     "retryable": false,
-    "http_status": null
+    "http_status": null,
+    "context": {
+      "field": "stackName"
+    }
   },
   "assert": [
     "no_requests"

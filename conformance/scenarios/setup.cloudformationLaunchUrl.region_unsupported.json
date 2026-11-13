@@ -17,7 +17,11 @@
   "expect_error": {
     "code": "SETUP_REGION_UNSUPPORTED",
     "retryable": false,
-    "http_status": null
+    "http_status": null,
+    "context": {
+      "field": "region",
+      "region": "cn-north-1"
+    }
   },
   "assert": [
     "no_requests"

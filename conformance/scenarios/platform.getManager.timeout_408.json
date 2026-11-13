@@ -28,7 +28,8 @@
   "expect_error": {
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": true,
-    "http_status": 408
+    "http_status": 408,
+    "context": null
   },
   "assert": []
 }

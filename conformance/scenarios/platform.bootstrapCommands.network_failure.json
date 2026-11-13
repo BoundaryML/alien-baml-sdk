@@ -31,7 +31,10 @@
   "expect_error": {
     "code": "COMMUNICATION_ERROR",
     "retryable": true,
-    "http_status": null
+    "http_status": null,
+    "context": {
+      "method": "POST"
+    }
   },
   "assert": []
 }

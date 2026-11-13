@@ -14,13 +14,30 @@ function error_of_send(base_url: string) -> string {
     }
 }
 
-function context_of(e: root.errors.AlienError) -> map<string, string> {
-    e.context ?? {}
+/// An error's context as JSON text: `null` when it has none.
+function context_of(e: root.errors.AlienError) -> string {
+    baml.json.stringify(e.context) catch (e) {
+        _ => "not JSON",
+    }
 }
 
-/// The context of a Platform API error whose body has this JSON `context`.
-function platform_error_context(context: string) -> map<string, string> {
+/// The string at `key` of an error's context, or null.
+function context_string(e: root.errors.AlienError, key: string) -> string? {
+    json_string(baml.json.field(e.context, key))
+}
+
+/// The context, as JSON text, of a Platform API error whose body has this
+/// JSON `context`.
+function platform_error_context(context: string) -> string {
     context_of(platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m","context":${context}}`))
+}
+
+/// The same for the first `source` level of a Platform API error.
+function source_context(context: string) -> string {
+    match (platform_error_source(`{"code":"INNER","message":"m","context":${context}}`)) {
+        let level: root.errors.AlienError => context_of(level),
+        null => "no source",
+    }
 }
 
 /// A Platform API error body, code `TOP`, whose `source` chain is `depth`
@@ -158,13 +175,8 @@ testset "http helpers" {
         assert.equal(e.request_id, "req_1");
         assert.equal(e.internal, false);
         assert.equal(e.source, null);
-        // The context still carries them as strings.
-        let context = context_of(e);
-        assert.equal(context.length(), 4);
-        assert.equal(context["path"], "/v1/x");
-        assert.equal(context["hint"], "use a shorter name");
-        assert.equal(context["requestId"], "req_1");
-        assert.equal(context["details"], `{"field":"name"}`);
+        // The context is the body's, with nothing of the SDK's added.
+        assert.equal(context_of(e), `{"field":"name"}`);
     }
 
     test "platform API errors keep the source chain, every field of every level" {
@@ -186,8 +198,8 @@ testset "http helpers" {
         assert.equal(first.hint, "ask an admin");
         assert.equal(first.request_id, "req_inner");
         assert.equal(first.internal, false);
-        // A level's context is its JSON text, under `details`.
-        assert.equal(first.context, { "details": `{"policy":"p1","limits":[1,2.5,null]}` });
+        // A level's context is its own, as sent.
+        assert.equal(context_of(first), `{"policy":"p1","limits":[1,2.5,null]}`);
         let second = first.source ?? invalid_request("no second level");
         assert.equal(second.code, "QUOTA");
         assert.equal(second.message, "quota exceeded");
@@ -196,7 +208,7 @@ testset "http helpers" {
         assert.equal(second.hint, null);
         assert.equal(second.request_id, null);
         assert.equal(second.internal, true);
-        assert.equal(second.context, { "details": `"cpu"` });
+        assert.equal(context_of(second), `"cpu"`);
         assert.equal(second.source, null);
     }
 
@@ -272,18 +284,56 @@ testset "http helpers" {
         }
     }
 
-    test "platform API error context is kept as JSON text, and left out when null" {
-        assert.equal(platform_error_context("null").length(), 1);
-        assert.equal(platform_error_context("null").get("details"), null);
-        assert.equal(platform_error_context(`"why"`)["details"], `"why"`);
-        assert.equal(platform_error_context(`[1,"a",null]`)["details"], `[1,"a",null]`);
+    test "a server's context is kept exactly as sent, whatever JSON it is, at the top and on a source level" {
+        for (let sent in [
+            `{"field":"name","limits":{"max":64,"ratio":0.5,"offset":-3},"tags":["a",1,null,true]}`,
+            `"why"`,
+            `""`,
+            `[1,"a",null,[2.5,-7],{"k":false}]`,
+            `[]`,
+            `{}`,
+            "7",
+            "-7",
+            "0",
+            "2.5",
+            "-0.125",
+            "true",
+            "false",
+            // Above 2^53, and above BAML's 63-bit int.
+            "9007199254740993",
+            "123456789012345678901234567890",
+        ]) {
+            assert.equal(platform_error_context(sent), sent);
+            assert.equal(source_context(sent), sent);
+        }
+        // A whole float stays a float, an integer an integer.
+        assert.equal(platform_error_context("1.0"), "1.0");
+        assert.equal(platform_error_context("1"), "1");
+        assert.equal(platform_error_context(`{"n":1.0,"m":1}`), `{"n":1.0,"m":1}`);
+        // Keys keep the order they were sent in.
+        assert.equal(platform_error_context(`{"z":1,"a":2}`), `{"z":1,"a":2}`);
+        // No context, or a null one, is null.
+        assert.equal(platform_error_context("null"), "null");
+        assert.equal(platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m"}`).context, null);
+        assert.equal(source_context("null"), "null");
+    }
+
+    test "a server's context gets no key of the SDK's: no path, request ID, hint or details" {
+        let e = platform_http_error(
+            404,
+            "/v1/managers/mgr_1?token=secret",
+            `{"code":"NOT_FOUND","message":"m","hint":"h","requestId":"req_1","context":{"id":"mgr_1"}}`,
+        );
+        assert.equal(context_of(e), `{"id":"mgr_1"}`);
+        assert.equal(e.hint, "h");
+        assert.equal(e.request_id, "req_1");
     }
 
     test "platform API errors without a retryable flag are not retryable" {
         let e = platform_http_error(409, "/v1/x", `{"code":"CONFLICT","message":"exists"}`);
         assert.equal(e.code, "CONFLICT");
         assert.equal(e.retryable, false);
-        assert.equal(context_of(e).length(), 1);
+        assert.equal(e.context, null);
     }
 
     test "other platform error bodies become PLATFORM_HTTP_ERROR, retryable on 408, 429 and 5xx" {
@@ -293,7 +343,9 @@ testset "http helpers" {
         assert.equal(platform_http_error(408, "/v1/x", "").retryable, true);
         assert.equal(platform_http_error(400, "/v1/x", `{"error":"x"}`).code, "PLATFORM_HTTP_ERROR");
         assert.equal(platform_http_error(400, "/v1/x", `{"error":"x"}`).retryable, false);
-        assert.equal(context_of(platform_http_error(500, "/v1/x", "oops"))["body"], "oops");
+        // The body is not kept, nor the path: there is nothing to put in the context.
+        assert.equal(platform_http_error(500, "/v1/x?token=secret", "oops").context, null);
+        assert.equal(platform_http_error(500, "/v1/x", "").context, null);
     }
 
     test "manager error bodies keep code and message, never retryable" {
@@ -302,7 +354,8 @@ testset "http helpers" {
         assert.equal(e.message, "later");
         assert.equal(e.retryable, false);
         assert.equal(e.http_status, 503);
-        assert.equal(context_of(e), { "path": "/v1/commands/c1", "details": "queue full" });
+        // An ErrorResponse has no context: its details stand in.
+        assert.equal(context_of(e), `{"details":"queue full"}`);
         assert.equal(has_no_server_fields(e), true);
     }
 
@@ -320,15 +373,28 @@ testset "http helpers" {
         assert.equal(e.hint, "retry in a minute");
         assert.equal(e.request_id, "req_m1");
         assert.equal(e.internal, false);
-        // The context is still `path` and `details`.
-        assert.equal(context_of(e), { "path": "/v1/commands/c1" });
+        // The body's context, as sent.
+        assert.equal(context_of(e), `{"queue":"full"}`);
         assert.equal(chain_codes(e), ">UNAVAILABLE>STORE_DOWN>NESTED_ERROR");
         let first = e.source ?? invalid_request("no first level");
         // A source level is read as the server wrote it, `retryable` included.
         assert.equal(first.retryable, true);
         assert.equal(first.http_status, 502);
-        assert.equal(first.context, { "details": `{"store":"kv"}` });
+        assert.equal(context_of(first), `{"store":"kv"}`);
         assert.equal(first.source?.message, "connection refused");
+    }
+
+    test "a manager error's context is the body's context, else its details, else null" {
+        let both = manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":"why","context":{"field":"name","n":[1,2.5]}}`);
+        assert.equal(context_of(both), `{"field":"name","n":[1,2.5]}`);
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","context":"just text"}`)), `"just text"`);
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","context":[1,-2]}`)), `[1,-2]`);
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","context":0}`)), "0");
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","context":false}`)), "false");
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":"why"}`)), `{"details":"why"}`);
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":"why","context":null}`)), `{"details":"why"}`);
+        assert.equal(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m"}`).context, null);
+        assert.equal(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":null,"context":null}`).context, null);
     }
 
     test "the errors the SDK raises itself have no hint, request ID, source or internal flag" {
@@ -348,7 +414,7 @@ testset "http helpers" {
         let e = manager_http_error(502, "/v1/commands", "bad gateway");
         assert.equal(e.code, "MANAGER_HTTP_ERROR");
         assert.equal(e.retryable, false);
-        assert.equal(context_of(e)["body"], "bad gateway");
+        assert.equal(e.context, null);
     }
 
     test "a response that does not decode says where in the body, and why" {
@@ -357,17 +423,14 @@ testset "http helpers" {
         let e = decode_error_of<root.platform.Manager[]>(`[${valid},${invalid}]`);
         assert.equal(e.code, "MALFORMED_RESPONSE");
         assert.equal(e.message, "Response from /v1/x did not match the expected shape at [1].managementConfigs.aws.managingRoleArn: expected string");
-        assert.equal(context_of(e)["path"], "/v1/x");
-        assert.equal(context_of(e)["json_path"], "[1].managementConfigs.aws.managingRoleArn");
-        assert.equal(context_of(e)["decode_error"], "expected string");
+        assert.equal(context_of(e), `{"json_path":"[1].managementConfigs.aws.managingRoleArn","decode_error":"expected string"}`);
     }
 
     test "a body that is not JSON, or does not match at its root, has no json_path" {
         let text = decode_error_of<root.platform.Manager>("<html>busy</html>");
         assert.equal(text.message, "Response from /v1/x did not match the expected shape: expected value at line 1 column 1");
-        assert.equal(context_of(text).get("json_path"), null);
-        assert.equal(context_of(text)["decode_error"], "expected value at line 1 column 1");
-        assert.equal(context_of(decode_error_of<root.platform.Manager>("[]")).get("json_path"), null);
+        assert.equal(context_of(text), `{"decode_error":"expected value at line 1 column 1"}`);
+        assert.equal(context_string(decode_error_of<root.platform.Manager>("[]"), "json_path"), null);
     }
 
     test "a long decoder message is cut in the error message and kept whole in the context" {
@@ -376,7 +439,7 @@ testset "http helpers" {
             long = long + "`platform.ExternalBindingStorageS3`: literal mismatch at `.service`; ";
         }
         let e = malformed_response(200, "/v1/x", "", long);
-        assert.equal(context_of(e)["decode_error"], long);
+        assert.equal(context_string(e, "decode_error"), long);
         assert.equal(e.message.length() < 400, true);
         assert.equal(e.message.starts_with("Response from /v1/x did not match the expected shape: no union member matched: "), true);
         assert.equal(e.message.ends_with("… (the whole message is in context.decode_error)"), true);
@@ -385,21 +448,31 @@ testset "http helpers" {
     test "a failure inside a nested class says where" {
         let e = decode_error_of<root.platform.ListDeploymentsResponse>(`{"items":[{"id":"d1"}]}`);
         assert.equal(e.code, "MALFORMED_RESPONSE");
-        assert.equal(context_of(e)["json_path"], ".items[0]");
+        assert.equal(context_string(e, "json_path"), ".items[0]");
     }
 
     test "an error body that is JSON of another shape says why it is not the API's error body" {
-        let platform = context_of(platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m","retryable":"yes"}`));
-        assert.equal(platform["json_path"], ".retryable");
-        assert.equal(platform["decode_error"], "expected boolean");
-        assert.equal(platform["body"], `{"code":"BAD","message":"m","retryable":"yes"}`);
-        let missing = context_of(platform_http_error(502, "/v1/x", `{"message":"bad gateway"}`));
-        assert.equal(missing.get("json_path"), null);
-        assert.equal(missing["decode_error"], "missing required field `code`");
-        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":1,"message":"m"}`))["json_path"], ".code");
-        // A body that is not JSON at all is only quoted.
-        assert.equal(context_of(platform_http_error(500, "/v1/x", "oops")).length(), 2);
-        assert.equal(context_of(manager_http_error(502, "/v1/c", "bad gateway")).length(), 2);
+        let platform = platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m","retryable":"yes"}`);
+        assert.equal(platform.code, "PLATFORM_HTTP_ERROR");
+        assert.equal(context_of(platform), `{"json_path":".retryable","decode_error":"expected boolean"}`);
+        let missing = platform_http_error(502, "/v1/x", `{"message":"bad gateway"}`);
+        assert.equal(context_of(missing), "{\"decode_error\":\"missing required field `code`\"}");
+        assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":1,"message":"m"}`)), `{"json_path":".code","decode_error":"expected string"}`);
+        // A body that is not JSON at all leaves nothing to say: no context.
+        assert.equal(platform_http_error(500, "/v1/x", "oops").context, null);
+        assert.equal(manager_http_error(502, "/v1/c", "bad gateway").context, null);
+    }
+
+    test "the contexts of the SDK's own errors hold no request path and no response body" {
+        let path = "/v1/user/invitations/tok_secret/accept?workspace=w";
+        assert.equal(context_of(communication_error("POST", path, null, "refused")), `{"method":"POST"}`);
+        assert.equal(context_of(communication_error("GET", path, 200, "reset")), `{"method":"GET"}`);
+        assert.equal(context_of(malformed_response(200, path, ".a", "why")), `{"json_path":".a","decode_error":"why"}`);
+        assert.equal(context_of(malformed_response(200, path, "", "why")), `{"decode_error":"why"}`);
+        assert.equal(invalid_request("m").context, null);
+        assert.equal(context_of(setup_error("SETUP_REGION_UNSUPPORTED", "m", { "field": "region", "region": "cn-north-1" })), `{"field":"region","region":"cn-north-1"}`);
+        // The messages still name the path.
+        assert.equal(communication_error("POST", path, null, "refused").message, `HTTP request POST ${path} failed: refused`);
     }
 
     test "a timeout says which limit elapsed, and after how long when BAML says" {

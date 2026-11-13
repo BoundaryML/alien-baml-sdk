@@ -114,10 +114,11 @@
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": true,
     "http_status": 500,
-    "context": {
-      "path": "/v1/deployments?workspace=my-workspace&project=project%20value&deploymentGroup=deploymentGroup%20value&name=name%20value&managerId=managerId%20value&purpose=application&search=search%20value&status=pending&status=preflights-failed&environment=aws&environment=gcp&include=release&include=deploymentGroup&limit=2&cursor=cursor%20value",
-      "body": "upstream failed"
-    }
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

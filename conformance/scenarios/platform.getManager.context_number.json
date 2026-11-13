@@ -1,0 +1,78 @@
+{
+  "id": "platform.getManager.context_number",
+  "phase": 1,
+  "notes": "A context that is a JSON number arrives as that number, not as its text: a negative float on the error, an integer on a source level, zero on the next. A number is never equal to a string of its digits.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 422,
+        "json": {
+          "code": "VALIDATION_FAILED",
+          "message": "The request is not valid.",
+          "retryable": false,
+          "internal": false,
+          "context": -12.5,
+          "source": {
+            "code": "INNER",
+            "message": "The inner error.",
+            "internal": false,
+            "context": 42,
+            "source": {
+              "code": "INNERMOST",
+              "message": "The innermost error.",
+              "internal": false,
+              "context": 0
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "VALIDATION_FAILED",
+    "retryable": false,
+    "http_status": 422,
+    "context": -12.5,
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "INNER",
+      "message": "The inner error.",
+      "retryable": false,
+      "http_status": null,
+      "context": 42,
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "INNERMOST",
+        "message": "The innermost error.",
+        "retryable": false,
+        "http_status": null,
+        "context": 0,
+        "hint": null,
+        "request_id": null,
+        "internal": false,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

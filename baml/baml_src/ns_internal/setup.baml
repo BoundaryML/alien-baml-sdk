@@ -1,5 +1,5 @@
 /// A non-retryable setup validation error.
-function setup_error(code: string, message: string, context: map<string, string>) -> root.errors.AlienError {
+function setup_error(code: string, message: string, context: json) -> root.errors.AlienError {
     root.errors.AlienError {
         code: code,
         message: message,

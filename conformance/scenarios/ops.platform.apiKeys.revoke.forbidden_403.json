@@ -49,9 +49,11 @@
     "code": "FORBIDDEN",
     "retryable": false,
     "http_status": 403,
-    "context": {
-      "path": "/v1/api-keys/apikey_ye96yxs1tjnrrwulp8frhapikeyy?workspace=my-workspace"
-    }
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": null
   },
   "assert": []
 }

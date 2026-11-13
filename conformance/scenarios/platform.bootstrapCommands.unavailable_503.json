@@ -40,7 +40,9 @@
   "expect_error": {
     "code": "SERVICE_UNAVAILABLE",
     "retryable": true,
-    "http_status": 503
+    "http_status": 503,
+    "context": null,
+    "request_id": "00000000-0000-4000-8000-000000000000"
   },
   "assert": []
 }

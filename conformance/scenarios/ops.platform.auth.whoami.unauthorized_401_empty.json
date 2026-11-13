@@ -37,10 +37,11 @@
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": false,
     "http_status": 401,
-    "context": {
-      "path": "/v1/whoami?workspace=my-workspace",
-      "body": ""
-    }
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

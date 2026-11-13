@@ -275,10 +275,8 @@ def test_alien_error(stub, secrets) -> None:
     assert (error.code, error.retryable, error.http_status) == ("NOT_FOUND", False, 404)
     assert str(error) == "NOT_FOUND: Manager not found."
     assert (error.hint, error.request_id, error.internal, error.source) == ("Check the ID.", "req_1", None, None)
-    # The context is unchanged: it still carries the hint and the request ID as strings.
-    assert error.context is not None
-    assert (error.context["requestId"], error.context["hint"]) == ("req_1", "Check the ID.")
-    assert json.loads(error.context["details"]) == {"id": "mgr_x"}
+    # The server's context as sent: no path, request ID, hint or details added.
+    assert error.context == {"id": "mgr_x"}
     # No source, so no cause; and the runtime's error is not chained either.
     assert error.__cause__ is None and error.__context__ is None and error.__suppress_context__ is False
     assert f"{type(error).__module__}.{type(error).__qualname__}" == "alien_sdk.AlienError"
@@ -286,6 +284,83 @@ def test_alien_error(stub, secrets) -> None:
         assert type(clone) is AlienError
         assert _fields(clone) == _fields(error)
         assert clone.__cause__ is None
+
+
+def _raw_error(stub, secrets, body: str, asynchronous: bool = False) -> AlienError:
+    """The error for this response body, sent as written (JSON text)."""
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_x"},
+                  "respond": {"status": 400, "text": body, "headers": {"content-type": "application/json"}}})
+    with pytest.raises(AlienError) as info:
+        if asynchronous:
+            asyncio.run(AsyncAlien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x"))
+        else:
+            Alien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x")
+    requests(stub)
+    return info.value
+
+
+def _typed(value: object) -> object:
+    """A JSON value with the type of every number, bool and None spelled out,
+    so that 1, 1.0 and True, which Python compares equal, differ."""
+    if isinstance(value, dict):
+        return {key: _typed(member) for key, member in value.items()}
+    if isinstance(value, list):
+        return [_typed(member) for member in value]
+    return (type(value).__name__, value)
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_context_is_the_servers_json(stub, secrets, asynchronous: bool) -> None:
+    nested = ('{"s":"t","i":7,"neg":-7,"f":2.5,"whole":1.0,"zero":0,"b":true,"n":null,'
+              '"past_2_53":9007199254740993,"huge":123456789012345678901234567890,'
+              '"arr":[1,"a",null,{"k":[2.5,-0.125]}],"obj":{"z":1,"a":{"deep":[]}}}')
+    error = _raw_error(stub, secrets, (
+        f'{{"code":"TOP","message":"m","context":{nested},'
+        f'"source":{{"code":"L1","message":"m","context":[1,{nested}],'
+        '"source":{"code":"L2","message":"m","context":"just text",'
+        '"source":{"code":"L3","message":"m","context":-0.5,'
+        '"source":{"code":"L4","message":"m","context":7,'
+        '"source":{"code":"L5","message":"m","context":false}}}}}}'
+    ), asynchronous)
+    want = {
+        "s": "t", "i": 7, "neg": -7, "f": 2.5, "whole": 1.0, "zero": 0, "b": True, "n": None,
+        # Python's int has no limit: integers of any size arrive exact.
+        "past_2_53": 9007199254740993, "huge": 123456789012345678901234567890,
+        "arr": [1, "a", None, {"k": [2.5, -0.125]}], "obj": {"z": 1, "a": {"deep": []}},
+    }
+    levels = []
+    level: AlienError | None = error
+    while level is not None:
+        levels.append(level.context)
+        level = level.source
+    # dict, list, str, int, float, bool and None: json.loads' types, an integer an int and 1.0 a float.
+    assert [_typed(context) for context in levels] == [_typed(c) for c in (want, [1, want], "just text", -0.5, 7, False)]
+    assert json.loads(json.dumps(error.context)) == want
+    assert list(error.context) == list(want)  # keys in the order sent
+    # Stored as given: the constructor does not copy or convert it.
+    given = {"a": [1]}
+    assert AlienError("X", "m", False, context=given).context is given
+    for scalar in ("text", 7, 2.5, True, [1, 2]):
+        assert AlienError("X", "m", False, None, scalar).context == scalar
+
+
+def test_a_context_is_never_the_request_path_or_the_response_body(stub, secrets) -> None:
+    # A server error body that is not the API's: nothing to put in the context.
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_x"}, "respond": {"status": 502, "text": "bad gateway: secret"}})
+    with pytest.raises(AlienError) as info:
+        Alien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x")
+    assert (info.value.code, info.value.context) == ("PLATFORM_HTTP_ERROR", None)
+    # JSON of another shape: where and why it is not the API's error body.
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_x"}, "respond": {"status": 400, "json": {"code": 7, "message": "m"}}})
+    with pytest.raises(AlienError) as info:
+        Alien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x")
+    assert (info.value.code, info.value.context) == ("PLATFORM_HTTP_ERROR", {"json_path": ".code", "decode_error": "expected string"})
+    # A request that cannot be sent: the method, not the path.
+    with pytest.raises(AlienError) as info:
+        Alien(secrets["apiKey"], server_url="http://127.0.0.1:1").managers.get("mgr_x")
+    assert (info.value.code, info.value.context) == ("COMMUNICATION_ERROR", {"method": "GET"})
+    assert "/v1/managers/mgr_x" in info.value.message  # the message still names it
+    requests(stub)
 
 
 # Every field of Alien's error, with a two-level `source` chain.
@@ -316,11 +391,11 @@ def test_the_cause_chain_is_the_servers_source_chain(stub, secrets, asynchronous
     error = _chained(stub, secrets, asynchronous)
     assert _fields(error) == {
         "code": "DEPLOY_FAILED", "message": "deploy failed", "retryable": False, "http_status": 500,
-        "context": {"path": "/v1/managers/mgr_x", "requestId": "req_top", "hint": "see the source", "details": '{"step":3}'},
+        "context": {"step": 3},
         "hint": "see the source", "request_id": "req_top", "internal": True,
         "source": {
             "code": "SANDBOX_REFUSED", "message": "the sandbox refused", "retryable": True, "http_status": 403,
-            "context": {"details": '{"policy":"p1"}'}, "hint": "ask an admin", "request_id": "req_inner", "internal": False,
+            "context": {"policy": "p1"}, "hint": "ask an admin", "request_id": "req_inner", "internal": False,
             "source": {
                 "code": "QUOTA", "message": "quota exceeded", "retryable": False, "http_status": None,
                 "context": None, "hint": None, "request_id": None, "internal": True, "source": None,
@@ -354,7 +429,7 @@ def test_a_chained_error_survives_pickle_and_copy(stub, secrets) -> None:
     # So is an error built directly, with `source` by position or by keyword.
     inner = AlienError("INNER", "inner", False)
     by_keyword = AlienError("OUTER", "outer", True, source=inner)
-    by_position = AlienError("OUTER", "outer", True, 502, {"path": "/v1/x"}, "a hint", "req_1", inner, False)
+    by_position = AlienError("OUTER", "outer", True, 502, {"field": "name"}, "a hint", "req_1", inner, False)
     assert by_keyword.__cause__ is inner and by_position.__cause__ is inner
     assert (by_position.hint, by_position.request_id, by_position.source, by_position.internal) == ("a hint", "req_1", inner, False)
     assert inner.__cause__ is None and inner.__suppress_context__ is False
@@ -370,10 +445,10 @@ def test_the_facade_maps_every_field_of_the_generated_error() -> None:
     assert tuple(p.name for p in parameters) == ERROR_FIELDS
     assert all(p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD for p in parameters)  # pickle rebuilds with cls(*args)
     innermost = _gen.errors.AlienError(
-        code="INNER", message="inner", retryable=True, http_status=403, context={"details": "{}"},
+        code="INNER", message="inner", retryable=True, http_status=403, context=["inner", 1, {"a": None}],
         hint="inner hint", request_id="req_inner", source=None, internal=True)
     value = _gen.errors.AlienError(
-        code="OUTER", message="outer", retryable=False, http_status=500, context={"path": "/v1/x"},
+        code="OUTER", message="outer", retryable=False, http_status=500, context={"field": "name", "limits": [1, 2.5]},
         hint="outer hint", request_id="req_outer", source=innermost, internal=False)
     assert set(value.model_fields_set) == generated  # the fixture sets every field
     error = alien_sdk._errors._from_generated(value)

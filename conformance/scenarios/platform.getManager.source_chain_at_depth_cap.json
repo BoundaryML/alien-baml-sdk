@@ -76,6 +76,7 @@
     "code": "TOP_LEVEL",
     "retryable": true,
     "http_status": 502,
+    "context": null,
     "hint": null,
     "request_id": null,
     "internal": false,
