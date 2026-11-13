@@ -1,0 +1,47 @@
+{
+  "id": "manager.getCommandStatus.error_context_wins_over_details",
+  "phase": 1,
+  "notes": "A Manager error body with both context and details: the context is the body's context as sent, here a string, and details is not kept.",
+  "call": {
+    "fn": "manager.getCommandStatus",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "token": "${secrets.managerToken}"
+      },
+      "command_id": "cmd_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_1",
+        "headers": {
+          "authorization": "Bearer ${secrets.managerToken}"
+        }
+      },
+      "respond": {
+        "status": 400,
+        "json": {
+          "code": "INVALID_COMMAND",
+          "message": "The command is not valid.",
+          "details": "command is required",
+          "context": "the payload has no command"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "INVALID_COMMAND",
+    "retryable": false,
+    "http_status": 400,
+    "context": "the payload has no command",
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

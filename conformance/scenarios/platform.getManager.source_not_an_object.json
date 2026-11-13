@@ -37,10 +37,7 @@
     "code": "CONFLICT",
     "retryable": false,
     "http_status": 409,
-    "context": {
-      "path": "/v1/managers/mgr_1",
-      "hint": "Pick another name."
-    },
+    "context": null,
     "hint": "Pick another name.",
     "request_id": null,
     "internal": true,

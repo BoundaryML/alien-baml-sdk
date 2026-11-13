@@ -2,9 +2,9 @@
 ///
 /// Mirrors Alien's error contract (`AlienErrorData`): a machine-readable
 /// `code`, a human-readable `message`, whether retrying can help, the HTTP
-/// status when one was involved, string context for debugging, and the
-/// server's `hint`, request ID, `internal` flag and `source` chain when the
-/// error came from an API error body.
+/// status when one was involved, a JSON context, and the server's `hint`,
+/// request ID, `internal` flag and `source` chain when the error came from an
+/// API error body.
 ///
 /// Codes this SDK raises itself:
 ///
@@ -25,9 +25,9 @@
 /// ...}`) keeps the server's `code`, `message` and `retryable` (for example
 /// `SERVICE_UNAVAILABLE`), with `http_status` set to the response status. A
 /// Manager API error response keeps its `code` and `message` and is never
-/// retryable. Both also keep the body's `hint`, `requestId`, `internal` and
-/// `source`. The errors this SDK raises itself (the table above) have none of
-/// the four.
+/// retryable. Both also keep the body's `context`, `hint`, `requestId`,
+/// `internal` and `source`. The errors this SDK raises itself (the table
+/// above) have none of the last four, and a context of the SDK's own.
 class AlienError {
     code: string,
     message: string,
@@ -35,10 +35,14 @@ class AlienError {
     /// The response's status. On a `source` level: that level's own
     /// `httpStatusCode` when it is an integer from 100 to 599, else null.
     http_status: int?,
-    /// Strings for debugging: `path`, and for a server error its request ID
-    /// (`requestId`), hint (`hint`) and context as JSON text (`details`). On
-    /// a `source` level: only `details`, that level's context as JSON text.
-    context: map<string, string>?,
+    /// A server error: the error body's `context` exactly as sent, whatever
+    /// JSON it is (an object, a string, a number, a list), on the thrown
+    /// error and on every `source` level. A Manager `ErrorResponse` without a
+    /// `context` gives `{"details": details}`. An error the SDK raises itself:
+    /// null, or an object with the SDK's own keys (`method`, `json_path`,
+    /// `decode_error`, and those of the `SETUP_*` errors). Never the request
+    /// path or a response body.
+    context: json?,
     /// The server's remediation hint.
     hint: string?,
     /// The server's request ID: the error body's `requestId`.

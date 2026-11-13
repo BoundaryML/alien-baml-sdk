@@ -8,7 +8,7 @@ import type { AddressInfo } from "node:net"
 import { inspect } from "node:util"
 import { BamlAbortError, BamlError } from "@boundaryml/baml-bridge"
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, test, vi } from "vitest"
-import { Alien, AlienError, AlienManager, type platform, shutdown } from "../src/index.js"
+import { Alien, AlienError, AlienManager, type Json, type platform, shutdown } from "../src/index.js"
 import * as sdk from "../generated/index.js"
 
 const KEY = "alien_test_key_6f1c"
@@ -304,10 +304,75 @@ describe("errors", () => {
     const e = error as AlienError
     expect([e.name, e.code, e.message, e.retryable, e.statusCode]).toEqual(["AlienError", "NOT_FOUND", "Manager not found", false, 404])
     expect([e.hint, e.requestId]).toEqual(["Check the manager ID", "req_1"])
-    expect(e.context).toEqual({ path: "/v1/managers/mgr_x", requestId: "req_1", hint: "Check the manager ID", details: '{"id":"mgr_x"}' })
-    // A plain object, not a null-prototype map.
-    expect(Object.getPrototypeOf(e.context)).toBe(Object.prototype)
-    expect(e.context?.hasOwnProperty("path")).toBe(true)
+    // The server's context as sent: no path, request ID, hint or details added.
+    expect(e.context).toStrictEqual({ id: "mgr_x" })
+  })
+
+  /** Every object under `value`, `value` included. */
+  function objects(value: unknown): object[] {
+    if (value === null || typeof value !== "object") return []
+    return [value, ...Object.values(value).flatMap(objects)]
+  }
+
+  test("context is the server's JSON as plain data, at every nesting level and on every source level", async () => {
+    const alien = new Alien({ apiKey: KEY, serverURL })
+    const nested = { s: "t", i: 7, neg: -7, f: 2.5, zero: 0, b: true, n: null, arr: [1, "a", null, { k: [2.5, -0.125] }], obj: { z: 1, a: { deep: [] } } }
+    respond(500, {
+      code: "TOP",
+      message: "m",
+      context: nested,
+      source: {
+        code: "L1",
+        message: "m",
+        context: [1, { a: { b: [nested] } }],
+        source: { code: "L2", message: "m", context: "just text", source: { code: "L3", message: "m", context: -0.5, source: { code: "L4", message: "m", context: nested } } },
+      },
+    })
+    const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
+    const levels = [e, e.source, e.source?.source, e.source?.source?.source, e.source?.source?.source?.source]
+    expect(levels.map((level) => level?.context)).toStrictEqual([nested, [1, { a: { b: [nested] } }], "just text", -0.5, nested])
+    // Plain objects and arrays all the way down, not the runtime's null-prototype maps.
+    const found = levels.flatMap((level) => objects(level?.context))
+    expect(found.length).toBeGreaterThan(20)
+    for (const value of found) {
+      expect([Object.prototype, Array.prototype]).toContain(Object.getPrototypeOf(value))
+    }
+    const context = e.context as { [key: string]: Json }
+    expect(context.hasOwnProperty("s")).toBe(true)
+    expect(String(context)).toBe("[object Object]")
+    expect(JSON.parse(JSON.stringify(e.context))).toStrictEqual(nested)
+  })
+
+  test("a context key named __proto__ stays a key", async () => {
+    const alien = new Alien({ apiKey: KEY, serverURL })
+    response = { status: 400, body: '{"code":"X","message":"m","context":{"__proto__":{"polluted":true},"constructor":"c","a":{"__proto__":1}}}', delayMs: 0 }
+    const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
+    const context = e.context as { [key: string]: Json }
+    expect(Object.keys(context).sort()).toEqual(["__proto__", "a", "constructor"])
+    expect(Object.getPrototypeOf(context)).toBe(Object.prototype)
+    expect(Object.getOwnPropertyDescriptor(context, "__proto__")?.value).toStrictEqual({ polluted: true })
+    expect(Object.getOwnPropertyDescriptor(context.a as object, "__proto__")?.value).toBe(1)
+    expect(context.constructor).toBe("c")
+    expect(({} as { polluted?: boolean }).polluted).toBeUndefined()
+  })
+
+  test("numbers in a context: a number, and a bigint beyond BAML's 63-bit int", async () => {
+    const alien = new Alien({ apiKey: KEY, serverURL })
+    // Raw JSON text: JSON.stringify could not write these integers.
+    response = {
+      status: 400,
+      body: '{"code":"X","message":"m","context":{"int":1,"float":1.0,"fraction":2.5,"safe":9007199254740991,"past_safe":9007199254740993,"huge":123456789012345678901234567890,"negative_huge":-123456789012345678901234567890}}',
+      delayMs: 0,
+    }
+    const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
+    const context = e.context as { [key: string]: Json }
+    // JavaScript has one number type: 1 and 1.0 are the same value.
+    expect([context.int, context.float, context.fraction, context.safe]).toStrictEqual([1, 1, 2.5, Number.MAX_SAFE_INTEGER])
+    // An integer above 2^53 that fits BAML's int is a number, so it is rounded.
+    expect(context.past_safe).toBe(9007199254740992)
+    // One that does not fit is a bigint, exact.
+    expect([context.huge, context.negative_huge]).toStrictEqual([123456789012345678901234567890n, -123456789012345678901234567890n])
+    expect(() => JSON.stringify(e.context)).toThrow(TypeError)
   })
 
   test("an error without a response has no statusCode, hint, requestId, internal flag, source or cause", async () => {
@@ -357,7 +422,7 @@ describe("errors", () => {
     expect(e.cause).toBe(first)
     expect([first?.code, first?.message, first?.retryable, first?.statusCode]).toEqual(["SANDBOX_REFUSED", "the sandbox refused", true, 403])
     expect([first?.hint, first?.requestId, first?.internal]).toEqual(["ask an admin", "req_inner", false])
-    expect(first?.context).toEqual({ details: '{"policy":"p1"}' })
+    expect(first?.context).toStrictEqual({ policy: "p1" })
     const second = first?.source
     expect(second).toBeInstanceOf(AlienError)
     expect(first?.cause).toBe(second)
@@ -483,6 +548,8 @@ describe("types (checked by tsc -p test)", () => {
     expectTypeOf<AlienError["requestId"]>().toEqualTypeOf<string | null>()
     expectTypeOf<AlienError["internal"]>().toEqualTypeOf<boolean | null>()
     expectTypeOf<AlienError["source"]>().toEqualTypeOf<AlienError | null>()
+    expectTypeOf<AlienError["context"]>().toEqualTypeOf<Json | null>()
+    expectTypeOf<{ a: [1, "x", null, { b: true }] }>().toMatchTypeOf<Json>()
     // @ts-expect-error: groups are on the client, without a `.platform` level
     expect(alien.platform).toBeUndefined()
     // @ts-expect-error: only the async functions are bound, not their `_sync` twins

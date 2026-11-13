@@ -19,7 +19,11 @@
   "expect_error": {
     "code": "SETUP_INVALID_PARAMETER",
     "retryable": false,
-    "http_status": null
+    "http_status": null,
+    "context": {
+      "field": "parameters",
+      "key": "Bad-Key"
+    }
   },
   "assert": [
     "no_requests"

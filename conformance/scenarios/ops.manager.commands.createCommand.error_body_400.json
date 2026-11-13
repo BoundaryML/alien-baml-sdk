@@ -73,9 +73,12 @@
     "retryable": false,
     "http_status": 400,
     "context": {
-      "path": "/v1/commands",
       "details": "command is required"
-    }
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

@@ -57,9 +57,12 @@
     "retryable": false,
     "http_status": 200,
     "context": {
-      "path": "/v1/releases/rel_WbhQgksrawSKIpEN0NAssHX9relW?workspace=my-workspace&include=project&include=rollout",
       "decode_error": "missing required field `id`"
-    }
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

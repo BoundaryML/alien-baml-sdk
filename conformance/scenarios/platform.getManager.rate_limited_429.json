@@ -30,7 +30,10 @@
   "expect_error": {
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": true,
-    "http_status": 429
+    "http_status": 429,
+    "context": {
+      "decode_error": "missing required field `code`"
+    }
   },
   "assert": []
 }

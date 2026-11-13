@@ -10,6 +10,11 @@
 //   scenario's expected error lists. A listed `source` is compared whole,
 //   level by level: every field of each level, `message` included, and a
 //   field the scenario leaves out must be null.
+// - a `context` is JSON data and is compared as it is, nothing dropped: a
+//   null member is not an absent one, `1` is not `"1"`, and an array keeps
+//   its order. Only the order of an object's keys does not count, and a
+//   context that is null is the same as none. Numbers are compared as
+//   JavaScript reads them, so `1` and `1.0` are the same number.
 
 import { isDeepStrictEqual } from "node:util"
 
@@ -34,8 +39,15 @@ export function reduceError(error) {
   })
 }
 
-// What an error has besides code, retryable and http_status (and `source`).
-const LISTED_FIELDS = ["context", "hint", "request_id", "internal"]
+// What an error has besides code, retryable, http_status, `context` and
+// `source`.
+const LISTED_FIELDS = ["hint", "request_id", "internal"]
+
+// A context as it is compared: the JSON value itself, with no member dropped.
+// isDeepStrictEqual already ignores the order of an object's keys.
+function wholeContext(error) {
+  return error.context ?? null
+}
 
 // One level of a `source` chain, and the levels below it, with every field:
 // a harness cannot pass by leaving one out, nor a scenario by not listing it.
@@ -44,8 +56,7 @@ function wholeError(error) {
   if (typeof error !== "object" || Array.isArray(error)) return { not_an_error: error }
   const out = { code: error.code, message: error.message, retryable: error.retryable, http_status: error.http_status ?? null }
   for (const key of LISTED_FIELDS) out[key] = error[key] ?? null
-  out.source = wholeError(error.source)
-  return normalize(out)
+  return { ...normalize(out), context: wholeContext(error), source: wholeError(error.source) }
 }
 
 export function compareOutcome(scenario, outcome) {
@@ -60,9 +71,13 @@ export function compareOutcome(scenario, outcome) {
     const got = reduceError(outcome.error)
     for (const key of LISTED_FIELDS) {
       if (key in wantError) {
-        want[key] = normalize(wantError[key] ?? null)
-        got[key] = normalize(outcome.error[key] ?? null)
+        want[key] = wantError[key] ?? null
+        got[key] = outcome.error[key] ?? null
       }
+    }
+    if ("context" in wantError) {
+      want.context = wholeContext(wantError)
+      got.context = wholeContext(outcome.error)
     }
     if ("source" in wantError) {
       want.source = wholeError(wantError.source)

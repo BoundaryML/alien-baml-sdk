@@ -44,9 +44,12 @@
     "retryable": true,
     "http_status": null,
     "context": {
-      "method": "GET",
-      "path": "/v1/commands/command_id-value"
-    }
+      "method": "GET"
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

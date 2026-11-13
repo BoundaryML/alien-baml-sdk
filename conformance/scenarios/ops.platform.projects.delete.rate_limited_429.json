@@ -45,10 +45,11 @@
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": true,
     "http_status": 429,
-    "context": {
-      "path": "/v1/projects/idOrName-value?workspace=my-workspace",
-      "body": "slow down"
-    }
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

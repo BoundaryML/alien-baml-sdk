@@ -1,7 +1,7 @@
 {
   "id": "manager.getCommandStatus.api_error_full",
   "phase": 1,
-  "notes": "A Manager error body in Alien's full error shape keeps hint, request ID, internal flag and the source chain. It is still never retryable, whatever the body says (a source level keeps its own flag), and its context is still path and details: the body's context is not kept.",
+  "notes": "A Manager error body in Alien's full error shape keeps hint, request ID, internal flag, context and the source chain. Its context is the body's context as sent, not its details. It is still never retryable, whatever the body says (a source level keeps its own flag).",
   "call": {
     "fn": "manager.getCommandStatus",
     "args": {
@@ -58,8 +58,7 @@
     "retryable": false,
     "http_status": 503,
     "context": {
-      "path": "/v1/commands/cmd_1",
-      "details": "kv timeout"
+      "store": "kv"
     },
     "hint": "Retry in a minute.",
     "request_id": "req_manager_1",
@@ -70,7 +69,7 @@
       "retryable": true,
       "http_status": 504,
       "context": {
-        "details": "{\"timeoutMs\":3000}"
+        "timeoutMs": 3000
       },
       "hint": null,
       "request_id": null,

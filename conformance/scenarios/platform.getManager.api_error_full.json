@@ -1,7 +1,7 @@
 {
   "id": "platform.getManager.api_error_full",
   "phase": 1,
-  "notes": "An API error keeps every field of Alien's error: hint, request ID, internal flag and the source chain, each level with its own fields. A level's context is its JSON text (an object, then an array with numbers); the top-level context is unchanged. Context keys are in alphabetical order here because the Rust harness loads a scenario with its keys sorted, and the JSON text keeps the order the stub sends.",
+  "notes": "An API error keeps every field of Alien's error: hint, request ID, internal flag, context and the source chain, each level with its own fields. Every context arrives exactly as sent: an object at the top, an object with a nested object on the first source level, an array with numbers and a null on the second. Nothing of the SDK's is added to a server's context.",
   "call": {
     "fn": "platform.getManager",
     "args": {
@@ -30,8 +30,8 @@
           "hint": "See the source error.",
           "requestId": "req_top_1",
           "context": {
-            "attempt": 2,
-            "deploymentId": "dep_1"
+            "deploymentId": "dep_1",
+            "attempt": 2
           },
           "source": {
             "code": "SANDBOX_REFUSED",
@@ -42,10 +42,10 @@
             "hint": "Ask a workspace admin.",
             "requestId": "req_inner_1",
             "context": {
+              "policy": "p1",
               "limits": {
                 "cpu": 2
-              },
-              "policy": "p1"
+              }
             },
             "source": {
               "code": "QUOTA_EXCEEDED",
@@ -70,10 +70,8 @@
     "retryable": false,
     "http_status": 500,
     "context": {
-      "path": "/v1/managers/mgr_1",
-      "requestId": "req_top_1",
-      "hint": "See the source error.",
-      "details": "{\"attempt\":2,\"deploymentId\":\"dep_1\"}"
+      "deploymentId": "dep_1",
+      "attempt": 2
     },
     "hint": "See the source error.",
     "request_id": "req_top_1",
@@ -84,7 +82,10 @@
       "retryable": true,
       "http_status": 403,
       "context": {
-        "details": "{\"limits\":{\"cpu\":2},\"policy\":\"p1\"}"
+        "policy": "p1",
+        "limits": {
+          "cpu": 2
+        }
       },
       "hint": "Ask a workspace admin.",
       "request_id": "req_inner_1",
@@ -94,9 +95,12 @@
         "message": "The CPU quota is exceeded.",
         "retryable": false,
         "http_status": null,
-        "context": {
-          "details": "[1,2.5,\"cpu\",null]"
-        },
+        "context": [
+          1,
+          2.5,
+          "cpu",
+          null
+        ],
         "hint": null,
         "request_id": null,
         "internal": true,

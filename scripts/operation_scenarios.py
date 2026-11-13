@@ -23,7 +23,9 @@ Every operation gets:
   header and body, and decodes a spec-shaped response.
 - `ops.<fn>.required_only` (when it has optional arguments): none of them set.
 - `ops.<fn>.api_error`: the service's error body (Platform `APIError`, 404;
-  Manager `ErrorResponse`, 404) becomes an AlienError with its code.
+  Manager `ErrorResponse`, 404), with a `context` and a one-level `source`,
+  becomes an AlienError with its code, hint, request ID, `internal` flag,
+  context as sent and source.
 EXTRA_CASES below adds other error mapping cases for representative operations,
 and UNION_CASES members of a union tagged by two fields that this SDK does not
 know.
@@ -59,67 +61,80 @@ SERVICES = {
     },
 }
 
+# The `source` of the error bodies below, and the error it becomes. The stub
+# compares a `source` whole (conformance/README.md), so every field is listed.
+ERROR_SOURCE = {"code": "STORE_LOOKUP_FAILED", "message": "The store has no such row.", "retryable": True,
+                "internal": True, "context": {"table": "resources", "shard": 3}}
+EXPECTED_SOURCE = {"code": "STORE_LOOKUP_FAILED", "message": "The store has no such row.", "retryable": True,
+                   "http_status": None, "context": {"table": "resources", "shard": 3}, "hint": None,
+                   "request_id": None, "internal": True, "source": None}
+
 API_ERROR = {"code": "RESOURCE_NOT_FOUND", "message": "No such resource.", "retryable": False,
-             "internal": False, "requestId": "req_fixture_1", "hint": "Check the ID."}
+             "internal": False, "requestId": "req_fixture_1", "hint": "Check the ID.",
+             "context": {"resource": "fixture", "attempts": [1, 2]}, "source": ERROR_SOURCE}
+EXPECTED_API_ERROR = {"code": "RESOURCE_NOT_FOUND", "retryable": False,
+                      "context": {"resource": "fixture", "attempts": [1, 2]}, "hint": "Check the ID.",
+                      "request_id": "req_fixture_1", "internal": False, "source": EXPECTED_SOURCE}
 
 # `ops.<fn>.api_error`, per service: the error body and the expected error,
 # sent with the status the operation declares first (404 when it declares it
 # or none). The bodies are valid for every error schema the specs use:
-# Platform `APIError`, Manager `ErrorResponse` and `AlienError`.
+# Platform `APIError`, Manager `ErrorResponse` and `AlienError`. The expected
+# context is the body's `context`, exactly as sent.
 API_ERROR_CASE = {
-    "platform": (API_ERROR,
-                 {"code": "RESOURCE_NOT_FOUND", "retryable": False,
-                  "context": {"path": "path", "requestId": "req_fixture_1", "hint": "Check the ID."}}),
-    "manager": ({"code": "NOT_FOUND", "message": "No such resource.", "details": "unknown id", "retryable": False, "internal": False},
-                {"code": "NOT_FOUND", "retryable": False, "context": {"path": "path", "details": "unknown id"}}),
+    "platform": (API_ERROR, EXPECTED_API_ERROR),
+    "manager": ({"code": "NOT_FOUND", "message": "No such resource.", "details": "unknown id", "retryable": False, "internal": False,
+                 "context": {"resource": "fixture", "attempts": [1, 2]}, "source": ERROR_SOURCE},
+                {"code": "NOT_FOUND", "retryable": False, "context": {"resource": "fixture", "attempts": [1, 2]},
+                 "hint": None, "request_id": None, "internal": False, "source": EXPECTED_SOURCE}),
 }
+
+# What an expected error lists when the response is not a server's error
+# body: none of the server's fields.
+NO_SERVER_FIELDS = {"hint": None, "request_id": None, "internal": None, "source": None}
 
 # Error mapping (docs/errors.md) on representative operations, plus a `null`
 # body for a nullable response: (operation, case, response, expected error or
-# {"ok": value}), every argument set. `path` in an expected context stands for
-# the request path with its query string.
+# {"ok": value}), every argument set.
 EXTRA_CASES = [
     ("platform.managers.get", "api_error_404",
      {"status": 404, "json": API_ERROR},
-     {"code": "RESOURCE_NOT_FOUND", "retryable": False, "http_status": 404,
-      "context": {"path": "path", "requestId": "req_fixture_1", "hint": "Check the ID."}}),
+     {**EXPECTED_API_ERROR, "http_status": 404}),
     ("platform.deployments.create", "api_error_retryable_409",
      {"status": 409, "json": {"code": "CONFLICT", "message": "Busy.", "retryable": True, "internal": False, "context": {"field": "name"}}},
-     {"code": "CONFLICT", "retryable": True, "http_status": 409,
-      "context": {"path": "path", "details": "{\"field\":\"name\"}"}}),
+     {"code": "CONFLICT", "retryable": True, "http_status": 409, "context": {"field": "name"},
+      "hint": None, "request_id": None, "internal": False, "source": None}),
     ("platform.deployments.list", "server_error_500_text",
      {"status": 500, "text": "upstream failed"},
-     {"code": "PLATFORM_HTTP_ERROR", "retryable": True, "http_status": 500,
-      "context": {"path": "path", "body": "upstream failed"}}),
+     {"code": "PLATFORM_HTTP_ERROR", "retryable": True, "http_status": 500, "context": None, **NO_SERVER_FIELDS}),
     ("platform.apiKeys.revoke", "forbidden_403",
      {"status": 403, "json": {"code": "FORBIDDEN", "message": "Not allowed.", "internal": False}},
-     {"code": "FORBIDDEN", "retryable": False, "http_status": 403, "context": {"path": "path"}}),
+     {"code": "FORBIDDEN", "retryable": False, "http_status": 403, "context": None,
+      "hint": None, "request_id": None, "internal": False, "source": None}),
     ("platform.auth.whoami", "unauthorized_401_empty",
      {"status": 401},
-     {"code": "PLATFORM_HTTP_ERROR", "retryable": False, "http_status": 401, "context": {"path": "path", "body": ""}}),
+     {"code": "PLATFORM_HTTP_ERROR", "retryable": False, "http_status": 401, "context": None, **NO_SERVER_FIELDS}),
     ("platform.projects.delete", "rate_limited_429",
      {"status": 429, "text": "slow down"},
-     {"code": "PLATFORM_HTTP_ERROR", "retryable": True, "http_status": 429,
-      "context": {"path": "path", "body": "slow down"}}),
+     {"code": "PLATFORM_HTTP_ERROR", "retryable": True, "http_status": 429, "context": None, **NO_SERVER_FIELDS}),
     ("platform.releases.get", "malformed_200",
      {"status": 200, "json": {"unexpected": True}},
      {"code": "MALFORMED_RESPONSE", "retryable": False, "http_status": 200,
-      "context": {"path": "path", "decode_error": "missing required field `id`"}}),
+      "context": {"decode_error": "missing required field `id`"}, **NO_SERVER_FIELDS}),
     ("platform.deployments.getUpdateOperation", "null_body",
      {"status": 200, "json": None},
      {"ok": None}),
     ("manager.commands.createCommand", "error_body_400",
      {"status": 400, "json": {"code": "INVALID_COMMAND", "message": "Bad command.", "details": "command is required"}},
      {"code": "INVALID_COMMAND", "retryable": False, "http_status": 400,
-      "context": {"path": "path", "details": "command is required"}}),
+      "context": {"details": "command is required"}, **NO_SERVER_FIELDS}),
     ("manager.commands.getCommandStatus", "http_error_502_text",
      {"status": 502, "text": "bad gateway"},
-     {"code": "MANAGER_HTTP_ERROR", "retryable": False, "http_status": 502,
-      "context": {"path": "path", "body": "bad gateway"}}),
+     {"code": "MANAGER_HTTP_ERROR", "retryable": False, "http_status": 502, "context": None, **NO_SERVER_FIELDS}),
     ("manager.commands.getCommandStatus", "network_failure",
      {"drop": True},
      {"code": "COMMUNICATION_ERROR", "retryable": True, "http_status": None,
-      "context": {"method": "GET", "path": "path"}}),
+      "context": {"method": "GET"}, **NO_SERVER_FIELDS}),
 ]
 
 # A union whose members are told apart by two fields (`ExternalBinding`:
@@ -142,7 +157,8 @@ UNION_CASES = [
     ("platform.deployments.get", "external_binding_known_malformed", ["stackSettings", "externalBindings"],
      {"files": {**S3_BINDING, "forcePathStyle": "yes"}},
      {"code": "MALFORMED_RESPONSE", "retryable": False, "http_status": 200,
-      "context": {"path": "path", "decode_error": "expected boolean", "json_path": ".stackSettings.externalBindings[\"files\"].forcePathStyle"}}),
+      "context": {"json_path": ".stackSettings.externalBindings[\"files\"].forcePathStyle", "decode_error": "expected boolean"},
+      **NO_SERVER_FIELDS}),
 ]
 
 
@@ -654,10 +670,8 @@ def operation_scenarios(service: str, op_id: str, spec: Spec, values: Values, fn
         return path, expect
 
     def scenario(case: str, args: dict, respond: dict, outcome: dict, notes: str) -> dict:
-        path, expect = request(args)
+        _, expect = request(args)
         error = None if "ok" in outcome else dict(outcome)
-        if error and "context" in error:
-            error["context"] = {k: (path if v == "path" else v) for k, v in error["context"].items()}
         return literal({
             "id": f"{PREFIX}{fn['fn']}.{case}",
             "phase": PHASE,

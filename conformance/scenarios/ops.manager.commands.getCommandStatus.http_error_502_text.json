@@ -44,10 +44,11 @@
     "code": "MANAGER_HTTP_ERROR",
     "retryable": false,
     "http_status": 502,
-    "context": {
-      "path": "/v1/commands/command_id-value",
-      "body": "bad gateway"
-    }
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

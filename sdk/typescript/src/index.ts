@@ -10,6 +10,7 @@ import { type Bound, type BoundOperations, type Groups, bind } from "./bind.js"
 import { AlienError, call, callSync } from "./errors.js"
 
 export { AlienError } from "./errors.js"
+export type { Json } from "./errors.js"
 /**
  * Types of the Platform and Manager APIs (request and response shapes). Types
  * only: request bodies are plain objects, as in Alien's TypeScript SDK, and the

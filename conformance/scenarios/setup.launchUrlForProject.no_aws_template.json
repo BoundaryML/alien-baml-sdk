@@ -33,7 +33,10 @@
   "expect_error": {
     "code": "SETUP_TEMPLATE_UNAVAILABLE",
     "retryable": false,
-    "http_status": null
+    "http_status": null,
+    "context": {
+      "project": "my-project"
+    }
   },
   "assert": []
 }

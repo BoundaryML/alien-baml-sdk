@@ -105,7 +105,24 @@
           "retryable": false,
           "internal": false,
           "requestId": "req_fixture_1",
-          "hint": "Check the ID."
+          "hint": "Check the ID.",
+          "context": {
+            "resource": "fixture",
+            "attempts": [
+              1,
+              2
+            ]
+          },
+          "source": {
+            "code": "STORE_LOOKUP_FAILED",
+            "message": "The store has no such row.",
+            "retryable": true,
+            "internal": true,
+            "context": {
+              "table": "resources",
+              "shard": 3
+            }
+          }
         }
       }
     }
@@ -115,9 +132,28 @@
     "code": "RESOURCE_NOT_FOUND",
     "retryable": false,
     "context": {
-      "path": "/v1/releases?workspace=my-workspace&project=project%20value&channel=c&allChannels=true&include=project&include=rollout&search=search%20value&branch=branch%20value&author=author%20value&createdAfter=2026-10-01T00%3A00%3A00Z&createdBefore=2026-10-01T00%3A00%3A00Z&limit=2&cursor=cursor%20value",
-      "requestId": "req_fixture_1",
-      "hint": "Check the ID."
+      "resource": "fixture",
+      "attempts": [
+        1,
+        2
+      ]
+    },
+    "hint": "Check the ID.",
+    "request_id": "req_fixture_1",
+    "internal": false,
+    "source": {
+      "code": "STORE_LOOKUP_FAILED",
+      "message": "The store has no such row.",
+      "retryable": true,
+      "http_status": null,
+      "context": {
+        "table": "resources",
+        "shard": 3
+      },
+      "hint": null,
+      "request_id": null,
+      "internal": true,
+      "source": null
     },
     "http_status": 400
   },

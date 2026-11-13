@@ -474,6 +474,14 @@ form: an integer outside the i64/u64 range"). Requests cannot hit it: every
 `serde_json` integer is an `i64` or a `u64`. The other languages map `json` to
 `unknown`, `Any` and `any`; no scenario covers such a number.
 
+An error's `context` is `json` too, and a server writes it. Such an integer
+anywhere in the context of an error body, or of a level of its `source`
+chain, makes the Rust call return `Error::Runtime` ("BAML error
+[user.errors.AlienError]: " and the error's message) in place of the
+`AlienError`: the code, the retryable flag and the other fields are lost.
+`tests/conformance.rs` (`context_is_the_servers_json`) pins this, and that
+`u64::MAX` still arrives ([errors.md](errors.md#context)).
+
 ## B20
 
 **The Rust generator skips unions of string literals that are not Rust

@@ -67,7 +67,6 @@
     "retryable": false,
     "http_status": 200,
     "context": {
-      "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
       "json_path": ".managementConfigs.aws.managingRoleArn",
       "decode_error": "expected string"
     }

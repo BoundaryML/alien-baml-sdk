@@ -78,7 +78,8 @@ testset "command_registry_unavailable" {
         assert.equal(e.message, "The API cannot serve the request right now.");
         assert.equal(e.retryable, true);
         assert.equal(e.http_status, 503);
-        assert.equal(e.context?.get("requestId"), "00000000-0000-4000-8000-000000000000");
+        assert.equal(e.request_id, "00000000-0000-4000-8000-000000000000");
+        assert.equal(e.context, null);
     }
 
     test "a non-API error body becomes PLATFORM_HTTP_ERROR, retryable on 408, 429 and 5xx" {

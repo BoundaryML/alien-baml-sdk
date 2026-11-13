@@ -29,8 +29,14 @@ type AlienError struct {
 	Retryable bool   `json:"retryable"`
 	// HTTPStatus is the response's status; nil when there was no response.
 	// On a Source level: the status that level names, if any.
-	HTTPStatus *int              `json:"http_status"`
-	Context    map[string]string `json:"context"`
+	HTTPStatus *int `json:"http_status"`
+	// Context is JSON data as encoding/json decodes it into an any: a
+	// map[string]any, a []any, a string, a float64, a bool, or nil. For a
+	// server error it is the error body's context exactly as sent; for an
+	// error the SDK raises itself, nil or an object with the SDK's own keys
+	// (docs/errors.md). Every number is a float64, so an integer above 2^53
+	// is rounded.
+	Context any `json:"context"`
 	// Hint is the server's remediation hint; "" when it sent none.
 	Hint string `json:"hint"`
 	// RequestID is the server's request ID (the error body's requestId); ""

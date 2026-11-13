@@ -26,7 +26,7 @@
 //! Telemetry is on (`medium`) unless `ALIEN_TELEMETRY=off`; see [`shutdown`]
 //! for when to call it.
 
-use std::{collections::HashMap, convert::Infallible, fmt, time::Duration};
+use std::{convert::Infallible, fmt, time::Duration};
 
 use alien_api::setup;
 
@@ -84,7 +84,11 @@ pub struct AlienError {
     /// The HTTP status of the response that failed, if there was one. On a
     /// `source` level: the status that level names, if any.
     pub http_status_code: Option<u16>,
-    pub context: Option<HashMap<String, String>>,
+    /// JSON data ([`Json`], `serde_json::Value`). For a server error: the
+    /// error body's `context` exactly as sent, whatever JSON it is. For an
+    /// error the SDK raises itself: `None`, or an object with the SDK's own
+    /// keys (docs/errors.md). A JSON `null` context is `None`.
+    pub context: Option<Json>,
     /// The server's remediation hint, if it sent one.
     pub hint: Option<String>,
     /// The server's request ID (the error body's `requestId`), if it sent one.
@@ -134,7 +138,8 @@ impl From<alien_api::errors::AlienError> for AlienError {
             // server wrote, which the BAML code keeps only from 100 to 599.
             // One that still does not fit is dropped, never a panic.
             http_status_code: http_status.and_then(|status| u16::try_from(status).ok()),
-            context: context.map(|context| context.into_iter().collect()),
+            // A JSON null is "no context", as an absent one is.
+            context: context.filter(|context| !context.is_null()),
             hint,
             request_id,
             source: source.map(|source| Box::new(Self::from(*source))),
@@ -152,7 +157,8 @@ pub enum Error {
     Alien(AlienError),
     /// The BAML runtime failed: it could not start or was shut down, a
     /// blocking function was called inside an async runtime, a value has no
-    /// Rust form (a `json` integer outside `i64`/`u64` in a response, docs/gaps.md#b19),
+    /// Rust form (a `json` integer outside `i64`/`u64` in a response or in
+    /// an error's context, docs/gaps.md#b19),
     /// or BAML panicked. Holds the `baml_bridge` error, BAML trace included;
     /// `Display` and `source()` are the held error's.
     Runtime(Box<dyn std::error::Error + Send + Sync>),
@@ -473,11 +479,7 @@ mod tests {
             message: format!("{code} failed"),
             retryable: true,
             http_status,
-            context: Some(
-                [("details".to_string(), "{}".to_string())]
-                    .into_iter()
-                    .collect(),
-            ),
+            context: Some(serde_json::json!({ "field": code, "limits": [1, 2.5, null] })),
             hint: Some(format!("{code} hint")),
             request_id: Some(format!("req_{code}")),
             source: source.map(Box::new),
@@ -523,8 +525,8 @@ mod tests {
             ("OUTER", "OUTER failed", true, Some(500))
         );
         assert_eq!(
-            error.context.as_ref().map(|c| c["details"].as_str()),
-            Some("{}")
+            error.context,
+            Some(serde_json::json!({ "field": "OUTER", "limits": [1, 2.5, null] }))
         );
         assert_eq!(error.hint.as_deref(), Some("OUTER hint"));
         assert_eq!(error.request_id.as_deref(), Some("req_OUTER"));

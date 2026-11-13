@@ -38,7 +38,7 @@ func TestConvert(t *testing.T) {
 		t.Fatalf("thrown AlienError: got %T %v", got, got)
 	}
 	if alienErr.Code != "NOT_FOUND" || alienErr.Message != "no such manager" || !alienErr.Retryable ||
-		alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 || alienErr.Context["requestId"] != "req_1" ||
+		alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 || !reflect.DeepEqual(alienErr.Context, map[string]any{"requestId": "req_1"}) ||
 		alienErr.Hint != "check the ID" || alienErr.RequestID != "req_1" || alienErr.Internal == nil || *alienErr.Internal {
 		t.Errorf("fields: %+v", alienErr)
 	}
@@ -109,6 +109,16 @@ func TestConvert(t *testing.T) {
 	if v, err := Do("value", nil); v != "value" || err != nil {
 		t.Errorf("Do on success: %q %v", v, err)
 	}
+}
+
+// mustDecode is JSON text as encoding/json decodes it into an any.
+func mustDecode(t *testing.T, text []byte) any {
+	t.Helper()
+	var out any
+	if err := json.Unmarshal(text, &out); err != nil {
+		t.Fatal(err)
+	}
+	return out
 }
 
 // newClient is New for options that have an API key.
@@ -346,12 +356,12 @@ func TestCalls(t *testing.T) {
 		}
 		first, second := top.Source, top.Source.Source
 		if top.Code != "DEPLOY_FAILED" || top.Hint != "see the source" || top.RequestID != "req_top" || top.Internal == nil || !*top.Internal ||
-			top.HTTPStatus == nil || *top.HTTPStatus != 500 || top.Context["details"] != `{"step":3}` {
+			top.HTTPStatus == nil || *top.HTTPStatus != 500 || !reflect.DeepEqual(top.Context, map[string]any{"step": 3.0}) {
 			t.Errorf("top: %+v", top)
 		}
 		if first.Code != "SANDBOX_REFUSED" || first.Message != "the sandbox refused" || !first.Retryable || first.Hint != "ask an admin" ||
 			first.RequestID != "req_inner" || first.Internal == nil || *first.Internal || first.HTTPStatus == nil || *first.HTTPStatus != 403 ||
-			fmt.Sprint(first.Context) != `map[details:{"policy":"p1"}]` {
+			!reflect.DeepEqual(first.Context, map[string]any{"policy": "p1"}) {
 			t.Errorf("first source: %+v", first)
 		}
 		if second.Code != "QUOTA" || second.Retryable || second.Hint != "" || second.RequestID != "" || second.Internal == nil || !*second.Internal ||
@@ -364,6 +374,73 @@ func TestCalls(t *testing.T) {
 		var bamlErr *baml_go.BamlError
 		if errors.As(err, &bamlErr) {
 			t.Errorf("the BAML error is in the chain")
+		}
+	})
+
+	t.Run("context is the server's JSON, at the top and on every source level", func(t *testing.T) {
+		const nested = `{"s":"t","i":7,"neg":-7,"f":2.5,"whole":1.0,"zero":0,"b":true,"n":null,"arr":[1,"a",null,{"k":[2.5,-0.125]}],"obj":{"z":1,"a":{"deep":[]}}}`
+		s := server(t, "GET /v1/managers/mgr_x", "Bearer key", 400, `{"code":"TOP","message":"m","context":`+nested+
+			`,"source":{"code":"L1","message":"m","context":[1,`+nested+`],"source":{"code":"L2","message":"m","context":"just text",`+
+			`"source":{"code":"L3","message":"m","context":-0.5,"source":{"code":"L4","message":"m","context":7,"source":{"code":"L5","message":"m","context":false}}}}}}`)
+		_, err := newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Managers.Get(ctx, "mgr_x")
+		var e *AlienError
+		if !errors.As(err, &e) {
+			t.Fatalf("got %T %v", err, err)
+		}
+		// As encoding/json decodes into an any: every number a float64.
+		want := map[string]any{
+			"s": "t", "i": 7.0, "neg": -7.0, "f": 2.5, "whole": 1.0, "zero": 0.0, "b": true, "n": nil,
+			"arr": []any{1.0, "a", nil, map[string]any{"k": []any{2.5, -0.125}}},
+			"obj": map[string]any{"z": 1.0, "a": map[string]any{"deep": []any{}}},
+		}
+		var got []any
+		for level := e; level != nil; level = level.Source {
+			got = append(got, level.Context)
+		}
+		if all := []any{want, []any{1.0, want}, "just text", -0.5, 7.0, false}; !reflect.DeepEqual(got, all) {
+			t.Errorf("contexts:\n got %#v\nwant %#v", got, all)
+		}
+		// It encodes again as the JSON that was sent.
+		var sent any
+		if err := json.Unmarshal([]byte(nested), &sent); err != nil {
+			t.Fatal(err)
+		}
+		if encoded, err := json.Marshal(e.Context); err != nil || !reflect.DeepEqual(mustDecode(t, encoded), sent) {
+			t.Errorf("re-encoded: %s %v", encoded, err)
+		}
+	})
+
+	t.Run("an integer above 2^53 in a context is rounded: every number is a float64", func(t *testing.T) {
+		s := server(t, "GET /v1/managers/mgr_x", "Bearer key", 400,
+			`{"code":"X","message":"m","context":{"safe":9007199254740991,"past_safe":9007199254740993,"huge":123456789012345678901234567890}}`)
+		_, err := newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Managers.Get(ctx, "mgr_x")
+		var e *AlienError
+		if !errors.As(err, &e) {
+			t.Fatalf("got %T %v", err, err)
+		}
+		want := map[string]any{"safe": 9007199254740991.0, "past_safe": 9007199254740992.0, "huge": 1.2345678901234568e29}
+		if !reflect.DeepEqual(e.Context, want) {
+			t.Errorf("got %#v", e.Context)
+		}
+	})
+
+	t.Run("a context is never the request path or the response body", func(t *testing.T) {
+		s := server(t, "GET /v1/managers/mgr_x", "Bearer key", 502, `bad gateway: secret`)
+		_, err := newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Managers.Get(ctx, "mgr_x")
+		var e *AlienError
+		if !errors.As(err, &e) || e.Code != "PLATFORM_HTTP_ERROR" || e.Context != nil {
+			t.Errorf("a body that is not JSON: %+v", e)
+		}
+		s = server(t, "GET /v1/managers/mgr_x", "Bearer key", 400, `{"code":7,"message":"m"}`)
+		_, err = newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Managers.Get(ctx, "mgr_x")
+		if !errors.As(err, &e) || e.Code != "PLATFORM_HTTP_ERROR" ||
+			!reflect.DeepEqual(e.Context, map[string]any{"json_path": ".code", "decode_error": "expected string"}) {
+			t.Errorf("JSON of another shape: %+v", e)
+		}
+		_, err = newClient(t, Options{APIKey: "key", ServerURL: "http://127.0.0.1:1"}).Managers.Get(ctx, "mgr_x")
+		if !errors.As(err, &e) || e.Code != "COMMUNICATION_ERROR" || !reflect.DeepEqual(e.Context, map[string]any{"method": "GET"}) ||
+			!strings.Contains(e.Message, "/v1/managers/mgr_x") {
+			t.Errorf("a request that cannot be sent: %+v", e)
 		}
 	})
 

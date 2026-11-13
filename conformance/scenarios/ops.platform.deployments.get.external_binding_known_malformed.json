@@ -222,10 +222,13 @@
     "retryable": false,
     "http_status": 200,
     "context": {
-      "path": "/v1/deployments/dep_0c29fq4a2yjb7kx3smwdgxlcdep0?workspace=my-workspace&include=release&include=deploymentGroup",
-      "decode_error": "expected boolean",
-      "json_path": ".stackSettings.externalBindings[\"files\"].forcePathStyle"
-    }
+      "json_path": ".stackSettings.externalBindings[\"files\"].forcePathStyle",
+      "decode_error": "expected boolean"
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
   },
   "assert": []
 }

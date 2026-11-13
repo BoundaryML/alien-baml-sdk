@@ -28,7 +28,10 @@
   "expect_error": {
     "code": "MALFORMED_RESPONSE",
     "retryable": false,
-    "http_status": 200
+    "http_status": 200,
+    "context": {
+      "decode_error": "expected value at line 1 column 1"
+    }
   },
   "assert": []
 }

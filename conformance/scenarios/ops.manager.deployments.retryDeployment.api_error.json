@@ -40,7 +40,24 @@
           "message": "No such resource.",
           "details": "unknown id",
           "retryable": false,
-          "internal": false
+          "internal": false,
+          "context": {
+            "resource": "fixture",
+            "attempts": [
+              1,
+              2
+            ]
+          },
+          "source": {
+            "code": "STORE_LOOKUP_FAILED",
+            "message": "The store has no such row.",
+            "retryable": true,
+            "internal": true,
+            "context": {
+              "table": "resources",
+              "shard": 3
+            }
+          }
         }
       }
     }
@@ -50,8 +67,28 @@
     "code": "NOT_FOUND",
     "retryable": false,
     "context": {
-      "path": "/v1/deployments/id-value/retry",
-      "details": "unknown id"
+      "resource": "fixture",
+      "attempts": [
+        1,
+        2
+      ]
+    },
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "STORE_LOOKUP_FAILED",
+      "message": "The store has no such row.",
+      "retryable": true,
+      "http_status": null,
+      "context": {
+        "table": "resources",
+        "shard": 3
+      },
+      "hint": null,
+      "request_id": null,
+      "internal": true,
+      "source": null
     },
     "http_status": 404
   },

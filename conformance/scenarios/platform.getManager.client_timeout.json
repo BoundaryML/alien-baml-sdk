@@ -46,8 +46,7 @@
     "retryable": true,
     "http_status": null,
     "context": {
-      "method": "GET",
-      "path": "/v1/managers/mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr"
+      "method": "GET"
     }
   },
   "assert": []

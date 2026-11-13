@@ -58,10 +58,7 @@
     "code": "CONFLICT",
     "retryable": true,
     "http_status": 409,
-    "context": {
-      "path": "/v1/managers/mgr_1",
-      "requestId": "req_conflict_1"
-    },
+    "context": null,
     "hint": null,
     "request_id": "req_conflict_1",
     "internal": false,

@@ -2,6 +2,27 @@ import { BamlError } from "@boundaryml/baml-bridge"
 import * as sdk from "../generated/index.js"
 
 /**
+ * Any JSON value: what an error's `context` holds. A number is a `number`,
+ * so an integer above 2^53 is rounded; one too large for BAML's 63-bit `int`
+ * is a `bigint` instead, exact (`JSON.stringify` refuses those).
+ */
+export type Json = sdk.baml.json.json
+
+/**
+ * `value` as plain JSON data. The runtime builds JSON objects without a
+ * prototype, at every level; callers get ordinary objects (`hasOwnProperty`,
+ * `toString`, a readable `console.log`). `Object.fromEntries` defines each key
+ * as an own property, so a key named `__proto__` stays a key.
+ */
+function plainJson(value: Json): Json {
+  if (Array.isArray(value)) return value.map(plainJson)
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, member]) => [key, plainJson(member)]))
+  }
+  return value
+}
+
+/**
  * The error every Alien SDK call throws (docs/errors.md). Field names follow
  * the errors of Alien's TypeScript SDK (`statusCode`, `hint`, `requestId`).
  *
@@ -26,8 +47,13 @@ export class AlienError extends Error {
   readonly internal: boolean | null
   /** The error that caused this one, from the server's `source` chain (at most 8 levels below the thrown error); also `cause`. */
   readonly source: AlienError | null
-  /** Strings for debugging: `path`, and the server's context as JSON text in `details` (docs/errors.md). */
-  readonly context: Readonly<Record<string, string>> | null
+  /**
+   * A server error: the error body's `context` exactly as sent, whatever JSON
+   * it is (an object, a string, a number, an array). An error the SDK raises
+   * itself: `null`, or an object with the SDK's own keys (docs/errors.md).
+   * Plain data at every level, on the thrown error and on every `source`.
+   */
+  readonly context: Json | null
 
   constructor(value: sdk.errors.AlienError) {
     const source = value.source ? new AlienError(value.source) : null
@@ -40,8 +66,7 @@ export class AlienError extends Error {
     this.requestId = value.request_id ?? null
     this.internal = value.internal ?? null
     this.source = source
-    // A plain copy: the runtime's map has a null prototype.
-    this.context = value.context ? { ...value.context } : null
+    this.context = plainJson(value.context ?? null)
   }
 }
 
