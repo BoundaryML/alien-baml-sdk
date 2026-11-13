@@ -1,0 +1,46 @@
+{
+  "id": "platform.getManager.unread_body_with_request_id",
+  "phase": 1,
+  "notes": "The status line and headers arrive, then the connection closes before the body ends: COMMUNICATION_ERROR, retryable, with the response's status and the request ID of its x-request-id header.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 200,
+        "headers": {
+          "x-request-id": "req_header_unread"
+        },
+        "text": "{\"id\":",
+        "truncate": true
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMUNICATION_ERROR",
+    "retryable": true,
+    "http_status": 200,
+    "context": {
+      "method": "GET"
+    },
+    "hint": null,
+    "request_id": "req_header_unread",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

@@ -71,6 +71,42 @@ function has_no_server_fields(e: root.errors.AlienError) -> bool {
     e.hint == null && e.request_id == null && e.source == null && e.internal == null
 }
 
+/// A response as BAML's HTTP client hands it over, with header names in
+/// lowercase, built without a request.
+function response_with(status: int, headers: map<string, string>, body: string) -> baml.http.Response {
+    baml.http.Response.new(status, headers, body.to_utf8())
+}
+
+/// The error `reply` throws for this response to `GET /v1/x`; `INVALID_REQUEST`
+/// "no error" when it throws none.
+function reply_error(response: baml.http.Response, manager: bool) -> root.errors.AlienError {
+    { reply(response, "GET", "/v1/x", manager); invalid_request("no error") } catch (e) {
+        root.errors.AlienError => e,
+    }
+}
+
+/// The request ID of the error `reply` throws for a non-2xx response with
+/// this body, and the `x-request-id` header `header` when it is not null.
+function request_id_of(body: string, header: string?, manager: bool) -> string? {
+    let headers: map<string, string> = { "content-type": "application/json" };
+    if let id: string = header {
+        headers["x-request-id"] = id;
+    }
+    reply_error(response_with(400, headers, body), manager).request_id
+}
+
+/// The error of decoding a 200 response with this body and headers as a
+/// `Manager`, as `platform_json` does: `reply`, then `decode_body`.
+function decoded_reply_error(headers: map<string, string>, body: string) -> root.errors.AlienError {
+    {
+        let r = reply(response_with(200, headers, body), "GET", "/v1/x", false);
+        decode_body<root.platform.Manager>(r.text, r.status, r.path, request_id = r.request_id);
+        invalid_request("no error")
+    } catch (e) {
+        root.errors.AlienError => e,
+    }
+}
+
 /// The error `decode_body` throws for this body, decoded as `T`.
 function decode_error_of<T>(text: string) -> root.errors.AlienError {
     { decode_body<T>(text, 200, "/v1/x"); invalid_request("decoded") } catch (e) {
@@ -395,6 +431,104 @@ testset "http helpers" {
         assert.equal(context_of(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":"why","context":null}`)), `{"details":"why"}`);
         assert.equal(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m"}`).context, null);
         assert.equal(manager_http_error(400, "/v1/c", `{"code":"BAD","message":"m","details":null,"context":null}`).context, null);
+    }
+
+    test "a response's request ID is its x-request-id header; none, or an empty one, is no ID" {
+        assert.equal(response_request_id(response_with(200, { "x-request-id": "req_h1" }, "{}")), "req_h1");
+        assert.equal(response_request_id(response_with(200, { "content-type": "application/json", "x-request-id": "req_h1" }, "")), "req_h1");
+        // No header: `get`, so no panic.
+        assert.equal(response_request_id(response_with(200, {}, "{}")), null);
+        assert.equal(response_request_id(response_with(502, { "content-type": "text/plain" }, "bad gateway")), null);
+        // An empty value (what a header that is not UTF-8 arrives as) is no ID.
+        assert.equal(response_request_id(response_with(200, { "x-request-id": "" }, "{}")), null);
+        // The 2xx reply keeps it for the errors of decoding the body.
+        assert.equal(reply(response_with(200, { "x-request-id": "req_h1" }, "{}"), "GET", "/v1/x", false).request_id, "req_h1");
+        assert.equal(reply(response_with(204, {}, ""), "GET", "/v1/x", true).request_id, null);
+    }
+
+    test "an API error body's requestId wins over the header, which is used when the body has none" {
+        let body = `{"code":"NOT_FOUND","message":"m","requestId":"req_body"}`;
+        let bare = `{"code":"NOT_FOUND","message":"m"}`;
+        for (let manager in [false, true]) {
+            assert.equal(request_id_of(body, "req_header", manager), "req_body");
+            assert.equal(request_id_of(body, null, manager), "req_body");
+            assert.equal(request_id_of(body, "", manager), "req_body");
+            assert.equal(request_id_of(bare, "req_header", manager), "req_header");
+            assert.equal(request_id_of(bare, null, manager), null);
+            assert.equal(request_id_of(bare, "", manager), null);
+            // A null or empty requestId in the body is none.
+            assert.equal(request_id_of(`{"code":"NOT_FOUND","message":"m","requestId":null}`, "req_header", manager), "req_header");
+            assert.equal(request_id_of(`{"code":"NOT_FOUND","message":"m","requestId":""}`, "req_header", manager), "req_header");
+            // The error is still the server's.
+            let e = reply_error(response_with(404, { "x-request-id": "req_header" }, bare), manager);
+            assert.equal(e.code, "NOT_FOUND");
+            assert.equal(e.http_status, 404);
+        }
+        // A Manager ErrorResponse has no requestId of its own.
+        assert.equal(request_id_of(`{"code":"UNAVAILABLE","message":"later","details":"queue full"}`, "req_header", true), "req_header");
+    }
+
+    test "an error response that is not the API's error body takes the header's request ID" {
+        let platform = reply_error(response_with(502, { "x-request-id": "req_proxy" }, "bad gateway"), false);
+        assert.equal(platform.code, "PLATFORM_HTTP_ERROR");
+        assert.equal(platform.request_id, "req_proxy");
+        assert.equal(platform.context, null);
+        let manager = reply_error(response_with(502, { "x-request-id": "req_proxy" }, "bad gateway"), true);
+        assert.equal(manager.code, "MANAGER_HTTP_ERROR");
+        assert.equal(manager.request_id, "req_proxy");
+        // JSON of another shape, an empty body, and no header at all.
+        assert.equal(request_id_of(`{"error":"x","requestId":"not read"}`, "req_proxy", false), "req_proxy");
+        assert.equal(request_id_of("", "req_proxy", false), "req_proxy");
+        assert.equal(request_id_of("", "req_proxy", true), "req_proxy");
+        assert.equal(request_id_of("bad gateway", null, false), null);
+        assert.equal(request_id_of("bad gateway", null, true), null);
+        assert.equal(request_id_of("bad gateway", "", false), null);
+    }
+
+    test "a source level's request ID is only its own: the header never reaches it" {
+        let e = reply_error(
+            response_with(
+                500,
+                { "x-request-id": "req_header" },
+                `{"code":"TOP","message":"m","source":{"code":"L1","message":"m","source":{"code":"L2","message":"m","requestId":"req_l2"}}}`,
+            ),
+            false,
+        );
+        assert.equal(e.request_id, "req_header");
+        assert.equal(e.source?.request_id, null);
+        assert.equal(e.source?.source?.request_id, "req_l2");
+        let m = reply_error(
+            response_with(500, { "x-request-id": "req_header" }, `{"code":"TOP","message":"m","requestId":"req_body","source":{"code":"L1","message":"m"}}`),
+            true,
+        );
+        assert.equal(m.request_id, "req_body");
+        assert.equal(m.source?.request_id, null);
+    }
+
+    test "a 2xx body that does not decode keeps the response's request ID" {
+        let e = decoded_reply_error({ "x-request-id": "req_ok" }, `{"id":7}`);
+        assert.equal(e.code, "MALFORMED_RESPONSE");
+        assert.equal(e.http_status, 200);
+        assert.equal(e.request_id, "req_ok");
+        assert.equal(decoded_reply_error({ "x-request-id": "req_ok" }, "<html>").request_id, "req_ok");
+        assert.equal(decoded_reply_error({}, "<html>").request_id, null);
+        assert.equal(decoded_reply_error({ "x-request-id": "" }, "<html>").request_id, null);
+        // The helpers take it by name and default to none, for callers that have no response.
+        assert.equal(decode_error_of<root.platform.Manager>("<html>").request_id, null);
+        assert.equal(malformed_response(200, "/v1/x", "", "why", request_id = "req_ok").request_id, "req_ok");
+        // An empty 2xx body decodes as null, with or without an ID.
+        assert.equal(decode_optional_body<root.platform.Manager>("", 200, "/v1/x", request_id = "req_ok"), null);
+    }
+
+    test "a communication error has the request ID of a response that arrived, and none without a response" {
+        let unread = communication_error("GET", "/v1/x", 200, "connection reset", request_id = "req_partial");
+        assert.equal(unread.request_id, "req_partial");
+        assert.equal(unread.http_status, 200);
+        assert.equal(communication_error("GET", "/v1/x", null, "connection refused").request_id, null);
+        // Nothing else of a server's is set.
+        assert.equal(unread.hint, null);
+        assert.equal(unread.source, null);
+        assert.equal(unread.internal, null);
     }
 
     test "the errors the SDK raises itself have no hint, request ID, source or internal flag" {

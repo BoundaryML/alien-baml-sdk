@@ -40,7 +40,8 @@
     "http_status": null,
     "context": {
       "method": "GET"
-    }
+    },
+    "request_id": null
   },
   "assert": []
 }

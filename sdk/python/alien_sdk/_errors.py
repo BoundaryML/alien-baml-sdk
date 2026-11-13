@@ -23,6 +23,10 @@ class AlienError(Exception):
     for an error the SDK raises itself, ``None`` or a ``dict`` with the SDK's
     own keys (docs/errors.md). It is stored as given, not copied.
 
+    ``request_id`` is the server's request ID: the error body's
+    ``requestId``, else the response's ``x-request-id`` header; ``None`` when
+    no response arrived or it named none.
+
     ``source`` is the error the server names as this one's cause (its own
     ``source`` in turn, at most 8 levels below the raised error), and
     ``__cause__`` is ``source``, so tracebacks and anything that walks

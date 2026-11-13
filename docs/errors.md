@@ -19,9 +19,10 @@ class AlienError {
 
 It mirrors Alien's error contract (`AlienErrorData`: code, message, retryable,
 HTTP status, context, hint, the `internal` flag and the `source` chain), plus
-the request ID. The last four fields come from a server's error body
-([The server's fields and the source chain](#the-servers-fields-and-the-source-chain));
-the errors the SDK raises itself leave them null. `context` is JSON: the
+the request ID. `hint`, `source` and `internal` come from a server's error
+body ([The server's fields and the source chain](#the-servers-fields-and-the-source-chain))
+and are null on the errors the SDK raises itself. `request_id` is on every
+error that had a response ([Request ID](#request-id)). `context` is JSON: the
 server's own, exactly as sent, or a small object of the SDK's
 ([Context](#context)).
 
@@ -34,7 +35,7 @@ current SDKs use for the same failure. "Speakeasy" is `@alienplatform/platform-a
 
 | Code | Retryable | Source (BAML) | When | Alien counterpart |
 |---|---|---|---|---|
-| *server's own code*, e.g. `SERVICE_UNAVAILABLE`, `NOT_FOUND`, `CONFLICT` | as the body says; absent means no | `internal.platform_http_error` | A Platform API non-2xx whose body is Alien's API error (`{code, message, retryable?, hint?, requestId?, context?, …}`). `http_status` is the response status; `context`, `hint`, `request_id`, `internal` and `source` are the body's, `context` exactly as sent | Same code and retryable flag: the API error's `code` in Speakeasy (`APIError`) and the Rust client |
+| *server's own code*, e.g. `SERVICE_UNAVAILABLE`, `NOT_FOUND`, `CONFLICT` | as the body says; absent means no | `internal.platform_http_error` | A Platform API non-2xx whose body is Alien's API error (`{code, message, retryable?, hint?, requestId?, context?, …}`). `http_status` is the response status; `context`, `hint`, `internal` and `source` are the body's, `context` exactly as sent; `request_id` is the body's `requestId`, else the response's `x-request-id` header | Same code and retryable flag: the API error's `code` in Speakeasy (`APIError`) and the Rust client |
 | *Manager's own code* | no | `internal.manager_http_error` | A Manager API non-2xx whose body is its `ErrorResponse` (`{code, message, details?}`); `context` is `{"details": details}`. A body in Alien's full error shape also gives `hint`, `request_id`, `internal` and `source`, and its `context` is then the error's, as sent; its `retryable` is not read | commands: same code, not retryable |
 | `MANAGER_HTTP_ERROR` | no | `internal.manager_http_error` | A Manager API non-2xx whose body is not an `ErrorResponse`. The body is not kept. A JSON body of another shape gets `context.json_path` and `context.decode_error`, as below; any other body leaves `context` null | commands: `MANAGER_HTTP_ERROR`, not retryable |
 | `PLATFORM_HTTP_ERROR` | on 408, 429 and 5xx | `internal.platform_http_error` | A Platform API non-2xx whose body is not an API error. The body is not kept. A JSON body of another shape gets `context.json_path` and `context.decode_error`, as below; any other body leaves `context` null | commands: `PLATFORM_HTTP_ERROR` (bootstrap, same retry rule). Rust client: `UNEXPECTED_RESPONSE` (retryable on 5xx). Speakeasy: `AlienDefaultError`, no code |
@@ -74,14 +75,15 @@ A Platform API error body is Alien's own error, serialized. Besides `code`,
 | Field | From the body's | Notes |
 |---|---|---|
 | `hint` | `hint` | The server's remediation hint |
-| `request_id` | `requestId` | Only the body is read; the `x-request-id` response header is not |
+| `request_id` | `requestId` | The response's `x-request-id` header when the body has none ([Request ID](#request-id)) |
 | `internal` | `internal` | The server's flag, as sent; null when the body has none |
 | `source` | `source` | The error that caused this one, itself an `AlienError` with its own `source` |
 
-A Manager error body gives the same four when it has them. All four are null
-on the errors the SDK raises itself (`COMMUNICATION_ERROR`,
-`MALFORMED_RESPONSE`, `PLATFORM_HTTP_ERROR` and the rest of the table above):
-a body that is not the API's error body is not read for them.
+A Manager error body gives the same four when it has them. `hint`,
+`internal` and `source` are null on the errors the SDK raises itself
+(`COMMUNICATION_ERROR`, `MALFORMED_RESPONSE`, `PLATFORM_HTTP_ERROR` and the
+rest of the table above): a body that is not the API's error body is not read
+for them.
 
 **How `source` is read** (`internal.error_chain`). Each level is read on its
 own and never fails the call, so a `source` that is not an error cannot change
@@ -109,6 +111,31 @@ walks an error's causes (a traceback, Sentry's chained exceptions,
 `errors.As`, `anyhow`'s `{:#}`) walks the server's chain. The BAML runtime's
 own error, which carries the failure across the bridge, is the same failure
 and not a cause of it: it is in no chain.
+
+## Request ID
+
+`request_id` is the ID the server gave the request, for support and for
+finding the request in the server's logs. Every error that had a response
+carries it, whatever the response's body was:
+
+| Error | `request_id` |
+|---|---|
+| *a server's code* (Platform or Manager error body) | The body's `requestId`; the response's `x-request-id` header when the body has none, or an empty one |
+| `PLATFORM_HTTP_ERROR`, `MANAGER_HTTP_ERROR` | The header |
+| `MALFORMED_RESPONSE` | The header of the 2xx response that did not decode |
+| `COMMUNICATION_ERROR` | The header, when the response arrived and its body could not be read; null when no response arrived (the request could not be sent, or timed out first) |
+| `INVALID_REQUEST`, `SETUP_*` | null: no response is involved |
+| A `source` level | That level's own `requestId`, never the header |
+
+- **The body wins over the header.** The body is the error's own statement,
+  and a proxy in front of the API can set an `x-request-id` of its own. The
+  spec says the two hold the same value, so the order only matters when they
+  differ. Alien's own clients differ here: its Platform client reads only the
+  body, its Manager client prefers the header.
+- A response without the header, or with an empty value, has no request ID;
+  the field is then null. Header names are case-insensitive (`X-Request-Id`).
+- A Manager `ErrorResponse` has no `requestId` field, so a Manager error's
+  request ID is usually the header's.
 
 ## Context
 

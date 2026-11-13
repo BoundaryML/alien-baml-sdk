@@ -151,14 +151,21 @@ function invalid_request(message: string) -> root.errors.AlienError {
 }
 
 /// The error for a request that could not be sent, or whose response body
-/// could not be read (`status` is then the response's).
-function communication_error(method: string, path: string, status: int?, detail: string) -> root.errors.AlienError {
+/// could not be read (`status` and `request_id` are then the response's).
+function communication_error(
+    method: string,
+    path: string,
+    status: int?,
+    detail: string,
+    request_id: string? = null,
+) -> root.errors.AlienError {
     root.errors.AlienError {
         code: "COMMUNICATION_ERROR",
         message: `HTTP request ${method} ${path} failed: ${detail}`,
         retryable: true,
         http_status: status,
         context: { "method": method },
+        request_id: request_id,
     }
 }
 
@@ -167,7 +174,14 @@ function communication_error(method: string, path: string, status: int?, detail:
 /// `.items[3].status`; "" when BAML gives none) and `reason` the decoder's
 /// message. The message leads with both; the context (`decode_context`)
 /// keeps `reason` whole, however long, and `json_path` when there is one.
-function malformed_response(status: int, path: string, json_path: string, reason: string) -> root.errors.AlienError {
+/// `request_id` is the response's (`response_request_id`).
+function malformed_response(
+    status: int,
+    path: string,
+    json_path: string,
+    reason: string,
+    request_id: string? = null,
+) -> root.errors.AlienError {
     let at = match (json_path) {
         "" => "",
         _ => ` at ${json_path}`,
@@ -178,6 +192,7 @@ function malformed_response(status: int, path: string, json_path: string, reason
         retryable: false,
         http_status: status,
         context: decode_context(json_path, reason),
+        request_id: request_id,
     }
 }
 
@@ -277,12 +292,25 @@ function error_chain(value: json, level: int = 1) -> root.errors.AlienError? {
     }
 }
 
+/// The request ID of an error that came with a response: the error body's
+/// own `requestId`, and the response's `x-request-id` header (`header`) when
+/// the body has none, or an empty one. The body is the error's own statement,
+/// and a proxy in front of the API can set a header of its own.
+function error_request_id(body: string?, header: string?) -> string? {
+    match (body) {
+        null | "" => header ?? body,
+        let id: string => id,
+    }
+}
+
 /// A non-2xx Platform API response. Alien's API error body keeps its code,
 /// message, retryable flag, hint, request ID, `internal` flag, `source`
 /// chain (`error_chain`) and context, which is the body's `context` exactly
 /// as sent, whatever JSON it is; anything else becomes `PLATFORM_HTTP_ERROR`,
-/// retryable on 408, 429 and 5xx.
-function platform_http_error(status: int, path: string, body: string) -> root.errors.AlienError {
+/// retryable on 408, 429 and 5xx. `request_id` is the response's
+/// (`response_request_id`): an error body's own `requestId` wins over it
+/// (`error_request_id`), and `source` levels never get it.
+function platform_http_error(status: int, path: string, body: string, request_id: string? = null) -> root.errors.AlienError {
     let mismatch: baml.json.DecodeError? = null;
     let api = baml.json.decode<ApiErrorBody>(body) catch (e) {
         baml.json.DecodeError => {
@@ -299,7 +327,7 @@ function platform_http_error(status: int, path: string, body: string) -> root.er
             http_status: status,
             context: parsed.context,
             hint: parsed.hint,
-            request_id: parsed.requestId,
+            request_id: error_request_id(parsed.requestId, request_id),
             source: error_chain(parsed.source),
             internal: parsed.internal,
         },
@@ -309,6 +337,7 @@ function platform_http_error(status: int, path: string, body: string) -> root.er
             retryable: status == 408 || status == 429 || status >= 500,
             http_status: status,
             context: error_body_context(mismatch),
+            request_id: request_id,
         },
     }
 }
@@ -318,8 +347,9 @@ function platform_http_error(status: int, path: string, body: string) -> root.er
 /// (`error_chain`). Its context is the body's `context` as sent when it has
 /// one, else `{"details": details}` when it has `details`, else null.
 /// Anything else becomes `MANAGER_HTTP_ERROR`. Neither is retryable, as in
-/// `@alienplatform/commands`.
-function manager_http_error(status: int, path: string, body: string) -> root.errors.AlienError {
+/// `@alienplatform/commands`. `request_id` is the response's, used as for a
+/// Platform API response.
+function manager_http_error(status: int, path: string, body: string, request_id: string? = null) -> root.errors.AlienError {
     let mismatch: baml.json.DecodeError? = null;
     let api = baml.json.decode<ManagerErrorBody>(body) catch (e) {
         baml.json.DecodeError => {
@@ -336,7 +366,7 @@ function manager_http_error(status: int, path: string, body: string) -> root.err
             http_status: status,
             context: manager_context(parsed),
             hint: parsed.hint,
-            request_id: parsed.requestId,
+            request_id: error_request_id(parsed.requestId, request_id),
             source: error_chain(parsed.source),
             internal: parsed.internal,
         },
@@ -346,6 +376,7 @@ function manager_http_error(status: int, path: string, body: string) -> root.err
             retryable: false,
             http_status: status,
             context: error_body_context(mismatch),
+            request_id: request_id,
         },
     }
 }
@@ -430,52 +461,73 @@ function timed_out(what: string, e: baml.errors.Timeout) -> string {
     `${what}${after} (${e.timeout_type})`
 }
 
-/// A 2xx response's status and body, and the request's path and query, as
-/// errors name it.
+/// A 2xx response's status and body, the request's path and query, as
+/// errors name it, and the response's request ID (`response_request_id`).
 class Reply {
     status: int,
     text: string,
     path: string,
+    request_id: string?,
+}
+
+/// The request ID a response carries in its `x-request-id` header; null when
+/// it has none, or an empty one (a value that is not UTF-8 arrives empty).
+/// BAML's HTTP client gives header names in lowercase, whatever the server
+/// wrote. `get`, never an index: indexing a missing key panics.
+function response_request_id(response: baml.http.Response) -> string? {
+    match (response.headers.get("x-request-id")) {
+        null | "" => null,
+        let id: string => id,
+    }
 }
 
 /// Reads a response. A non-2xx status throws the error `manager_http_error` or
-/// `platform_http_error` maps it to.
+/// `platform_http_error` maps it to. Every error for a response that arrived
+/// carries its request ID, and so does the `Reply`, for the errors of
+/// decoding it.
 function reply(
     response: baml.http.Response,
     method: string,
     path: string,
     manager: bool,
 ) -> Reply throws root.errors.AlienError {
+    let request_id = response_request_id(response);
     let text = response.text() catch (e) {
-        baml.errors.Io => throw communication_error(method, path, response.status_code, e.message),
-        baml.errors.Timeout => throw communication_error(method, path, response.status_code, timed_out("timed out reading the response", e)),
+        baml.errors.Io => throw communication_error(method, path, response.status_code, e.message, request_id = request_id),
+        baml.errors.Timeout => throw communication_error(
+            method,
+            path,
+            response.status_code,
+            timed_out("timed out reading the response", e),
+            request_id = request_id,
+        ),
     };
     if (!response.ok()) {
         throw if (manager) {
-            manager_http_error(response.status_code, path, text)
+            manager_http_error(response.status_code, path, text, request_id = request_id)
         } else {
-            platform_http_error(response.status_code, path, text)
+            platform_http_error(response.status_code, path, text, request_id = request_id)
         };
     }
-    Reply { status: response.status_code, text: text, path: path }
+    Reply { status: response.status_code, text: text, path: path, request_id: request_id }
 }
 
-/// Decodes a JSON body into `T`, throwing `MALFORMED_RESPONSE` on failure.
-/// `decode` follows the `@json` attributes: wire names, open unions and extra
-/// keys.
-function decode_body<T>(text: string, status: int, path: string) -> T throws root.errors.AlienError {
+/// Decodes a JSON body into `T`, throwing `MALFORMED_RESPONSE` on failure,
+/// with the response's `request_id` when the caller has one. `decode` follows
+/// the `@json` attributes: wire names, open unions and extra keys.
+function decode_body<T>(text: string, status: int, path: string, request_id: string? = null) -> T throws root.errors.AlienError {
     baml.json.decode<T>(text) catch (e) {
-        baml.json.ParseError => throw malformed_response(status, path, "", e.message),
-        baml.json.DecodeError => throw malformed_response(status, path, e.path, e.message),
+        baml.json.ParseError => throw malformed_response(status, path, "", e.message, request_id = request_id),
+        baml.json.DecodeError => throw malformed_response(status, path, e.path, e.message, request_id = request_id),
     }
 }
 
 /// `null` for a 204 or any 2xx with an empty body; the decoded body otherwise.
-function decode_optional_body<T>(text: string, status: int, path: string) -> T? throws root.errors.AlienError {
+function decode_optional_body<T>(text: string, status: int, path: string, request_id: string? = null) -> T? throws root.errors.AlienError {
     if (status == 204 || text == "") {
         return null;
     }
-    decode_body<T>(text, status, path)
+    decode_body<T>(text, status, path, request_id = request_id)
 }
 
 // Platform API operations: always authenticated with the client's API key.
@@ -506,7 +558,7 @@ function platform_json<T>(
     body: string? = null,
 ) -> T throws root.errors.AlienError {
     let r = platform_reply(client, method, path, query, headers, body);
-    decode_body<T>(r.text, r.status, r.path)
+    decode_body<T>(r.text, r.status, r.path, request_id = r.request_id)
 }
 
 /// A Platform API request whose response is JSON decoded as `T`, or empty
@@ -520,7 +572,7 @@ function platform_optional_json<T>(
     body: string? = null,
 ) -> T? throws root.errors.AlienError {
     let r = platform_reply(client, method, path, query, headers, body);
-    decode_optional_body<T>(r.text, r.status, r.path)
+    decode_optional_body<T>(r.text, r.status, r.path, request_id = r.request_id)
 }
 
 /// A Platform API request whose response body is ignored.
@@ -563,7 +615,7 @@ function manager_json<T>(
     body: string? = null,
 ) -> T throws root.errors.AlienError {
     let r = manager_reply(client, method, path, query, headers, body);
-    decode_body<T>(r.text, r.status, r.path)
+    decode_body<T>(r.text, r.status, r.path, request_id = r.request_id)
 }
 
 /// A Manager API request whose response is JSON decoded as `T`, or empty
@@ -577,7 +629,7 @@ function manager_optional_json<T>(
     body: string? = null,
 ) -> T? throws root.errors.AlienError {
     let r = manager_reply(client, method, path, query, headers, body);
-    decode_optional_body<T>(r.text, r.status, r.path)
+    decode_optional_body<T>(r.text, r.status, r.path, request_id = r.request_id)
 }
 
 /// A Manager API request whose response body is ignored.

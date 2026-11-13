@@ -135,6 +135,14 @@ function respond(res, spec, req) {
       body = spec.text
       headers["content-type"] ??= "text/plain"
     }
+    if (spec.truncate) {
+      // A response whose body cannot be read: the status line and headers
+      // arrive, then the connection closes before the declared length.
+      headers["content-length"] = Buffer.byteLength(body) + 1024
+      res.writeHead(spec.status ?? 200, headers)
+      res.write(body, () => req.socket.destroy())
+      return
+    }
     headers["content-length"] = Buffer.byteLength(body)
     res.writeHead(spec.status ?? 200, headers)
     res.end(body)
