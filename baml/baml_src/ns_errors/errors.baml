@@ -27,7 +27,8 @@
 /// Manager API error response keeps its `code` and `message` and is never
 /// retryable. Both also keep the body's `context`, `hint`, `requestId`,
 /// `internal` and `source`. The errors this SDK raises itself (the table
-/// above) have none of the last four, and a context of the SDK's own.
+/// above) have a context of the SDK's own and no hint, `internal` flag or
+/// source; those raised for a response that arrived keep its request ID.
 class AlienError {
     code: string,
     message: string,
@@ -45,7 +46,9 @@ class AlienError {
     context: json?,
     /// The server's remediation hint.
     hint: string?,
-    /// The server's request ID: the error body's `requestId`.
+    /// The server's request ID: the error body's `requestId`, else the
+    /// response's `x-request-id` header. Null when no response arrived, or
+    /// it named none. On a `source` level: only that level's own `requestId`.
     request_id: string?,
     /// The error that caused this one: the body's `source`, read leniently
     /// (`internal.error_chain`). At most 8 levels below the thrown error;

@@ -39,8 +39,9 @@ type AlienError struct {
 	Context any `json:"context"`
 	// Hint is the server's remediation hint; "" when it sent none.
 	Hint string `json:"hint"`
-	// RequestID is the server's request ID (the error body's requestId); ""
-	// when it sent none.
+	// RequestID is the server's request ID: the error body's requestId, else
+	// the response's x-request-id header. "" when no response arrived or it
+	// named none.
 	RequestID string `json:"request_id"`
 	// Source is the error that caused this one, from the server's source
 	// chain (at most 8 levels below the returned error); nil when there is

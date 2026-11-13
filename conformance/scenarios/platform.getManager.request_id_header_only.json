@@ -1,0 +1,43 @@
+{
+  "id": "platform.getManager.request_id_header_only",
+  "phase": 1,
+  "notes": "A 502 from a proxy, with a text body and an x-request-id header: PLATFORM_HTTP_ERROR carries the header's request ID. The body is not the API's error, so nothing else of a server's is set.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 502,
+        "text": "bad gateway",
+        "headers": {
+          "x-request-id": "req_header_502"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": true,
+    "http_status": 502,
+    "context": null,
+    "hint": null,
+    "request_id": "req_header_502",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

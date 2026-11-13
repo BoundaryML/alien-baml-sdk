@@ -143,6 +143,8 @@ async fn arg<T: BamlValue>(a: &Value, name: &str) -> Result<T, Error> {
         value.to_string(),
         200,
         format!("scenario argument {name}"),
+        // No response, so no request ID: the parameter's default.
+        baml_bridge::OptionalArg::Unset,
     )
     .await
     .map_err(|error| harness(format!("decode scenario argument {name:?}: {error}")))

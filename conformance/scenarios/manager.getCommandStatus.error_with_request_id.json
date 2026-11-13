@@ -1,0 +1,51 @@
+{
+  "id": "manager.getCommandStatus.error_with_request_id",
+  "phase": 1,
+  "notes": "A Manager ErrorResponse, which has no requestId of its own, and an x-request-id header: the error carries the header's request ID.",
+  "call": {
+    "fn": "manager.getCommandStatus",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "token": "${secrets.managerToken}"
+      },
+      "command_id": "cmd_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_1",
+        "headers": {
+          "authorization": "Bearer ${secrets.managerToken}"
+        }
+      },
+      "respond": {
+        "status": 404,
+        "headers": {
+          "x-request-id": "req_manager_header"
+        },
+        "json": {
+          "code": "COMMAND_NOT_FOUND",
+          "message": "No such command.",
+          "details": "cmd_1 expired"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMAND_NOT_FOUND",
+    "retryable": false,
+    "http_status": 404,
+    "context": {
+      "details": "cmd_1 expired"
+    },
+    "hint": null,
+    "request_id": "req_manager_header",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

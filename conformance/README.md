@@ -41,8 +41,11 @@ the same for every occurrence in one scenario), and `${$}` for a literal `$`
 
 `expect` may check `method`, `path` (with query string, exact), `headers`
 (subset, names case-insensitive), `headers_absent`, `json` (deep equality) and
-`body_empty`. `respond` sets `status`, `json` or `text`, `headers`,
-`delay_ms`, or `drop: true` (close the connection without answering).
+`body_empty`. `respond` sets `status`, `json` or `text`, `headers` (sent
+with their names as written, `X-Request-Id` for example), `delay_ms`,
+`truncate: true` (send the status line and headers, then close the
+connection before the body ends), or `drop: true` (close the connection
+without answering).
 
 A request that does not match the next exchange, or arrives when none is left,
 is answered with 599 and fails the scenario. So does an exchange that is never

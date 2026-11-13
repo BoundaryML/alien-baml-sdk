@@ -41,7 +41,7 @@ export class AlienError extends Error {
   readonly statusCode: number | null
   /** The server's remediation hint, if it sent one. */
   readonly hint: string | null
-  /** The server's request ID (the error body's `requestId`), if it sent one. */
+  /** The server's request ID: the error body's `requestId`, else the response's `x-request-id` header. `null` when no response arrived or it named none. */
   readonly requestId: string | null
   /** The server's `internal` flag, or `null` when the error is not from a server's error body. */
   readonly internal: boolean | null

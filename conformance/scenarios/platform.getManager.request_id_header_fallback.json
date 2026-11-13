@@ -1,0 +1,78 @@
+{
+  "id": "platform.getManager.request_id_header_fallback",
+  "phase": 1,
+  "notes": "An API error body without a requestId, and an x-request-id header: the header's is the error's request ID. A source level never takes it: the first has none, the second keeps its own.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 500,
+        "headers": {
+          "x-request-id": "req_from_header"
+        },
+        "json": {
+          "code": "DEPLOYMENT_FAILED",
+          "message": "The deployment failed.",
+          "internal": false,
+          "source": {
+            "code": "SANDBOX_REFUSED",
+            "message": "The sandbox refused the command.",
+            "internal": false,
+            "source": {
+              "code": "QUOTA_EXCEEDED",
+              "message": "The CPU quota is exceeded.",
+              "internal": true,
+              "requestId": "req_inner"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "DEPLOYMENT_FAILED",
+    "retryable": false,
+    "http_status": 500,
+    "context": null,
+    "hint": null,
+    "request_id": "req_from_header",
+    "internal": false,
+    "source": {
+      "code": "SANDBOX_REFUSED",
+      "message": "The sandbox refused the command.",
+      "retryable": false,
+      "http_status": null,
+      "context": null,
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "QUOTA_EXCEEDED",
+        "message": "The CPU quota is exceeded.",
+        "retryable": false,
+        "http_status": null,
+        "context": null,
+        "hint": null,
+        "request_id": "req_inner",
+        "internal": true,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

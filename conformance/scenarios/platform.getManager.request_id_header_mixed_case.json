@@ -1,0 +1,43 @@
+{
+  "id": "platform.getManager.request_id_header_mixed_case",
+  "phase": 1,
+  "notes": "The header written X-Request-Id: header names are case-insensitive, and the error carries its request ID all the same.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 503,
+        "text": "service unavailable",
+        "headers": {
+          "X-Request-Id": "req_Mixed_Case_1"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": true,
+    "http_status": 503,
+    "context": null,
+    "hint": null,
+    "request_id": "req_Mixed_Case_1",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

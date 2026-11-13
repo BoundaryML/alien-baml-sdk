@@ -91,7 +91,9 @@ pub struct AlienError {
     pub context: Option<Json>,
     /// The server's remediation hint, if it sent one.
     pub hint: Option<String>,
-    /// The server's request ID (the error body's `requestId`), if it sent one.
+    /// The server's request ID: the error body's `requestId`, else the
+    /// response's `x-request-id` header. `None` when no response arrived or
+    /// it named none.
     pub request_id: Option<String>,
     /// The error that caused this one, from the server's `source` chain (at
     /// most 8 levels below the returned error).

@@ -29,7 +29,8 @@
     "code": "PLATFORM_HTTP_ERROR",
     "retryable": false,
     "http_status": 400,
-    "context": null
+    "context": null,
+    "request_id": null
   },
   "assert": []
 }

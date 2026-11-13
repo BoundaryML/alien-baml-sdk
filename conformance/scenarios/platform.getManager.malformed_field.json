@@ -69,7 +69,8 @@
     "context": {
       "json_path": ".managementConfigs.aws.managingRoleArn",
       "decode_error": "expected string"
-    }
+    },
+    "request_id": null
   },
   "assert": []
 }

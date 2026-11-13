@@ -1,0 +1,82 @@
+{
+  "id": "platform.getManager.malformed_field_with_request_id",
+  "phase": 1,
+  "notes": "A 200 whose body does not decode: MALFORMED_RESPONSE keeps the request ID of the response's x-request-id header.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 200,
+        "headers": {
+          "x-request-id": "req_header_200"
+        },
+        "json": {
+          "id": "mgr_0c29fq4a2yjb7kx3smwdgxlcmpqr",
+          "name": "primary",
+          "targets": [
+            "aws",
+            "future-cloud"
+          ],
+          "cloud": "aws",
+          "region": "us-east-1",
+          "setupStatus": "active",
+          "url": "https://manager.example.com",
+          "managementConfigs": {
+            "aws": {
+              "managingRoleArn": 7,
+              "platform": "aws"
+            }
+          },
+          "isSystem": false,
+          "workspaceId": "ws_AAAAAAAAAAAAAAAAAAAAAAAA",
+          "status": "future-status",
+          "version": "1.2.3",
+          "metrics": {
+            "activeDeployments": 3,
+            "pendingDeployments": 0,
+            "memoryUsageMb": 512.5,
+            "cpuUsagePercent": 12.25,
+            "futureMetric": 7
+          },
+          "lastHeartbeatAt": null,
+          "logsDatabaseId": null,
+          "managedDeploymentCount": 3,
+          "defaultProjectCount": 1,
+          "createdAt": "2026-10-01T00:00:00Z",
+          "futureTopLevel": {
+            "nested": true
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "MALFORMED_RESPONSE",
+    "retryable": false,
+    "http_status": 200,
+    "context": {
+      "json_path": ".managementConfigs.aws.managingRoleArn",
+      "decode_error": "expected string"
+    },
+    "hint": null,
+    "request_id": "req_header_200",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

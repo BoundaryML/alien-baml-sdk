@@ -1,0 +1,45 @@
+{
+  "id": "manager.getCommandStatus.http_error_with_request_id",
+  "phase": 1,
+  "notes": "A Manager response that is not its error body, and an x-request-id header: MANAGER_HTTP_ERROR carries the header's request ID.",
+  "call": {
+    "fn": "manager.getCommandStatus",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "token": "${secrets.managerToken}"
+      },
+      "command_id": "cmd_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_1",
+        "headers": {
+          "authorization": "Bearer ${secrets.managerToken}"
+        }
+      },
+      "respond": {
+        "status": 502,
+        "text": "bad gateway",
+        "headers": {
+          "x-request-id": "req_manager_502"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "MANAGER_HTTP_ERROR",
+    "retryable": false,
+    "http_status": 502,
+    "context": null,
+    "hint": null,
+    "request_id": "req_manager_502",
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}

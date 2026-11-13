@@ -1,0 +1,43 @@
+{
+  "id": "platform.getManager.request_id_header_empty",
+  "phase": 1,
+  "notes": "An x-request-id header with an empty value is no request ID.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 502,
+        "text": "bad gateway",
+        "headers": {
+          "x-request-id": ""
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "PLATFORM_HTTP_ERROR",
+    "retryable": true,
+    "http_status": 502,
+    "context": null,
+    "hint": null,
+    "request_id": null,
+    "internal": null,
+    "source": null
+  },
+  "assert": []
+}
