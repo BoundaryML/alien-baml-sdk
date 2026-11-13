@@ -57,7 +57,7 @@ docs/                    API shape, errors, gaps, importer coverage, telemetry;
                          bindings/ compares Alien's Node and Python bindings adapters
 bench/                   benchmark programs (ours and Alien's current SDKs); bench/run.sh measures
 metrics/                 size, startup, per-call, large-page and Rust build measurements (written by bench/run.sh)
-scripts/                 import.sh, generate.sh, verify.sh
+scripts/                 import.sh, generate.sh, verify.sh, alien_error_workspace.sh
 ```
 
 Each generated SDK is named by `package_name` in `baml/baml.toml` (BAML's
@@ -272,6 +272,20 @@ had a response carries its request ID (the body's, else the `x-request-id`
 header's). See
 [docs/errors.md](docs/errors.md).
 
+In Rust the error also converts to Alien's own `alien_error::AlienError`, with
+every field kept: `?` in a function that returns `alien_error::Result<T>`, or
+`.into_sdk_error()` to chain `.context(…)` onto it
+([docs/errors.md](docs/errors.md#rust-alien_erroralienerror)):
+
+```rust
+use alien_sdk::alien_error::Context;
+use alien_sdk::SdkResultExt;
+
+let manager = alien.managers().get(id).send().await
+    .into_sdk_error()
+    .context(MyError::ManagerLookup)?;
+```
+
 **Keep the generated clients out of logs.** The clients you create (`Alien`
 and `AlienManager`; in Go `*alien.Client` and `*alien.ManagerClient`) do not
 print the API key or the token. The generated clients they hold do:
@@ -309,7 +323,14 @@ repository):
 - **Go.** `go mod edit -replace example.com/alien-baml-sdk/go=/path/to/alien-baml-sdk/sdk/go`,
   then `go get example.com/alien-baml-sdk/go/alien`.
 - **Rust.** A path dependency:
-  `alien_sdk = { path = "/path/to/alien-baml-sdk/sdk/rust" }`.
+  `alien_sdk = { path = "/path/to/alien-baml-sdk/sdk/rust" }`. Its default
+  feature, `alien-error`, converts the SDK's errors to
+  `alien_error::AlienError` and depends on the `alien-error` crate from
+  crates.io; `default-features = false` leaves both out. A workspace that
+  takes `alien-error` from a path needs
+  `[patch.crates-io] alien-error = { path = "crates/alien-error" }` in its
+  root manifest, or the two are different types
+  ([docs/errors.md](docs/errors.md#rust-alien_erroralienerror)).
 
 Each recipe brings the published BAML 0.25.3-nightly.20261109.a runtime package.
 
@@ -338,7 +359,9 @@ scripts/verify.sh --phase 2
 Runs every check: tests the importer and checks that the imported BAML and
 the generated operation scenarios are current, runs `baml check` and
 `baml test`, regenerates and builds the four SDKs, runs all 906 conformance
-scenarios in all four languages, checks the shared setup fixture, runs the
+scenarios in all four languages (Rust once more without its default
+`alien-error` feature), checks that feature in a workspace shaped like
+Alien's, checks the shared setup fixture, runs the
 README quickstarts, the telemetry checks, the [B4](docs/gaps.md#b4)
 coexistence repro and a secret scan, and prints a summary table. It exits
 non-zero on the first failure. `--phase 1` leaves out the importer checks and

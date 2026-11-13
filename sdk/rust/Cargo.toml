@@ -12,13 +12,24 @@ members = ["genops"]
 # The generated crate declares its own [workspace]; keep it out of ours.
 exclude = ["alien_api"]
 
+[features]
+default = ["alien-error"]
+# `From<alien_sdk::Error> for alien_error::AlienError` and `SdkResultExt`
+# (src/alien_error.rs, docs/errors.md). Without it the SDK does not depend on
+# the `alien-error` crate.
+alien-error = ["dep:alien-error"]
+
 [dependencies]
 # The generated crate (package_name in baml/baml.toml). genops finds it as this
 # manifest's one path dependency.
 alien_api = { path = "alien_api", features = ["serde"] }
 baml_bridge = "=0.25.3-nightly.20261109.a"
+# Alien's error type. A caret requirement, so that Cargo resolves the one
+# `alien-error` 3.x a caller's own crates use: `?` needs both sides to name the
+# same type.
+alien-error = { version = "3.3", optional = true }
 
 [dev-dependencies]
-serde = "1"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

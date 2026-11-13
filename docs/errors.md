@@ -207,7 +207,7 @@ the `SETUP_*` errors are unchanged.
 | TypeScript | `AlienError` (extends `Error`) | `code`, `message`, `retryable`, `statusCode`, `hint`, `requestId` (named as in Alien's TypeScript SDK), `internal`, `source`, `context` (`Json | null`; the package exports the `Json` type). `null` when not set | `cause` is `source`. Without a source the error has no `cause` property (`"cause" in err` is false) |
 | Python | `alien_sdk.AlienError` (an `Exception`; `str()` is `"<code>: <message>"`) | `code`, `message`, `retryable`, `http_status`, `context` (`Any`), `hint`, `request_id`, `source`, `internal`, also the constructor's arguments in that order. `None` when not set | `__cause__` is `source`, set by the constructor, so an error that is built directly, unpickled or copied is chained too. The runtime's error is neither `__cause__` nor `__context__` |
 | Go | `*alien.AlienError` via `errors.As` | `Code`, `Message`, `Retryable`, `HTTPStatus`, `Context` (`any`), `Hint` and `RequestID` (`""` when not set), `Source` and `Internal` (`nil` when not set). `context.Canceled` and `context.DeadlineExceeded` pass through unchanged; a generated call not wrapped in `alien.Do` or `alien.Err` returns `*baml_go.BamlError` | `Unwrap()` returns `Source`, and `nil` when there is none, so `errors.As` and `errors.Is` reach the inner errors. There is no `Cause` field |
-| Rust | `alien_sdk::Error::Alien(AlienError)` | `code`, `message`, `retryable`, `http_status_code` (`Option<u16>`, named as in `alien_error::AlienError`), `context` (`Option<Json>`), `hint`, `request_id`, `source` (`Option<Box<AlienError>>`), `internal`. The struct is `#[non_exhaustive]`: read its fields, do not build it or match on all of them. `Error::Runtime` holds the `baml_bridge` error, BAML trace included. A `json` value holding an integer outside the `i64`/`u64` range, in a response or in an error's context, fails the call with `Error::Runtime` ([B19](gaps.md#b19)) | `std::error::Error::source()` returns `source`, on `AlienError` and on the `Error::Alien` that holds it. `Display` stays `"<code>: <message>"` and does not print the chain |
+| Rust | `alien_sdk::Error::Alien(AlienError)` | `code`, `message`, `retryable`, `http_status_code` (`Option<u16>`, named as in `alien_error::AlienError`), `context` (`Option<Json>`), `hint`, `request_id`, `source` (`Option<Box<AlienError>>`), `internal`. The struct is `#[non_exhaustive]`: read its fields, do not build it or match on all of them. Converts to `alien_error::AlienError` ([below](#rust-alien_erroralienerror)). `Error::Runtime` holds the `baml_bridge` error, BAML trace included. A `json` value holding an integer outside the `i64`/`u64` range, in a response or in an error's context, fails the call with `Error::Runtime` ([B19](gaps.md#b19)) | `std::error::Error::source()` returns `source`, on `AlienError` and on the `Error::Alien` that holds it. `Display` stays `"<code>: <message>"` and does not print the chain |
 
 The four facades expose the same fields because each is checked against the
 generated class: Rust destructures it without `..`, so a field BAML's
@@ -235,6 +235,117 @@ Each facade's conversion is a few lines: `sdk/typescript/src/errors.ts`,
 `sdk/python/alien_sdk/_errors.py`, `sdk/go/alien/errors.go`,
 `sdk/rust/src/lib.rs`. Go needs the most, because the Go bridge returns thrown
 values as untyped maps ([gaps B5](gaps.md#b5)).
+
+## Rust: `alien_error::AlienError`
+
+Alien's Rust code handles errors with its own crate, `alien-error`: functions
+return `alien_error::Result<T>`, and a caller's error is chained on with
+`.context(..)`. The Rust SDK converts its errors to that type. Its methods
+still return `alien_sdk::Error`; the conversion happens where the caller asks
+for it:
+
+```rust
+use alien_sdk::alien_error::{self, Context};
+use alien_sdk::{Alien, SdkResultExt};
+
+// `?` converts, in a function that returns alien_error's Result:
+async fn manager_name(alien: &Alien, id: &str) -> alien_error::Result<String> {
+    Ok(alien.managers().get(id).send().await?.name)
+}
+
+// `into_sdk_error()` converts in place, so `.context(..)` chains onto it:
+let manager = alien.managers().get(id).send().await
+    .into_sdk_error()                 // Result<_, alien_error::AlienError>
+    .context(MyError::ManagerLookup)?;
+```
+
+- `From<alien_sdk::Error>` and `From<alien_sdk::AlienError>` for
+  `alien_error::AlienError` are what `?` uses.
+- `SdkResultExt::into_sdk_error()` has the name and the meaning of the trait
+  of Alien's own Rust clients (`alien-platform-api`, `alien-manager-api`). It
+  is another trait, for another result type, so both can be in scope; to
+  import both by name, import one unnamed (`use alien_sdk::SdkResultExt as _;`).
+- `alien_sdk::alien_error` is the crate the SDK was built against.
+
+**Use `?` or `into_sdk_error()`, not `.into_alien_error()`.** `alien-error`
+gives every `std::error::Error` an `.into_alien_error()`, this SDK's errors
+included, and it compiles. It reads only what any error has, its text and its
+sources: the result is a `GENERIC_ERROR` whose message is `"<code>:
+<message>"`, with the code, the retryable flag, the HTTP status, the hint and
+the context lost at every level (`tests/alien_error.rs` pins both paths).
+
+**What each field becomes**, on the error and on every level of its `source`
+chain:
+
+| `alien_error::AlienError` | From `alien_sdk::AlienError` |
+|---|---|
+| `code`, `message`, `retryable`, `hint` | The same |
+| `http_status_code` | The same; `None` stays `None` |
+| `internal` | The same; `false` when the SDK's error has none (an error of the SDK's own, or a body without the flag) |
+| `context` | `context`, with `request_id` put into it (below) |
+| `source` | `source`, converted the same way |
+| `error` | `Some(GenericError { message })`, as Alien's clients set it |
+| `human_layer_presentation` | The default, `Normal` |
+
+`alien_error::AlienError` has no field for a request ID, and Alien's tools
+look for one at `context.requestId`. So the conversion puts `request_id`
+there, by the rule of Alien's own Platform client:
+
+| The SDK error's `context` | With a `request_id` | Without one |
+|---|---|---|
+| An object | Gains `"requestId"`, unless it already has that key (the server's own is kept) | Unchanged |
+| None | `{"requestId": …}` | None |
+| Anything else (a string, an array, a number) | `{"requestId": …, "context": <the value>}` | Unchanged |
+
+**`Error::Runtime`** (the BAML runtime failed: a panic, a call after
+`shutdown`, a per-call timeout or cancellation) has no code of Alien's. It
+converts as `.into_alien_error()` converts any error: `GENERIC_ERROR`, the
+runtime error's text as the message, not retryable, status 500, its sources
+below it. A per-call timeout is `GENERIC_ERROR` with the message `BAML panic
+[baml.panics.Cancelled]: operation cancelled` followed by the BAML stack; to
+tell it apart, match `alien_sdk::Error::Runtime` before converting.
+
+**Printing.** `Display` of the SDK's own error is one line, `"<code>:
+<message>"`. The converted error prints as `alien-error` prints, the chain as
+a tree:
+
+```
+MANAGER_NOT_FOUND: No such manager.
+├─▶ STORE_LOOKUP_FAILED: The store has no such row.
+│   ├─▶ KV_TIMEOUT: The store timed out.
+```
+
+**The cargo feature.** The conversion is the feature `alien-error`, on by
+default; it adds the crates `alien-error` and `alien-error-derive` to the
+build. Without it the SDK has no dependency on either:
+
+```toml
+alien_sdk = { path = "…/sdk/rust", default-features = false }
+```
+
+**A workspace with its own `alien-error`.** `alien_sdk` requires
+`alien-error = "3.3"` from crates.io. Cargo tells packages apart by name,
+version and source, so a workspace that takes `alien-error` from a path, as
+Alien's own does, has two of them: its crates name the path one, `alien_sdk`
+converts to the crates.io one, and `?` fails with "the trait
+`From<alien_sdk::Error>` is not implemented for `alien_error::AlienError`"
+(the compiler adds "there are multiple different versions of crate
+`alien_error` in the dependency graph"). One entry in the workspace's root
+`Cargo.toml` makes them one package:
+
+```toml
+[patch.crates-io]
+alien-error = { path = "crates/alien-error" }
+```
+
+The path crate's version has to satisfy `3.3`. `scripts/alien_error_workspace.sh`
+(a step of `scripts/verify.sh`) builds such a workspace and checks both
+halves: without the entry `cargo check` fails with that error, with it the
+same code compiles.
+
+**Versions.** The lockfile has `alien-error` 3.3.64. The feature's tests also
+pass with 3.3.0, the lowest version the requirement allows, and the crate
+checks with Rust 1.91.1, the SDK's minimum (`alien-error` declares none).
 
 ## Credentials in Python tracebacks
 
