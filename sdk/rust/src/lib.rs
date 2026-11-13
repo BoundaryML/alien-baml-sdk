@@ -66,15 +66,35 @@ fn redact_query(url: &str) -> String {
 }
 
 /// The error every Alien SDK call returns for a failure the SDK describes
-/// (docs/errors.md). Its fields are named as in `alien_error::AlienError`.
+/// (docs/errors.md). Its fields are named as in `alien_error::AlienError`,
+/// plus `request_id`.
+///
+/// [`source`](Self::source) is the error the server names as this one's
+/// cause, and `std::error::Error::source()` returns it, so anything that
+/// walks an error's sources walks the server's chain.
+///
+/// The struct is `#[non_exhaustive]`: it gains a field when Alien's error
+/// does, so read its fields rather than matching on all of them.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct AlienError {
     pub code: String,
     pub message: String,
     pub retryable: bool,
-    /// The HTTP status of the response that failed, if there was one.
+    /// The HTTP status of the response that failed, if there was one. On a
+    /// `source` level: the status that level names, if any.
     pub http_status_code: Option<u16>,
     pub context: Option<HashMap<String, String>>,
+    /// The server's remediation hint, if it sent one.
+    pub hint: Option<String>,
+    /// The server's request ID (the error body's `requestId`), if it sent one.
+    pub request_id: Option<String>,
+    /// The error that caused this one, from the server's `source` chain (at
+    /// most 8 levels below the returned error).
+    pub source: Option<Box<AlienError>>,
+    /// The server's `internal` flag; `None` when the error is not from a
+    /// server's error body.
+    pub internal: Option<bool>,
 }
 
 impl fmt::Display for AlienError {
@@ -83,19 +103,42 @@ impl fmt::Display for AlienError {
     }
 }
 
-impl std::error::Error for AlienError {}
+impl std::error::Error for AlienError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.source
+            .as_deref()
+            .map(|source| source as &(dyn std::error::Error + 'static))
+    }
+}
 
 impl From<alien_api::errors::AlienError> for AlienError {
     fn from(value: alien_api::errors::AlienError) -> Self {
+        // Every field by name, without `..`: when BAML's AlienError gains a
+        // field, this stops compiling until the field is mapped below.
+        let alien_api::errors::AlienError {
+            code,
+            message,
+            retryable,
+            http_status,
+            context,
+            hint,
+            request_id,
+            source,
+            internal,
+        } = value;
         Self {
-            code: value.code,
-            message: value.message,
-            retryable: value.retryable,
-            // The BAML code sets it only from an HTTP response's status.
-            http_status_code: value
-                .http_status
-                .map(|status| u16::try_from(status).expect("an HTTP status code fits in u16")),
-            context: value.context.map(|context| context.into_iter().collect()),
+            code,
+            message,
+            retryable,
+            // The response's status, or on a `source` level a number the
+            // server wrote, which the BAML code keeps only from 100 to 599.
+            // One that still does not fit is dropped, never a panic.
+            http_status_code: http_status.and_then(|status| u16::try_from(status).ok()),
+            context: context.map(|context| context.into_iter().collect()),
+            hint,
+            request_id,
+            source: source.map(|source| Box::new(Self::from(*source))),
+            internal,
         }
     }
 }
@@ -105,6 +148,7 @@ impl From<alien_api::errors::AlienError> for AlienError {
 #[non_exhaustive]
 pub enum Error {
     /// The call failed in a way the SDK describes (docs/errors.md).
+    /// `source()` is the held error's: the server's `source` chain.
     Alien(AlienError),
     /// The BAML runtime failed: it could not start or was shut down, a
     /// blocking function was called inside an async runtime, a value has no
@@ -126,7 +170,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::Alien(_) => None,
+            // `Error::Alien` is the error itself, not a wrapper around it:
+            // its source is the error's own.
+            Error::Alien(error) => std::error::Error::source(error),
             Error::Runtime(error) => error.source(),
         }
     }
@@ -256,6 +302,10 @@ impl Alien {
                 retryable: false,
                 http_status_code: None,
                 context: None,
+                hint: None,
+                request_id: None,
+                source: None,
+                internal: None,
             }));
         }
         Ok(Self {
@@ -409,5 +459,127 @@ mod tests {
             }
         }
         assert_eq!(AlienManager::new("u", None).client.timeout_ms, None);
+    }
+
+    /// A generated error with this code, status and source, every other
+    /// field set.
+    fn generated(
+        code: &str,
+        http_status: Option<i64>,
+        source: Option<alien_api::errors::AlienError>,
+    ) -> alien_api::errors::AlienError {
+        alien_api::errors::AlienError {
+            code: code.to_string(),
+            message: format!("{code} failed"),
+            retryable: true,
+            http_status,
+            context: Some(
+                [("details".to_string(), "{}".to_string())]
+                    .into_iter()
+                    .collect(),
+            ),
+            hint: Some(format!("{code} hint")),
+            request_id: Some(format!("req_{code}")),
+            source: source.map(Box::new),
+            internal: Some(true),
+        }
+    }
+
+    /// The codes of an error and its sources, as `std::error::Error::source()` gives them.
+    fn sources(error: &(dyn std::error::Error + 'static)) -> Vec<String> {
+        let mut codes = Vec::new();
+        let mut next = Some(error);
+        while let Some(level) = next {
+            let level = level
+                .downcast_ref::<AlienError>()
+                .expect("every level is an AlienError");
+            codes.push(level.code.clone());
+            next = std::error::Error::source(level);
+        }
+        codes
+    }
+
+    #[test]
+    fn the_conversion_keeps_every_field_and_the_source_chain() {
+        use std::error::Error as _;
+
+        let thrown = generated(
+            "OUTER",
+            Some(500),
+            Some(generated(
+                "INNER",
+                Some(403),
+                Some(generated("INNERMOST", None, None)),
+            )),
+        );
+        let error = AlienError::from(thrown);
+        assert_eq!(
+            (
+                error.code.as_str(),
+                error.message.as_str(),
+                error.retryable,
+                error.http_status_code
+            ),
+            ("OUTER", "OUTER failed", true, Some(500))
+        );
+        assert_eq!(
+            error.context.as_ref().map(|c| c["details"].as_str()),
+            Some("{}")
+        );
+        assert_eq!(error.hint.as_deref(), Some("OUTER hint"));
+        assert_eq!(error.request_id.as_deref(), Some("req_OUTER"));
+        assert_eq!(error.internal, Some(true));
+        let inner = error.source.as_deref().expect("a source");
+        assert_eq!(
+            (
+                inner.code.as_str(),
+                inner.http_status_code,
+                inner.hint.as_deref(),
+                inner.request_id.as_deref()
+            ),
+            ("INNER", Some(403), Some("INNER hint"), Some("req_INNER"))
+        );
+        let innermost = inner.source.as_deref().expect("a second source");
+        assert_eq!(
+            (innermost.code.as_str(), innermost.http_status_code),
+            ("INNERMOST", None)
+        );
+        assert!(innermost.source.is_none() && innermost.source().is_none());
+
+        // std::error::Error::source() walks the same chain, from the error
+        // and from the `Error::Alien` that holds it; the BAML error that
+        // carried the throw is not in it.
+        assert_eq!(sources(&error), ["OUTER", "INNER", "INNERMOST"]);
+        let held = Error::Alien(error.clone());
+        assert_eq!(held.to_string(), "OUTER: OUTER failed");
+        assert_eq!(
+            sources(held.source().expect("the error's source")),
+            ["INNER", "INNERMOST"]
+        );
+        let no_source = Error::Alien(AlienError::from(generated("ALONE", None, None)));
+        assert!(no_source.source().is_none());
+    }
+
+    #[test]
+    fn a_status_that_is_not_an_http_status_is_dropped_not_a_panic() {
+        // The BAML code keeps a source level's status only from 100 to 599;
+        // the conversion does not rely on that.
+        for status in [70_000, -1, i64::MAX, i64::MIN, 65_536] {
+            let error = AlienError::from(generated(
+                "OUTER",
+                Some(status),
+                Some(generated("INNER", Some(status), None)),
+            ));
+            assert_eq!(error.http_status_code, None, "{status}");
+            assert_eq!(
+                error.source.expect("a source").http_status_code,
+                None,
+                "{status}"
+            );
+        }
+        assert_eq!(
+            AlienError::from(generated("E", Some(65_535), None)).http_status_code,
+            Some(65_535)
+        );
     }
 }

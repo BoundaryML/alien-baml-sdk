@@ -12,6 +12,10 @@ import (
 // API or the Manager API reports a failure (docs/errors.md). Use errors.As to
 // read it.
 //
+// Source is the error the server names as this one's cause, and Unwrap
+// returns it, so errors.As and errors.Is walk the server's chain. The BAML
+// runtime's own error, which carried the failure, is not in the chain.
+//
 // Three kinds of error are not *AlienError:
 //   - context.Canceled and context.DeadlineExceeded when ctx ends; they pass
 //     through unchanged, so errors.Is(err, context.DeadlineExceeded) works.
@@ -20,18 +24,37 @@ import (
 //   - runtime failures: a runtime that cannot start, a BAML panic, a call
 //     made after Shutdown.
 type AlienError struct {
-	Code       string            `json:"code"`
-	Message    string            `json:"message"`
-	Retryable  bool              `json:"retryable"`
+	Code      string `json:"code"`
+	Message   string `json:"message"`
+	Retryable bool   `json:"retryable"`
+	// HTTPStatus is the response's status; nil when there was no response.
+	// On a Source level: the status that level names, if any.
 	HTTPStatus *int              `json:"http_status"`
 	Context    map[string]string `json:"context"`
-	// Cause is the BAML error this was decoded from.
-	Cause error `json:"-"`
+	// Hint is the server's remediation hint; "" when it sent none.
+	Hint string `json:"hint"`
+	// RequestID is the server's request ID (the error body's requestId); ""
+	// when it sent none.
+	RequestID string `json:"request_id"`
+	// Source is the error that caused this one, from the server's source
+	// chain (at most 8 levels below the returned error); nil when there is
+	// none.
+	Source *AlienError `json:"source"`
+	// Internal is the server's internal flag; nil when the error is not from
+	// a server's error body.
+	Internal *bool `json:"internal"`
 }
 
 func (e *AlienError) Error() string { return e.Code + ": " + e.Message }
 
-func (e *AlienError) Unwrap() error { return e.Cause }
+// Unwrap returns Source, or nil (an untyped nil, so errors.Unwrap(err) == nil)
+// when there is none.
+func (e *AlienError) Unwrap() error {
+	if e.Source == nil {
+		return nil
+	}
+	return e.Source
+}
 
 const alienErrorClass = "user.errors.AlienError"
 
@@ -46,7 +69,7 @@ func convert(err error) error {
 	if !errors.As(err, &bamlErr) || bamlErr.Kind != "error" || bamlErr.ClassName != alienErrorClass {
 		return err
 	}
-	decoded := &AlienError{Cause: err}
+	decoded := &AlienError{}
 	if decodeErr := decodeThrown(bamlErr.Value, decoded); decodeErr != nil {
 		return fmt.Errorf("alien: cannot read thrown AlienError: %w (original: %w)", decodeErr, err)
 	}
@@ -57,8 +80,9 @@ func convert(err error) error {
 	return decoded
 }
 
-// decodeThrown reads a thrown value, a dynamic map, into out through its JSON
-// form.
+// decodeThrown reads a thrown value, a dynamic map keyed by the BAML field
+// names, into out through its JSON form; a nested source decodes the same
+// way.
 func decodeThrown(value any, out *AlienError) error {
 	encoded, err := json.Marshal(value)
 	if err != nil {

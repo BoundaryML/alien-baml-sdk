@@ -1,0 +1,165 @@
+{
+  "id": "platform.getManager.source_chain_at_depth_cap",
+  "phase": 1,
+  "notes": "A source chain 8 levels deep, the most the SDK keeps below the thrown error, arrives whole.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 502,
+        "json": {
+          "code": "TOP_LEVEL",
+          "message": "The call failed.",
+          "retryable": true,
+          "internal": false,
+          "source": {
+            "code": "LEVEL_1",
+            "message": "Level 1 failed.",
+            "internal": false,
+            "source": {
+              "code": "LEVEL_2",
+              "message": "Level 2 failed.",
+              "internal": false,
+              "source": {
+                "code": "LEVEL_3",
+                "message": "Level 3 failed.",
+                "internal": false,
+                "source": {
+                  "code": "LEVEL_4",
+                  "message": "Level 4 failed.",
+                  "internal": false,
+                  "source": {
+                    "code": "LEVEL_5",
+                    "message": "Level 5 failed.",
+                    "internal": false,
+                    "source": {
+                      "code": "LEVEL_6",
+                      "message": "Level 6 failed.",
+                      "internal": false,
+                      "source": {
+                        "code": "LEVEL_7",
+                        "message": "Level 7 failed.",
+                        "internal": false,
+                        "source": {
+                          "code": "LEVEL_8",
+                          "message": "Level 8 failed.",
+                          "internal": false,
+                          "source": null
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "TOP_LEVEL",
+    "retryable": true,
+    "http_status": 502,
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "LEVEL_1",
+      "message": "Level 1 failed.",
+      "retryable": false,
+      "http_status": null,
+      "context": null,
+      "hint": null,
+      "request_id": null,
+      "internal": false,
+      "source": {
+        "code": "LEVEL_2",
+        "message": "Level 2 failed.",
+        "retryable": false,
+        "http_status": null,
+        "context": null,
+        "hint": null,
+        "request_id": null,
+        "internal": false,
+        "source": {
+          "code": "LEVEL_3",
+          "message": "Level 3 failed.",
+          "retryable": false,
+          "http_status": null,
+          "context": null,
+          "hint": null,
+          "request_id": null,
+          "internal": false,
+          "source": {
+            "code": "LEVEL_4",
+            "message": "Level 4 failed.",
+            "retryable": false,
+            "http_status": null,
+            "context": null,
+            "hint": null,
+            "request_id": null,
+            "internal": false,
+            "source": {
+              "code": "LEVEL_5",
+              "message": "Level 5 failed.",
+              "retryable": false,
+              "http_status": null,
+              "context": null,
+              "hint": null,
+              "request_id": null,
+              "internal": false,
+              "source": {
+                "code": "LEVEL_6",
+                "message": "Level 6 failed.",
+                "retryable": false,
+                "http_status": null,
+                "context": null,
+                "hint": null,
+                "request_id": null,
+                "internal": false,
+                "source": {
+                  "code": "LEVEL_7",
+                  "message": "Level 7 failed.",
+                  "retryable": false,
+                  "http_status": null,
+                  "context": null,
+                  "hint": null,
+                  "request_id": null,
+                  "internal": false,
+                  "source": {
+                    "code": "LEVEL_8",
+                    "message": "Level 8 failed.",
+                    "retryable": false,
+                    "http_status": null,
+                    "context": null,
+                    "hint": null,
+                    "request_id": null,
+                    "internal": false,
+                    "source": null
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "assert": []
+}

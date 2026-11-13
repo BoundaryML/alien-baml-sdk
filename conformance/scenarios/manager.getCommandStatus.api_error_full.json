@@ -1,0 +1,92 @@
+{
+  "id": "manager.getCommandStatus.api_error_full",
+  "phase": 1,
+  "notes": "A Manager error body in Alien's full error shape keeps hint, request ID, internal flag and the source chain. It is still never retryable, whatever the body says (a source level keeps its own flag), and its context is still path and details: the body's context is not kept.",
+  "call": {
+    "fn": "manager.getCommandStatus",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "token": "${secrets.managerToken}"
+      },
+      "command_id": "cmd_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/commands/cmd_1",
+        "headers": {
+          "authorization": "Bearer ${secrets.managerToken}"
+        }
+      },
+      "respond": {
+        "status": 503,
+        "json": {
+          "code": "COMMAND_STORE_UNAVAILABLE",
+          "message": "The command store is unavailable.",
+          "details": "kv timeout",
+          "retryable": true,
+          "internal": false,
+          "httpStatusCode": 503,
+          "hint": "Retry in a minute.",
+          "requestId": "req_manager_1",
+          "context": {
+            "store": "kv"
+          },
+          "source": {
+            "code": "KV_TIMEOUT",
+            "message": "The key-value store timed out.",
+            "retryable": true,
+            "internal": true,
+            "httpStatusCode": 504,
+            "context": {
+              "timeoutMs": 3000
+            },
+            "source": {
+              "message": "connection reset by peer"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "COMMAND_STORE_UNAVAILABLE",
+    "retryable": false,
+    "http_status": 503,
+    "context": {
+      "path": "/v1/commands/cmd_1",
+      "details": "kv timeout"
+    },
+    "hint": "Retry in a minute.",
+    "request_id": "req_manager_1",
+    "internal": false,
+    "source": {
+      "code": "KV_TIMEOUT",
+      "message": "The key-value store timed out.",
+      "retryable": true,
+      "http_status": 504,
+      "context": {
+        "details": "{\"timeoutMs\":3000}"
+      },
+      "hint": null,
+      "request_id": null,
+      "internal": true,
+      "source": {
+        "code": "NESTED_ERROR",
+        "message": "connection reset by peer",
+        "retryable": false,
+        "http_status": null,
+        "context": null,
+        "hint": null,
+        "request_id": null,
+        "internal": null,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

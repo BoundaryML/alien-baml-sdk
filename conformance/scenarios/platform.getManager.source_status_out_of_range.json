@@ -1,0 +1,105 @@
+{
+  "id": "platform.getManager.source_status_out_of_range",
+  "phase": 1,
+  "notes": "A source level's httpStatusCode is kept only when it is an integer from 100 to 599: 70000, -1 and 404.5 become null, 404 is kept. The top-level status is the response's.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 502,
+        "json": {
+          "code": "UPSTREAM_FAILED",
+          "message": "An upstream call failed.",
+          "retryable": false,
+          "internal": false,
+          "httpStatusCode": 70000,
+          "source": {
+            "code": "TOO_LARGE",
+            "message": "Status 70000.",
+            "httpStatusCode": 70000,
+            "source": {
+              "code": "NEGATIVE",
+              "message": "Status -1.",
+              "httpStatusCode": -1,
+              "source": {
+                "code": "FRACTION",
+                "message": "Status 404.5.",
+                "httpStatusCode": 404.5,
+                "source": {
+                  "code": "IN_RANGE",
+                  "message": "Status 404.",
+                  "httpStatusCode": 404
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "UPSTREAM_FAILED",
+    "retryable": false,
+    "http_status": 502,
+    "hint": null,
+    "request_id": null,
+    "internal": false,
+    "source": {
+      "code": "TOO_LARGE",
+      "message": "Status 70000.",
+      "retryable": false,
+      "http_status": null,
+      "context": null,
+      "hint": null,
+      "request_id": null,
+      "internal": null,
+      "source": {
+        "code": "NEGATIVE",
+        "message": "Status -1.",
+        "retryable": false,
+        "http_status": null,
+        "context": null,
+        "hint": null,
+        "request_id": null,
+        "internal": null,
+        "source": {
+          "code": "FRACTION",
+          "message": "Status 404.5.",
+          "retryable": false,
+          "http_status": null,
+          "context": null,
+          "hint": null,
+          "request_id": null,
+          "internal": null,
+          "source": {
+            "code": "IN_RANGE",
+            "message": "Status 404.",
+            "retryable": false,
+            "http_status": 404,
+            "context": null,
+            "hint": null,
+            "request_id": null,
+            "internal": null,
+            "source": null
+          }
+        }
+      }
+    }
+  },
+  "assert": []
+}

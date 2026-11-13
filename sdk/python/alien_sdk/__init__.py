@@ -34,7 +34,7 @@ from . import _gen
 from ._gen import setup as _setup
 
 from . import _operations, manager, platform  # (platform, manager: the request and response types)
-from ._errors import AlienError, _converted
+from ._errors import AlienError, _acall, _call
 
 CloudFormationLaunch = _setup.CloudFormationLaunch
 
@@ -49,8 +49,9 @@ _MAX_TIMEOUT_MS = (1 << 62) - 1
 
 # The generated client classes are pydantic models, whose repr() shows every
 # field. These subclasses leave the credential out of repr(), vars() and
-# debuggers. A traceback that captures locals (as error reporters do) still
-# holds it: baml_bridge keeps the encoded call in a local of its own frame.
+# debuggers. baml_bridge keeps a call's arguments, the client among them, in
+# locals of its own frame: an AlienError's traceback has no such frame
+# (_errors._call), the runtime's own errors still do (docs/gaps.md#b23).
 class _PlatformClient(_gen.platform.PlatformClient):
     api_key: str = _pydantic.Field(repr=False)
 
@@ -215,8 +216,7 @@ class ProjectSetup:
         parameters: _typing.Mapping[str, str] | None = None,
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
-        with _converted():
-            return _setup.launch_url_for_project_sync(self._client, project, region, stack_name, dict(parameters or {}))
+        return _call(_setup.launch_url_for_project_sync, self._client, project, region, stack_name, dict(parameters or {}))
 
 
 class AsyncProjectSetup:
@@ -233,14 +233,12 @@ class AsyncProjectSetup:
         parameters: _typing.Mapping[str, str] | None = None,
     ) -> str:
         """Fetches the project's AWS template and builds a quick-create link for it."""
-        with _converted():
-            return await _setup.launch_url_for_project(self._client, project, region, stack_name, dict(parameters or {}))
+        return await _acall(_setup.launch_url_for_project, self._client, project, region, stack_name, dict(parameters or {}))
 
 
 def cloudformation_launch_url(input: CloudFormationLaunch) -> str:
     """Builds an AWS CloudFormation quick-create link from a template URL."""
-    with _converted():
-        return _setup.cloudformation_launch_url_sync(input)
+    return _call(_setup.cloudformation_launch_url_sync, input)
 
 
 def shutdown() -> None:

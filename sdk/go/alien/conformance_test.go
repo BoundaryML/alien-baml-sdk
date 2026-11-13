@@ -146,6 +146,25 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// errorOutcome is an error as the stub compares it: every field, under its
+// BAML name, Source level by level. A field that is not set is null.
+func errorOutcome(e *AlienError) map[string]any {
+	out := map[string]any{
+		"code": e.Code, "message": e.Message, "retryable": e.Retryable, "http_status": e.HTTPStatus,
+		"context": e.Context, "hint": nil, "request_id": nil, "internal": e.Internal, "source": nil,
+	}
+	if e.Hint != "" {
+		out["hint"] = e.Hint
+	}
+	if e.RequestID != "" {
+		out["request_id"] = e.RequestID
+	}
+	if e.Source != nil {
+		out["source"] = errorOutcome(e.Source)
+	}
+	return out
+}
+
 func TestConformance(t *testing.T) {
 	scenarios, err := loadScenarios()
 	if err != nil {
@@ -187,7 +206,7 @@ func TestConformance(t *testing.T) {
 				if !errors.As(err, &alienErr) {
 					t.Fatalf("call returned a non-AlienError: %v", err)
 				}
-				outcome["error"] = map[string]any{"code": alienErr.Code, "retryable": alienErr.Retryable, "http_status": alienErr.HTTPStatus, "message": alienErr.Message, "context": alienErr.Context}
+				outcome["error"] = errorOutcome(alienErr)
 			} else {
 				outcome["ok"] = value
 			}

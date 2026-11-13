@@ -291,13 +291,15 @@ def method(m: Module, f: Function, asynchronous: bool, qualify: Qualifier, inden
         params.append(f"{arg.arg}: {annotation(arg, qualify)} = {default}")
     returns = ast.unparse(qualify.visit(copy(f.node.returns))) if f.node.returns else "None"
     target = f"_gen.{m.dotted}.{f.name}" + ("" if asynchronous else SYNC_SUFFIX)
-    call_args = ["self._client", *(arg.arg for arg in positional), *(f"{arg.arg}={arg.arg}" for arg in keywords)]
-    call = f"{target}({', '.join(call_args)})"
+    # Through the facade's error conversion (_errors._call, _acall), which
+    # takes the generated function and its arguments.
+    call_args = [target, "self._client", *(arg.arg for arg in positional), *(f"{arg.arg}={arg.arg}" for arg in keywords)]
+    call = f"{'await _acall' if asynchronous else '_call'}({', '.join(call_args)})"
     lines = [f"{indent}{'async ' if asynchronous else ''}def {f.name}(", *(f"{indent}    {p}," for p in params), f"{indent}) -> {returns}:"]
     body = indent * 2
     if f.doc:
         lines.append(docstring(f.doc, body))
-    lines += [f"{body}with _converted():", f"{body}    return {'await ' if asynchronous else ''}{call}"]
+    lines.append(f"{body}return {call}")
     return lines
 
 
@@ -453,7 +455,7 @@ def main() -> None:
         *(f"import {m} as _{m}" for m in sorted(used)),
         "",
         "from . import _gen",
-        "from ._errors import _converted",
+        "from ._errors import _acall, _call",
         "",
         "__all__ = [",
         *(f'    "{n}",' for n in sorted(names)),

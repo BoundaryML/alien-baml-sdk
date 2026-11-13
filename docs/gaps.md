@@ -28,7 +28,7 @@ SDK works with.
 | [B20](#b20) | The Rust generator skips unions of string literals that are not identifiers | None needed: only internal `compat` types | — |
 | [B21](#b21) | A decode failure inside a `baml.FromJson` override loses its location | None: fixed by `@json` attributes, with no overrides left to decode through | — |
 | [B22](#b22) | The generated client classes print their credential (Rust `Debug`, Go `fmt` and `encoding/json`) | The facade types hide it. Rust keeps the generated clients private; Go documents what to keep out of logs | Logging Go's generated client (`c.Platform`) writes the API key or Manager token |
-| [B23](#b23) | The Python bridge keeps each encoded call, API key included, in a local variable | None; the entry gives Sentry settings | Error reporters that record local variables (Sentry by default) store the API key |
+| [B23](#b23) | The Python bridge keeps each call's arguments, the client included, in local variables of its frame | `AlienError` is raised without the bridge's error, so its traceback has no such frame; the facade's clients keep the key out of `repr()` | An error that is not an `AlienError` (a per-call timeout, a BAML panic) still carries the frame; a tool that records more of a local than its `repr()` would store the API key |
 | [B24](#b24) | `baml_bridge` turns on serde_json's `arbitrary_precision` and `preserve_order` | None: fixed in 0.24.0 (BAML #5509) | — |
 | [B25](#b25) | Rust union type names join every member's name | None | `cargo doc` fails with "File name too long" |
 | [B26](#b26) | The Rust generator's `serde` impls ignored the SDK's JSON mapping | None: fixed by `@json` attributes (BAML #5563) | — |
@@ -524,7 +524,7 @@ fmt.Printf("%+v\n", c.Platform) // {BaseUrl:https://api.alien.dev ApiKey:alien_e
 |---|---|---|
 | Rust | Nothing public: the generated clients are private to the facade | `Debug` of `Alien`, `AlienManager`, every group, every builder and `ProjectSetup` (`tests/client_options.rs` checks them) |
 | Go | `%v`, `%+v`, `%#v` of `c.Platform`; `json.Marshal` of `c`, `c.Platform`, `m` and `m.Generated`; `slog` with `c.Platform` (text and JSON handlers), or with `m` or `m.Generated` (JSON handler) | `fmt` and `slog` of `c`; `fmt` of `m` and `m.Generated` print the token's pointer |
-| Python | Tracebacks that record local variables ([B23](#b23)) | `repr()` of `Alien` and `AlienManager` |
+| Python | Nothing found ([B23](#b23) says what a traceback holds) | `repr()` of `Alien` and `AlienManager` |
 | TypeScript | Nothing found | `util.inspect`, `JSON.stringify` and `String()` of `Alien` and `AlienManager` |
 
 **Impact on Alien.** In Go, every call goes through `c`, but `c.Platform` and
@@ -543,43 +543,58 @@ complete fix.
 
 ## B23
 
-**A Python traceback that records local variables holds the API key.**
-`baml_bridge` encodes each call's arguments, the client included, into a bytes
-local named `args_proto` in the function that runs the call (its internal
-`_sync`, and `_async` for `AsyncAlien`). When the call fails, `AlienError` is
-chained from the bridge's error, whose traceback holds that frame. The facade's clients
-keep the key out of `repr()`, which does not help here, and the name
-`args_proto` does not match scrubbers that look for `api_key` or `token`.
+**The Python bridge's frame keeps each call's arguments, the client included.**
+The function of `baml_bridge` that runs a call (its internal `_sync`, and
+`_async` for `AsyncAlien`) holds the arguments in its locals `args`,
+`call_kwargs` and `merged`, and in `args_proto.kwargs`. The client is one of
+them, and the client holds the API key. When a call fails, the error
+`baml_bridge` raises has that frame in its traceback, so anything that records
+the local variables of a traceback records what those locals print.
+
+What they print depends on the client. A generated client prints its key. The
+facade's clients, the only ones `alien_sdk` hands out, leave it out of
+`repr()`:
 
 ```python
-alien = alien_sdk.Alien("alien_example_key", server_url="http://127.0.0.1:9")  # nothing listens there
+from alien_sdk import _generated                                 # the generated SDK, not the facade
+
+client = _generated.platform.PlatformClient(base_url="http://127.0.0.1:9", api_key="alien_example_key")  # nothing listens there
 try:
-    alien.managers.get("mgr_1")
-except alien_sdk.AlienError as e:
+    _generated.platform.managers.get_sync(client, "mgr_1")
+except baml_bridge.BamlError as e:
     print("".join(traceback.TracebackException.from_exception(e, capture_locals=True).format()))
 # …
-#     args_proto = b'\n\x8c\x01\n\x06client2\x…\x12\x1e\n\x07api_key2\x13\x12\x11alien_example_key\x12\x0b\n\tw…'
+#     args = (PlatformClient(base_url='http://127.0.0.1:9', api_key='alien_example_key', workspace=None, timeout_ms=None), 'mgr_1')
 ```
 
-| Records local variables | Shows the key |
-|---|---|
-| Sentry's Python SDK (2.73.0), default settings | Yes, in the `_sync` frame's `args_proto` |
-| `rich` tracebacks with `show_locals=True` | Yes |
-| `pytest -l` | Shortened in the middle, so the key may be cut out; in full with `-vv` |
-| `traceback` with `capture_locals=True` | Yes |
+Earlier BAML releases kept the whole call encoded as bytes in `args_proto`,
+which showed the key whatever the client printed, and `AlienError` was chained
+from the bridge's error, so every failed call led a reporter to that frame.
+With BAML 0.25.3-nightly.20261109.a the frame holds the arguments as objects.
 
-**Impact on Alien.** A Python service that reports errors to Sentry with its
-defaults sends the API key with every failed SDK call.
+| Error, with a facade client | Leads to the bridge's frame | A recorded local shows the key |
+|---|---|---|
+| `AlienError`, from `Alien` or `AsyncAlien` | No | No |
+| An error that is not an `AlienError`: `BamlCancelledError` (a per-call timeout), `BamlPanic` | Yes | No: the locals hold the client, whose `repr()` leaves the key out |
 
-**Workaround.** None in the SDK. For Sentry, turn local variables off
-(`include_local_variables=False`), or keep them and add `args_proto` to the
-scrubber's denylist
-(`event_scrubber=EventScrubber(denylist=DEFAULT_DENYLIST + ["args_proto"])`).
-With `data_collection` set, Sentry ignores `event_scrubber`; use
-`data_collection={"stack_frame_variables": False}` there. With sentry-sdk
-2.73.0, the key is in the event with the defaults and in none of the three
-settings. [errors.md](errors.md#credentials-in-python-tracebacks) has the
-code. A fix needs the Python bridge not to keep the encoded call in a local.
+Checked with `traceback` (`capture_locals=True`) and with Sentry's Python SDK
+2.73.0 at its default settings. `rich` tracebacks with `show_locals=True` and
+`pytest -l` were not checked again after the bridge changed.
+
+**Impact on Alien.** None found with the facade's clients. A tool that records
+more of a local than its `repr()` (its attributes, for example) would store
+the API key from the bridge's frame of an error that is not an `AlienError`.
+
+**Workaround.** In the facade: `AlienError` is raised without the bridge's
+error, as neither `__cause__` nor `__context__`, after the `except` block that
+caught it has ended (`sdk/python/alien_sdk/_errors.py`), so its traceback
+never has the bridge's frame and nothing keeps that error alive.
+`test_credentials_stay_out_of_tracebacks` in `sdk/python/tests/test_facade.py`
+checks it for the blocking and the `async` clients. To keep local variables out
+of Sentry altogether: `sentry_sdk.init(dsn, include_local_variables=False)`
+([errors.md](errors.md#credentials-in-python-tracebacks)). A complete fix needs
+the Python bridge not to keep a call's arguments in a frame that outlives the
+call, or BAML to support secret fields.
 
 ## B24
 
