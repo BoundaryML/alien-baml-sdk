@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -24,7 +25,12 @@ import (
 func TestConvert(t *testing.T) {
 	thrown := &baml_go.BamlError{Kind: "error", ClassName: alienErrorClass, Value: map[string]any{
 		"code": "NOT_FOUND", "message": "no such manager", "retryable": true, "http_status": int64(404),
-		"context": map[string]any{"requestId": "req_1"},
+		"context": map[string]any{"requestId": "req_1"}, "hint": "check the ID", "request_id": "req_1", "internal": false,
+		"source": map[string]any{
+			"code": "INNER", "message": "inner", "retryable": false, "http_status": int64(403), "context": nil,
+			"hint": nil, "request_id": nil, "internal": true,
+			"source": map[string]any{"code": "INNERMOST", "message": "innermost", "retryable": false},
+		},
 	}}
 	got := Err(thrown)
 	var alienErr *AlienError
@@ -32,14 +38,50 @@ func TestConvert(t *testing.T) {
 		t.Fatalf("thrown AlienError: got %T %v", got, got)
 	}
 	if alienErr.Code != "NOT_FOUND" || alienErr.Message != "no such manager" || !alienErr.Retryable ||
-		alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 || alienErr.Context["requestId"] != "req_1" {
+		alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 || alienErr.Context["requestId"] != "req_1" ||
+		alienErr.Hint != "check the ID" || alienErr.RequestID != "req_1" || alienErr.Internal == nil || *alienErr.Internal {
 		t.Errorf("fields: %+v", alienErr)
-	}
-	if errors.Unwrap(got) != thrown {
-		t.Errorf("Unwrap: got %v", errors.Unwrap(got))
 	}
 	if got.Error() != "NOT_FOUND: no such manager" {
 		t.Errorf("Error(): %q", got.Error())
+	}
+
+	// The chain is Source, level by level, and only that.
+	inner, innermost := alienErr.Source, alienErr.Source.Source
+	if inner == nil || innermost == nil || innermost.Source != nil {
+		t.Fatalf("source chain: %+v", alienErr)
+	}
+	if inner.Code != "INNER" || inner.HTTPStatus == nil || *inner.HTTPStatus != 403 || inner.Context != nil ||
+		inner.Hint != "" || inner.RequestID != "" || inner.Internal == nil || !*inner.Internal {
+		t.Errorf("inner fields: %+v", inner)
+	}
+	if innermost.Code != "INNERMOST" || innermost.HTTPStatus != nil || innermost.Internal != nil {
+		t.Errorf("innermost fields: %+v", innermost)
+	}
+	if errors.Unwrap(got) != error(inner) || errors.Unwrap(inner) != error(innermost) {
+		t.Errorf("Unwrap: got %v, then %v", errors.Unwrap(got), errors.Unwrap(inner))
+	}
+	// An untyped nil at the end: a nil *AlienError in an error would not be == nil.
+	if end := errors.Unwrap(innermost); end != nil {
+		t.Errorf("Unwrap of the last level: got %#v", end)
+	}
+	// errors.As and errors.Is reach the inner errors.
+	var reached *AlienError
+	if !errors.As(errors.Unwrap(got), &reached) || reached != inner {
+		t.Errorf("errors.As from the first source: got %+v", reached)
+	}
+	if !errors.Is(got, inner) || !errors.Is(got, innermost) {
+		t.Errorf("errors.Is does not reach the sources of %v", got)
+	}
+	// So does a wrapper around the chain.
+	reached = nil
+	if wrapped := fmt.Errorf("deploy: %w", inner); !errors.As(wrapped, &reached) || reached != inner || !errors.Is(wrapped, innermost) {
+		t.Errorf("errors.As through a wrapper: got %+v", reached)
+	}
+	// The BAML error that carried the throw is not in the chain.
+	var bamlErr *baml_go.BamlError
+	if errors.As(got, &bamlErr) || errors.Is(got, thrown) {
+		t.Errorf("the BAML error is in the chain of %v", got)
 	}
 
 	plain := errors.New("plain")
@@ -287,6 +329,94 @@ func TestCalls(t *testing.T) {
 		var alienErr *AlienError
 		if !errors.As(err, &alienErr) || alienErr.Code != "NOT_FOUND" || alienErr.HTTPStatus == nil || *alienErr.HTTPStatus != 404 {
 			t.Fatalf("got %T %v", err, err)
+		}
+	})
+
+	// Every field of Alien's error, with a two-level source chain.
+	const chained = `{"code":"DEPLOY_FAILED","message":"deploy failed","retryable":false,"internal":true,"hint":"see the source","requestId":"req_top","context":{"step":3},` +
+		`"source":{"code":"SANDBOX_REFUSED","message":"the sandbox refused","retryable":true,"internal":false,"hint":"ask an admin","requestId":"req_inner","httpStatusCode":403,"context":{"policy":"p1"},` +
+		`"source":{"code":"QUOTA","message":"quota exceeded","internal":true}}}`
+
+	t.Run("a failure keeps the server's source chain", func(t *testing.T) {
+		s := server(t, "GET /v1/managers/mgr_x", "Bearer key", 500, chained)
+		_, err := newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Managers.Get(ctx, "mgr_x")
+		var top *AlienError
+		if !errors.As(err, &top) || top.Source == nil || top.Source.Source == nil {
+			t.Fatalf("got %T %v", err, err)
+		}
+		first, second := top.Source, top.Source.Source
+		if top.Code != "DEPLOY_FAILED" || top.Hint != "see the source" || top.RequestID != "req_top" || top.Internal == nil || !*top.Internal ||
+			top.HTTPStatus == nil || *top.HTTPStatus != 500 || top.Context["details"] != `{"step":3}` {
+			t.Errorf("top: %+v", top)
+		}
+		if first.Code != "SANDBOX_REFUSED" || first.Message != "the sandbox refused" || !first.Retryable || first.Hint != "ask an admin" ||
+			first.RequestID != "req_inner" || first.Internal == nil || *first.Internal || first.HTTPStatus == nil || *first.HTTPStatus != 403 ||
+			fmt.Sprint(first.Context) != `map[details:{"policy":"p1"}]` {
+			t.Errorf("first source: %+v", first)
+		}
+		if second.Code != "QUOTA" || second.Retryable || second.Hint != "" || second.RequestID != "" || second.Internal == nil || !*second.Internal ||
+			second.HTTPStatus != nil || second.Context != nil || second.Source != nil {
+			t.Errorf("second source: %+v", second)
+		}
+		if errors.Unwrap(err) != error(first) || errors.Unwrap(first) != error(second) || errors.Unwrap(second) != nil {
+			t.Errorf("Unwrap does not follow Source")
+		}
+		var bamlErr *baml_go.BamlError
+		if errors.As(err, &bamlErr) {
+			t.Errorf("the BAML error is in the chain")
+		}
+	})
+
+	t.Run("AlienError has every field of the thrown value, and no other", func(t *testing.T) {
+		// A field BAML's AlienError gains fails here until AlienError has it.
+		s := server(t, "GET /v1/managers/mgr_x", "Bearer key", 500, chained)
+		_, err := alienapi.PlatformManagersGet(ctx, newClient(t, Options{APIKey: "key", ServerURL: s.URL}).Platform, "mgr_x")
+		var bamlErr *baml_go.BamlError
+		if !errors.As(err, &bamlErr) || bamlErr.ClassName != alienErrorClass {
+			t.Fatalf("got %T %v", err, err)
+		}
+		tags := map[string]bool{}
+		for i := range reflect.TypeFor[AlienError]().NumField() {
+			tags[reflect.TypeFor[AlienError]().Field(i).Tag.Get("json")] = true
+		}
+		// The thrown value names every field at every level, a null one included.
+		levels := 0
+		for level, ok := bamlErr.Value.(map[string]any); ok; level, ok = level["source"].(map[string]any) {
+			levels++
+			keys := map[string]bool{}
+			for key := range level {
+				keys[key] = true
+			}
+			if !reflect.DeepEqual(keys, tags) {
+				t.Errorf("level %d of the thrown value has the fields %v, AlienError has %v", levels, keys, tags)
+			}
+		}
+		if levels != 3 {
+			t.Errorf("the thrown value has %d levels", levels)
+		}
+		encoded, err := json.Marshal(bamlErr.Value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		strict := json.NewDecoder(bytes.NewReader(encoded))
+		strict.DisallowUnknownFields()
+		var decoded AlienError
+		if err := strict.Decode(&decoded); err != nil {
+			t.Fatalf("the thrown value has a field AlienError does not: %v", err)
+		}
+		// Each field of the top two levels is set, so none is silently dropped.
+		for _, level := range []*AlienError{&decoded, decoded.Source} {
+			if level.Code == "" || level.Message == "" || level.HTTPStatus == nil || level.Context == nil || level.Hint == "" ||
+				level.RequestID == "" || level.Source == nil || level.Internal == nil {
+				t.Errorf("a field is not set: %+v", level)
+			}
+		}
+		if !decoded.Source.Retryable {
+			t.Errorf("retryable is not set: %+v", decoded.Source)
+		}
+		var converted *AlienError
+		if !errors.As(Err(bamlErr), &converted) || !reflect.DeepEqual(converted, &decoded) {
+			t.Errorf("Err gives %+v, the strict decoding %+v", converted, decoded)
 		}
 	})
 

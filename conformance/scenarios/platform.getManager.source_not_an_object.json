@@ -1,0 +1,50 @@
+{
+  "id": "platform.getManager.source_not_an_object",
+  "phase": 1,
+  "notes": "A source that is not a JSON object is no source, and the error that carries it keeps the server's code.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 409,
+        "json": {
+          "code": "CONFLICT",
+          "message": "The resource already exists.",
+          "retryable": false,
+          "internal": true,
+          "hint": "Pick another name.",
+          "source": "the store said no"
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "CONFLICT",
+    "retryable": false,
+    "http_status": 409,
+    "context": {
+      "path": "/v1/managers/mgr_1",
+      "hint": "Pick another name."
+    },
+    "hint": "Pick another name.",
+    "request_id": null,
+    "internal": true,
+    "source": null
+  },
+  "assert": []
+}

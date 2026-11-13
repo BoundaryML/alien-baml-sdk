@@ -79,6 +79,21 @@ const calls: Record<string, (a: Args) => Promise<unknown>> = {
   "compat.decodeRemoteAccess": compatJson(sdk.compat.decode_remote_access),
 }
 
+/** An error as the stub compares it: every field, under its BAML name, `source` level by level. */
+function errorOutcome(error: AlienError): Record<string, unknown> {
+  return {
+    code: error.code,
+    message: error.message,
+    retryable: error.retryable,
+    http_status: error.statusCode,
+    context: error.context,
+    hint: error.hint,
+    request_id: error.requestId,
+    internal: error.internal,
+    source: error.source ? errorOutcome(error.source) : null,
+  }
+}
+
 async function outcomeOf(loaded: Call): Promise<{ ok?: unknown; error?: unknown; raw?: unknown }> {
   let run: () => Promise<unknown>
   if ("op" in loaded) {
@@ -92,11 +107,7 @@ async function outcomeOf(loaded: Call): Promise<{ ok?: unknown; error?: unknown;
     const value = await run()
     return { ok: value === undefined ? null : JSON.parse(JSON.stringify(value)), raw: value }
   } catch (error) {
-    if (error instanceof AlienError) {
-      return {
-        error: { code: error.code, retryable: error.retryable, http_status: error.statusCode, message: error.message, context: error.context },
-      }
-    }
+    if (error instanceof AlienError) return { error: errorOutcome(error) }
     throw error
   }
 }

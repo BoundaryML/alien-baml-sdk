@@ -19,7 +19,7 @@ import pytest
 
 import alien_sdk
 from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, platform
-from alien_sdk._errors import _converted
+from alien_sdk._errors import _call
 
 # The generated package, found through the facade's one import of it (alien_sdk/_gen.py).
 generated_sdk = importlib.import_module(_gen.platform.__name__.rpartition(".")[0])
@@ -67,8 +67,7 @@ def _platform_client(client: dict) -> _gen.platform.PlatformClient:
 
 def _converting(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     """Calls a generated function with the facade's error conversion."""
-    with _converted():
-        return function(*args, **kwargs)
+    return _call(function, *args, **kwargs)
 
 
 def _bootstrap_request(request: dict) -> Any:
@@ -215,17 +214,24 @@ def _to_json(value: Any) -> Any:
     return value
 
 
+def _error_fields(error: AlienError) -> dict:
+    """Every field of an AlienError, ``source`` level by level."""
+    return {
+        "code": error.code,
+        "message": error.message,
+        "retryable": error.retryable,
+        "http_status": error.http_status,
+        "context": error.context,
+        "hint": error.hint,
+        "request_id": error.request_id,
+        "internal": error.internal,
+        "source": _error_fields(error.source) if error.source is not None else None,
+    }
+
+
 def _error(error: AlienError) -> dict:
     """An AlienError as an outcome for the stub server."""
-    return {
-        "error": {
-            "code": error.code,
-            "retryable": error.retryable,
-            "http_status": error.http_status,
-            "message": error.message,
-            "context": error.context,
-        }
-    }
+    return {"error": _error_fields(error)}
 
 
 def test_found_scenarios() -> None:

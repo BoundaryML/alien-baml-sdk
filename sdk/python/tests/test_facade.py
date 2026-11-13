@@ -8,6 +8,7 @@ from __future__ import annotations
 import ast
 import asyncio
 import copy
+import gc
 import importlib
 import inspect
 import json
@@ -32,6 +33,7 @@ from baml_bridge import BamlCancelledError, BamlError
 
 import alien_sdk
 from alien_sdk import Alien, AlienError, AlienManager, AsyncAlien, AsyncAlienManager, _gen, manager, platform
+from alien_sdk._errors import _acall, _call
 
 
 def script(stub, *exchanges: dict) -> None:
@@ -241,7 +243,7 @@ def test_manager_without_token_sends_no_authorization(stub, token) -> None:
     requests(stub)
 
 
-def _not_found(stub, secrets) -> AlienError:
+def _not_found(stub, secrets, cls: type[Alien | AsyncAlien] = Alien) -> AlienError:
     script(stub, {
         "expect": {"method": "GET", "path": "/v1/managers/mgr_x?workspace=acme"},
         "respond": {"status": 404, "json": {
@@ -250,24 +252,134 @@ def _not_found(stub, secrets) -> AlienError:
         }},
     })
     with pytest.raises(AlienError) as info:
-        Alien(secrets["apiKey"], server_url=stub.base, workspace="acme").managers.get("mgr_x")
+        result = cls(secrets["apiKey"], server_url=stub.base, workspace="acme").managers.get("mgr_x")
+        if inspect.iscoroutine(result):
+            asyncio.run(result)
     requests(stub)
     return info.value
+
+
+# Every field of alien_sdk.AlienError, in the order its constructor takes them.
+ERROR_FIELDS = ("code", "message", "retryable", "http_status", "context", "hint", "request_id", "source", "internal")
+
+
+def _fields(error: AlienError | None) -> dict | None:
+    """Every field of an error, ``source`` level by level."""
+    if error is None:
+        return None
+    return {f: _fields(error.source) if f == "source" else getattr(error, f) for f in ERROR_FIELDS}
 
 
 def test_alien_error(stub, secrets) -> None:
     error = _not_found(stub, secrets)
     assert (error.code, error.retryable, error.http_status) == ("NOT_FOUND", False, 404)
     assert str(error) == "NOT_FOUND: Manager not found."
+    assert (error.hint, error.request_id, error.internal, error.source) == ("Check the ID.", "req_1", None, None)
+    # The context is unchanged: it still carries the hint and the request ID as strings.
     assert error.context is not None
     assert (error.context["requestId"], error.context["hint"]) == ("req_1", "Check the ID.")
     assert json.loads(error.context["details"]) == {"id": "mgr_x"}
-    assert isinstance(error.__cause__, BamlError)
+    # No source, so no cause; and the runtime's error is not chained either.
+    assert error.__cause__ is None and error.__context__ is None and error.__suppress_context__ is False
     assert f"{type(error).__module__}.{type(error).__qualname__}" == "alien_sdk.AlienError"
     for clone in (pickle.loads(pickle.dumps(error)), copy.copy(error), copy.deepcopy(error)):
         assert type(clone) is AlienError
-        fields = ("code", "message", "retryable", "http_status", "context")
-        assert [getattr(clone, f) for f in fields] == [getattr(error, f) for f in fields]
+        assert _fields(clone) == _fields(error)
+        assert clone.__cause__ is None
+
+
+# Every field of Alien's error, with a two-level `source` chain.
+CHAINED = {
+    "code": "DEPLOY_FAILED", "message": "deploy failed", "retryable": False, "internal": True,
+    "hint": "see the source", "requestId": "req_top", "context": {"step": 3},
+    "source": {
+        "code": "SANDBOX_REFUSED", "message": "the sandbox refused", "retryable": True, "internal": False,
+        "hint": "ask an admin", "requestId": "req_inner", "httpStatusCode": 403, "context": {"policy": "p1"},
+        "source": {"code": "QUOTA", "message": "quota exceeded", "internal": True},
+    },
+}
+
+
+def _chained(stub, secrets, asynchronous: bool = False) -> AlienError:
+    script(stub, {"expect": {"method": "GET", "path": "/v1/managers/mgr_x"}, "respond": {"status": 500, "json": CHAINED}})
+    with pytest.raises(AlienError) as info:
+        if asynchronous:
+            asyncio.run(AsyncAlien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x"))
+        else:
+            Alien(secrets["apiKey"], server_url=stub.base).managers.get("mgr_x")
+    requests(stub)
+    return info.value
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_the_cause_chain_is_the_servers_source_chain(stub, secrets, asynchronous: bool) -> None:
+    error = _chained(stub, secrets, asynchronous)
+    assert _fields(error) == {
+        "code": "DEPLOY_FAILED", "message": "deploy failed", "retryable": False, "http_status": 500,
+        "context": {"path": "/v1/managers/mgr_x", "requestId": "req_top", "hint": "see the source", "details": '{"step":3}'},
+        "hint": "see the source", "request_id": "req_top", "internal": True,
+        "source": {
+            "code": "SANDBOX_REFUSED", "message": "the sandbox refused", "retryable": True, "http_status": 403,
+            "context": {"details": '{"policy":"p1"}'}, "hint": "ask an admin", "request_id": "req_inner", "internal": False,
+            "source": {
+                "code": "QUOTA", "message": "quota exceeded", "retryable": False, "http_status": None,
+                "context": None, "hint": None, "request_id": None, "internal": True, "source": None,
+            },
+        },
+    }
+    first = error.source
+    assert isinstance(first, AlienError) and isinstance(first.source, AlienError)
+    assert error.__cause__ is first and error.__suppress_context__ is True
+    assert first.__cause__ is first.source and first.__suppress_context__ is True
+    assert first.source.__cause__ is None and first.source.source is None
+    # The chain is only the server's: no runtime error at any level, as cause or as context.
+    level: BaseException | None = error
+    while level is not None:
+        assert type(level) is AlienError and level.__context__ is None
+        level = level.__cause__
+    printed = "".join(traceback.format_exception(error))
+    assert printed.index("QUOTA: quota exceeded") < printed.index("SANDBOX_REFUSED: the sandbox refused") < printed.index("DEPLOY_FAILED: deploy failed")
+    assert printed.count("direct cause of the following exception") == 2 and "BamlError" not in printed
+
+
+def test_a_chained_error_survives_pickle_and_copy(stub, secrets) -> None:
+    error = _chained(stub, secrets)
+    for clone in (pickle.loads(pickle.dumps(error)), copy.copy(error), copy.deepcopy(error)):
+        assert type(clone) is AlienError
+        assert _fields(clone) == _fields(error)
+        assert type(clone.source) is AlienError and type(clone.source.source) is AlienError
+        # __init__ sets the cause, so a rebuilt error is chained as the raised one was.
+        assert clone.__cause__ is clone.source and clone.__suppress_context__ is True
+        assert clone.source.__cause__ is clone.source.source
+    # So is an error built directly, with `source` by position or by keyword.
+    inner = AlienError("INNER", "inner", False)
+    by_keyword = AlienError("OUTER", "outer", True, source=inner)
+    by_position = AlienError("OUTER", "outer", True, 502, {"path": "/v1/x"}, "a hint", "req_1", inner, False)
+    assert by_keyword.__cause__ is inner and by_position.__cause__ is inner
+    assert (by_position.hint, by_position.request_id, by_position.source, by_position.internal) == ("a hint", "req_1", inner, False)
+    assert inner.__cause__ is None and inner.__suppress_context__ is False
+
+
+def test_the_facade_maps_every_field_of_the_generated_error() -> None:
+    """A field BAML's AlienError gains fails here until the facade maps it:
+    the generated class, the facade's constructor and its attributes have the
+    same names, and the conversion carries each one at every level."""
+    generated = set(_gen.errors.AlienError.model_fields)
+    assert generated == set(ERROR_FIELDS)
+    parameters = list(inspect.signature(AlienError.__init__).parameters.values())[1:]
+    assert tuple(p.name for p in parameters) == ERROR_FIELDS
+    assert all(p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD for p in parameters)  # pickle rebuilds with cls(*args)
+    innermost = _gen.errors.AlienError(
+        code="INNER", message="inner", retryable=True, http_status=403, context={"details": "{}"},
+        hint="inner hint", request_id="req_inner", source=None, internal=True)
+    value = _gen.errors.AlienError(
+        code="OUTER", message="outer", retryable=False, http_status=500, context={"path": "/v1/x"},
+        hint="outer hint", request_id="req_outer", source=innermost, internal=False)
+    assert set(value.model_fields_set) == generated  # the fixture sets every field
+    error = alien_sdk._errors._from_generated(value)
+    assert _fields(error) == value.model_dump()
+    assert set(vars(error)) == generated
+    assert error.args == tuple(getattr(error, f) for f in ERROR_FIELDS)
 
 
 def test_a_union_tagged_by_two_fields_has_one_catch_all(stub, secrets) -> None:
@@ -300,20 +412,151 @@ def test_credentials_stay_out_of_reprs(stub, secrets) -> None:
         for text in (repr(value), str(value), repr(vars(value))):
             assert secrets["apiKey"] not in text and secrets["managerToken"] not in text
 
-    # Tracebacks that capture locals, as error reporters do: the only local
-    # holding the key is the encoded call that baml_bridge keeps in its own
-    # frame, which the facade cannot reach.
-    error = _not_found(stub, secrets)
+
+def _chain(error: BaseException) -> list[BaseException]:
+    """An exception and every exception reachable from it through
+    ``__cause__`` and ``__context__``, whatever ``__suppress_context__`` says:
+    error reporters read both."""
+    found: list[BaseException] = []
+    pending: list[BaseException | None] = [error]
+    while pending:
+        level = pending.pop()
+        if level is None or any(level is seen for seen in found):
+            continue
+        found.append(level)
+        pending += [level.__cause__, level.__context__]
+    return found
+
+
+def _holds(value: object, secret: str, seen: set[int], depth: int = 8) -> bool:
+    """Whether ``value`` holds ``secret`` by reference: it is a string or
+    bytes containing it, or a container, a pydantic model or another object
+    with attributes that leads to one, a few levels down."""
+    if isinstance(value, str):
+        return secret in value
+    if isinstance(value, (bytes, bytearray)) and secret.encode() in bytes(value):
+        return True
+    if depth == 0 or id(value) in seen or isinstance(value, (type, types.ModuleType, types.FunctionType, types.MethodType)):
+        return False
+    seen.add(id(value))
+    children: list[object] = []
+    if isinstance(value, dict):
+        children += [*value.keys(), *value.values()]
+    elif isinstance(value, (list, tuple, set, frozenset)):
+        children += value
+    attributes = getattr(value, "__dict__", None)
+    if isinstance(attributes, dict):
+        children += attributes.values()
+    return any(_holds(child, secret, seen, depth - 1) for child in children)
+
+
+def _locals_holding(error: BaseException, secret: str, by_reference: bool = False) -> set[str]:
+    """The frame locals, in the tracebacks of ``error`` and of everything
+    chained to it, that hold ``secret``; this file's own frames aside. A
+    local holds it when its repr shows it, which is what error reporters
+    record. With ``by_reference``, also when it leads to it (:func:`_holds`):
+    then the facade's own frames are left out too, since a method's ``self``
+    is the client, which has the key."""
     holding = set()
-    stack: traceback.TracebackException | None = traceback.TracebackException.from_exception(error, capture_locals=True)
-    while stack is not None:
-        for frame in stack.stack:
-            if Path(frame.filename).parent == Path(__file__).parent:
-                continue  # this test's own frames
-            holding |= {f"{Path(frame.filename).parent.name}.{frame.name}:{name}"
-                        for name, value in (frame.locals or {}).items() if secrets["apiKey"] in value}
-        stack = stack.__cause__ or (None if stack.__suppress_context__ else stack.__context__)
-    assert holding <= {"baml_bridge._sync:args_proto"}
+    for level in _chain(error):
+        for frame, _ in traceback.walk_tb(level.__traceback__):
+            directory = Path(frame.f_code.co_filename).parent
+            if directory == Path(__file__).parent or (by_reference and directory.name == "alien_sdk"):
+                continue
+            for name, value in frame.f_locals.items():
+                if secret in repr(value) or (by_reference and _holds(value, secret, set())):
+                    holding.add(f"{directory.name}.{frame.f_code.co_name}:{name}")
+    return holding
+
+
+def test_the_bridge_keeps_a_calls_arguments_in_its_frame(stub, secrets) -> None:
+    """Why an AlienError must not lead to the runtime's error
+    (docs/gaps.md#b23), and a check that :func:`_locals_holding` sees it: the
+    bridge's frame keeps the call's arguments, the client among them. A
+    generated client's repr shows the key; the facade's client hides it from
+    repr, but the object is still there."""
+    script(stub, *[{"expect": {"method": "GET", "path": "/v1/managers/mgr_x"},
+                    "respond": {"status": 404, "json": {"code": "NOT_FOUND", "message": "Manager not found."}}}] * 2)
+    key = secrets["apiKey"]
+
+    def in_the_bridge(holding: set[str]) -> bool:
+        return any(name.startswith("baml_bridge.") for name in holding)
+
+    with pytest.raises(BamlError) as shown:
+        _gen.platform.managers.get_sync(_gen.platform.PlatformClient(base_url=stub.base, api_key=key), "mgr_x")
+    assert in_the_bridge(_locals_holding(shown.value, key))
+    with pytest.raises(BamlError) as hidden:
+        _gen.platform.managers.get_sync(Alien(key, server_url=stub.base)._client, "mgr_x")
+    assert _locals_holding(hidden.value, key) == set()
+    assert in_the_bridge(_locals_holding(hidden.value, key, by_reference=True))
+    requests(stub)
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("failure", ["not_found", "chained"])
+def test_credentials_stay_out_of_tracebacks(stub, secrets, failure: str, asynchronous: bool) -> None:
+    """Tracebacks that capture locals, as error reporters do. baml_bridge keeps
+    a call's arguments, the client with its API key among them, in locals of
+    its own frame (docs/gaps.md#b23): an AlienError must not lead there,
+    through its traceback, its ``__cause__`` or its ``__context__``, at any
+    depth."""
+    gc.collect()
+    before = {id(o) for o in gc.get_objects() if isinstance(o, BamlError)}
+    if failure == "chained":
+        error = _chained(stub, secrets, asynchronous)
+    elif asynchronous:
+        error = _not_found(stub, secrets, AsyncAlien)
+    else:
+        error = _not_found(stub, secrets)
+    assert [type(level) for level in _chain(error)] == [AlienError] * (3 if failure == "chained" else 1)
+    # No local of any frame shows the key, and outside the facade's own frames none holds it at all.
+    assert _locals_holding(error, secrets["apiKey"]) == set()
+    assert _locals_holding(error, secrets["apiKey"], by_reference=True) == set()
+    # The frames the traceback does have are the facade's, not the bridge's or the generated SDK's.
+    frames = [frame for frame in traceback.extract_tb(error.__traceback__) if Path(frame.filename).parent != Path(__file__).parent]
+    assert {Path(frame.filename).parent.name for frame in frames} - {"asyncio"} == {"alien_sdk"}
+    assert frames[-1].name == ("_acall" if asynchronous else "_call")
+    # And nothing the AlienError references keeps the runtime's error, or its
+    # traceback, alive: with the AlienError still held, that error is gone.
+    gc.collect()
+    assert [o for o in gc.get_objects() if isinstance(o, BamlError) and id(o) not in before] == []
+
+
+def test_a_setup_helper_error_is_not_chained_to_the_runtimes(secrets) -> None:
+    for call in (
+        lambda: alien_sdk.cloudformation_launch_url(alien_sdk.CloudFormationLaunch(
+            template_url="http://not-https", region="us-east-1", stack_name="s", parameters={})),
+        lambda: Alien(secrets["apiKey"], server_url="http://127.0.0.1:1").setup.launch_url_for_project("p", "nowhere", "s"),
+        lambda: asyncio.run(AsyncAlien(secrets["apiKey"], server_url="http://127.0.0.1:1").setup.launch_url_for_project("p", "nowhere", "s")),
+    ):
+        with pytest.raises(AlienError) as info:
+            call()
+        assert [type(level) for level in _chain(info.value)] == [AlienError]
+        assert _locals_holding(info.value, secrets["apiKey"]) == set()
+
+
+def test_only_a_thrown_alien_error_is_converted() -> None:
+    # Anything else propagates as the object it is: a BamlError holding another
+    # value, and an error that is not the runtime's.
+    for raised in (BamlError({"code": "X"}, class_name="user.other.Error"), ValueError("plain")):
+        def fail() -> None:
+            raise raised
+
+        async def afail() -> None:
+            raise raised
+
+        with pytest.raises(type(raised)) as info:
+            _call(fail)
+        assert info.value is raised
+        with pytest.raises(type(raised)) as info:
+            asyncio.run(_acall(afail))
+        assert info.value is raised
+    assert _call(lambda a, *, b: (a, b), 1, b=2) == (1, 2)
+
+    async def add(a: int, *, b: int) -> int:
+        return a + b
+
+    assert asyncio.run(_acall(add, 1, b=2)) == 3
 
 
 def _operations(module: types.ModuleType) -> set[str]:

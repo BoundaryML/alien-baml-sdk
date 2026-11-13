@@ -1,0 +1,108 @@
+{
+  "id": "platform.getManager.api_error_full",
+  "phase": 1,
+  "notes": "An API error keeps every field of Alien's error: hint, request ID, internal flag and the source chain, each level with its own fields. A level's context is its JSON text (an object, then an array with numbers); the top-level context is unchanged. Context keys are in alphabetical order here because the Rust harness loads a scenario with its keys sorted, and the JSON text keeps the order the stub sends.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 500,
+        "json": {
+          "code": "DEPLOYMENT_FAILED",
+          "message": "The deployment failed.",
+          "retryable": false,
+          "internal": false,
+          "httpStatusCode": 500,
+          "hint": "See the source error.",
+          "requestId": "req_top_1",
+          "context": {
+            "attempt": 2,
+            "deploymentId": "dep_1"
+          },
+          "source": {
+            "code": "SANDBOX_REFUSED",
+            "message": "The sandbox refused the command.",
+            "retryable": true,
+            "internal": false,
+            "httpStatusCode": 403,
+            "hint": "Ask a workspace admin.",
+            "requestId": "req_inner_1",
+            "context": {
+              "limits": {
+                "cpu": 2
+              },
+              "policy": "p1"
+            },
+            "source": {
+              "code": "QUOTA_EXCEEDED",
+              "message": "The CPU quota is exceeded.",
+              "retryable": false,
+              "internal": true,
+              "context": [
+                1,
+                2.5,
+                "cpu",
+                null
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "DEPLOYMENT_FAILED",
+    "retryable": false,
+    "http_status": 500,
+    "context": {
+      "path": "/v1/managers/mgr_1",
+      "requestId": "req_top_1",
+      "hint": "See the source error.",
+      "details": "{\"attempt\":2,\"deploymentId\":\"dep_1\"}"
+    },
+    "hint": "See the source error.",
+    "request_id": "req_top_1",
+    "internal": false,
+    "source": {
+      "code": "SANDBOX_REFUSED",
+      "message": "The sandbox refused the command.",
+      "retryable": true,
+      "http_status": 403,
+      "context": {
+        "details": "{\"limits\":{\"cpu\":2},\"policy\":\"p1\"}"
+      },
+      "hint": "Ask a workspace admin.",
+      "request_id": "req_inner_1",
+      "internal": false,
+      "source": {
+        "code": "QUOTA_EXCEEDED",
+        "message": "The CPU quota is exceeded.",
+        "retryable": false,
+        "http_status": null,
+        "context": {
+          "details": "[1,2.5,\"cpu\",null]"
+        },
+        "hint": null,
+        "request_id": null,
+        "internal": true,
+        "source": null
+      }
+    }
+  },
+  "assert": []
+}

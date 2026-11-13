@@ -265,7 +265,9 @@ limit), Go `Options.Timeout` (a `time.Duration`), Rust `Options::timeout` (a
 (decision 9 in [docs/api-shape.md](docs/api-shape.md#decisions)).
 
 Every call fails with one error type, `AlienError` (`code`, `message`,
-`retryable`, HTTP status, context). See [docs/errors.md](docs/errors.md).
+`retryable`, HTTP status, context, and the server's hint, request ID,
+`internal` flag and `source` chain, which each language's cause chain
+follows). See [docs/errors.md](docs/errors.md).
 
 **Keep the generated clients out of logs.** The clients you create (`Alien`
 and `AlienManager`; in Go `*alien.Client` and `*alien.ManagerClient`) do not
@@ -277,8 +279,10 @@ print the API key or the token. The generated clients they hold do:
 - Go: `%v`, `%+v` and `%#v` of `client.Platform` show the API key, so
   `log.Printf("%+v", client.Platform)` logs it. `json.Marshal` of a client or
   of its generated client writes the key or token.
-- Python: a traceback that records local variables, as Sentry does by default,
-  holds the API key ([docs/errors.md](docs/errors.md#credentials-in-python-tracebacks)).
+- Python: none is public, and `repr()` of a client leaves the key out. The
+  runtime keeps a call's arguments, the client included, in a frame that an
+  `AlienError`'s traceback does not have and other errors' tracebacks do
+  ([docs/errors.md](docs/errors.md#credentials-in-python-tracebacks)).
 
 Details: [gaps B22](docs/gaps.md#b22) and [B23](docs/gaps.md#b23).
 
@@ -330,12 +334,12 @@ scripts/verify.sh --phase 2
 
 Runs every check: tests the importer and checks that the imported BAML and
 the generated operation scenarios are current, runs `baml check` and
-`baml test`, regenerates and builds the four SDKs, runs all 883 conformance
+`baml test`, regenerates and builds the four SDKs, runs all 890 conformance
 scenarios in all four languages, checks the shared setup fixture, runs the
 README quickstarts, the telemetry checks, the [B4](docs/gaps.md#b4)
 coexistence repro and a secret scan, and prints a summary table. It exits
 non-zero on the first failure. `--phase 1` leaves out the importer checks and
-runs only the 49 hand-written scenarios, not the 834 generated ones that call
+runs only the 56 hand-written scenarios, not the 834 generated ones that call
 each operation ([conformance/README.md](conformance/README.md)).
 
 ## Known gaps

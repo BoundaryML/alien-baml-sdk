@@ -23,6 +23,37 @@ function platform_error_context(context: string) -> map<string, string> {
     context_of(platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m","context":${context}}`))
 }
 
+/// A Platform API error body, code `TOP`, whose `source` chain is `depth`
+/// levels deep: level n has the code `L<n>`.
+function chained_body(depth: int) -> string {
+    let source = "null";
+    let level = depth;
+    while (level >= 1) {
+        source = `{"code":"L${level}","message":"level ${level}","source":${source}}`;
+        level = level - 1;
+    }
+    `{"code":"TOP","message":"m","source":${source}}`
+}
+
+/// The codes of an error and of its `source` chain, outermost first:
+/// `>TOP>L1>L2`; "" for no error.
+function chain_codes(e: root.errors.AlienError?) -> string {
+    match (e) {
+        null => "",
+        let level: root.errors.AlienError => `>${level.code}${chain_codes(level.source)}`,
+    }
+}
+
+/// The `source` of a Platform API error whose body has this JSON `source`.
+function platform_error_source(source: string) -> root.errors.AlienError? {
+    platform_http_error(400, "/v1/x", `{"code":"BAD","message":"m","source":${source}}`).source
+}
+
+/// Whether an error has none of the fields only a server's error body sets.
+function has_no_server_fields(e: root.errors.AlienError) -> bool {
+    e.hint == null && e.request_id == null && e.source == null && e.internal == null
+}
+
 /// The error `decode_body` throws for this body, decoded as `T`.
 function decode_error_of<T>(text: string) -> root.errors.AlienError {
     { decode_body<T>(text, 200, "/v1/x"); invalid_request("decoded") } catch (e) {
@@ -123,11 +154,122 @@ testset "http helpers" {
         assert.equal(e.message, "bad name");
         assert.equal(e.retryable, true);
         assert.equal(e.http_status, 422);
+        assert.equal(e.hint, "use a shorter name");
+        assert.equal(e.request_id, "req_1");
+        assert.equal(e.internal, false);
+        assert.equal(e.source, null);
+        // The context still carries them as strings.
         let context = context_of(e);
+        assert.equal(context.length(), 4);
         assert.equal(context["path"], "/v1/x");
         assert.equal(context["hint"], "use a shorter name");
         assert.equal(context["requestId"], "req_1");
         assert.equal(context["details"], `{"field":"name"}`);
+    }
+
+    test "platform API errors keep the source chain, every field of every level" {
+        let e = platform_http_error(
+            500,
+            "/v1/x",
+            `{"code":"DEPLOY_FAILED","message":"deploy failed","retryable":false,"internal":true,"httpStatusCode":500,"source":{"code":"SANDBOX_REFUSED","message":"the sandbox refused","retryable":true,"hint":"ask an admin","requestId":"req_inner","internal":false,"httpStatusCode":403,"context":{"policy":"p1","limits":[1,2.5,null]},"source":{"code":"QUOTA","message":"quota exceeded","internal":true,"context":"cpu"}}}`,
+        );
+        assert.equal(chain_codes(e), ">DEPLOY_FAILED>SANDBOX_REFUSED>QUOTA");
+        assert.equal(e.internal, true);
+        assert.equal(e.hint, null);
+        assert.equal(e.request_id, null);
+        assert.equal(e.http_status, 500);
+        let first = e.source ?? invalid_request("no first level");
+        assert.equal(first.code, "SANDBOX_REFUSED");
+        assert.equal(first.message, "the sandbox refused");
+        assert.equal(first.retryable, true);
+        assert.equal(first.http_status, 403);
+        assert.equal(first.hint, "ask an admin");
+        assert.equal(first.request_id, "req_inner");
+        assert.equal(first.internal, false);
+        // A level's context is its JSON text, under `details`.
+        assert.equal(first.context, { "details": `{"policy":"p1","limits":[1,2.5,null]}` });
+        let second = first.source ?? invalid_request("no second level");
+        assert.equal(second.code, "QUOTA");
+        assert.equal(second.message, "quota exceeded");
+        assert.equal(second.retryable, false);
+        assert.equal(second.http_status, null);
+        assert.equal(second.hint, null);
+        assert.equal(second.request_id, null);
+        assert.equal(second.internal, true);
+        assert.equal(second.context, { "details": `"cpu"` });
+        assert.equal(second.source, null);
+    }
+
+    test "a source level without code, message or retryable takes the defaults" {
+        let level = platform_error_source("{}") ?? invalid_request("no level");
+        assert.equal(level.code, "NESTED_ERROR");
+        assert.equal(level.message, "Nested error");
+        assert.equal(level.retryable, false);
+        assert.equal(level.http_status, null);
+        assert.equal(level.context, null);
+        assert.equal(has_no_server_fields(level), true);
+        assert.equal(platform_error_source(`{"context":null}`)?.context, null);
+    }
+
+    test "a source that is not a JSON object is no source" {
+        assert.equal(platform_error_source("null"), null);
+        assert.equal(platform_error_source(`"boom"`), null);
+        assert.equal(platform_error_source("7"), null);
+        assert.equal(platform_error_source("true"), null);
+        assert.equal(platform_error_source(`[{"code":"IN_A_LIST","message":"m"}]`), null);
+        // The same one level down: the level above is kept.
+        assert.equal(chain_codes(platform_error_source(`{"code":"L1","message":"m","source":[1]}`)), ">L1");
+    }
+
+    test "a source field of the wrong type takes its default, or null" {
+        let level = platform_error_source(
+            `{"code":7,"message":["m"],"retryable":"yes","hint":3,"requestId":{"id":"r"},"internal":"no","httpStatusCode":"404","source":"deeper"}`,
+        ) ?? invalid_request("no level");
+        assert.equal(level.code, "NESTED_ERROR");
+        assert.equal(level.message, "Nested error");
+        assert.equal(level.retryable, false);
+        assert.equal(level.http_status, null);
+        assert.equal(level.context, null);
+        assert.equal(has_no_server_fields(level), true);
+    }
+
+    test "a source level's httpStatusCode is kept only when it is an integer from 100 to 599" {
+        assert.equal(platform_error_source(`{"httpStatusCode":100}`)?.http_status, 100);
+        assert.equal(platform_error_source(`{"httpStatusCode":404}`)?.http_status, 404);
+        assert.equal(platform_error_source(`{"httpStatusCode":599}`)?.http_status, 599);
+        assert.equal(platform_error_source(`{"httpStatusCode":99}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":600}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":70000}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":-1}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":0}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":404.5}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":404.0}`)?.http_status, null);
+        assert.equal(platform_error_source(`{"httpStatusCode":123456789012345678901234567890}`)?.http_status, null);
+        // The code of the level is still read.
+        assert.equal(platform_error_source(`{"code":"L1","httpStatusCode":70000}`)?.code, "L1");
+    }
+
+    test "the source chain is kept 8 levels deep, and cut there" {
+        assert.equal(max_source_depth(), 8);
+        assert.equal(chain_codes(platform_http_error(500, "/v1/x", chained_body(0))), ">TOP");
+        assert.equal(chain_codes(platform_http_error(500, "/v1/x", chained_body(1))), ">TOP>L1");
+        assert.equal(chain_codes(platform_http_error(500, "/v1/x", chained_body(8))), ">TOP>L1>L2>L3>L4>L5>L6>L7>L8");
+        assert.equal(chain_codes(platform_http_error(500, "/v1/x", chained_body(9))), ">TOP>L1>L2>L3>L4>L5>L6>L7>L8");
+        assert.equal(chain_codes(platform_http_error(500, "/v1/x", chained_body(40))), ">TOP>L1>L2>L3>L4>L5>L6>L7>L8");
+        assert.equal(chain_codes(manager_http_error(500, "/v1/c", chained_body(9))), ">TOP>L1>L2>L3>L4>L5>L6>L7>L8");
+    }
+
+    test "a malformed source never changes the code of the error that carries it" {
+        for (let source in [`"boom"`, "7", "[]", "{}", `{"code":7,"source":{"source":[{}]}}`, `{"httpStatusCode":70000,"retryable":3}`]) {
+            let e = platform_http_error(409, "/v1/x", `{"code":"CONFLICT","message":"exists","retryable":true,"source":${source}}`);
+            assert.equal(e.code, "CONFLICT");
+            assert.equal(e.message, "exists");
+            assert.equal(e.retryable, true);
+            assert.equal(e.http_status, 409);
+            let m = manager_http_error(409, "/v1/c", `{"code":"CONFLICT","message":"exists","source":${source}}`);
+            assert.equal(m.code, "CONFLICT");
+            assert.equal(m.http_status, 409);
+        }
     }
 
     test "platform API error context is kept as JSON text, and left out when null" {
@@ -160,7 +302,46 @@ testset "http helpers" {
         assert.equal(e.message, "later");
         assert.equal(e.retryable, false);
         assert.equal(e.http_status, 503);
-        assert.equal(context_of(e)["details"], "queue full");
+        assert.equal(context_of(e), { "path": "/v1/commands/c1", "details": "queue full" });
+        assert.equal(has_no_server_fields(e), true);
+    }
+
+    test "manager error bodies in Alien's full error shape keep hint, request ID, internal and source" {
+        let e = manager_http_error(
+            503,
+            "/v1/commands/c1",
+            `{"code":"UNAVAILABLE","message":"later","retryable":true,"hint":"retry in a minute","requestId":"req_m1","internal":false,"httpStatusCode":503,"context":{"queue":"full"},"source":{"code":"STORE_DOWN","message":"the store is down","retryable":true,"httpStatusCode":502,"context":{"store":"kv"},"source":{"message":"connection refused"}}}`,
+        );
+        assert.equal(e.code, "UNAVAILABLE");
+        assert.equal(e.message, "later");
+        // Manager errors are never retryable, whatever the body says.
+        assert.equal(e.retryable, false);
+        assert.equal(e.http_status, 503);
+        assert.equal(e.hint, "retry in a minute");
+        assert.equal(e.request_id, "req_m1");
+        assert.equal(e.internal, false);
+        // The context is still `path` and `details`.
+        assert.equal(context_of(e), { "path": "/v1/commands/c1" });
+        assert.equal(chain_codes(e), ">UNAVAILABLE>STORE_DOWN>NESTED_ERROR");
+        let first = e.source ?? invalid_request("no first level");
+        // A source level is read as the server wrote it, `retryable` included.
+        assert.equal(first.retryable, true);
+        assert.equal(first.http_status, 502);
+        assert.equal(first.context, { "details": `{"store":"kv"}` });
+        assert.equal(first.source?.message, "connection refused");
+    }
+
+    test "the errors the SDK raises itself have no hint, request ID, source or internal flag" {
+        assert.equal(has_no_server_fields(invalid_request("m")), true);
+        assert.equal(has_no_server_fields(communication_error("GET", "/v1/x", null, "refused")), true);
+        assert.equal(has_no_server_fields(malformed_response(200, "/v1/x", "", "why")), true);
+        assert.equal(has_no_server_fields(platform_http_error(502, "/v1/x", "bad gateway")), true);
+        assert.equal(has_no_server_fields(manager_http_error(502, "/v1/c", "bad gateway")), true);
+        assert.equal(has_no_server_fields(setup_error("SETUP_INVALID_PARAMETER", "m", {})), true);
+        // A body that is not the API's error body is not read for them either.
+        let other = platform_http_error(400, "/v1/x", `{"error":"x","hint":"h","requestId":"r","internal":true,"source":{"code":"S"}}`);
+        assert.equal(other.code, "PLATFORM_HTTP_ERROR");
+        assert.equal(has_no_server_fields(other), true);
     }
 
     test "other manager error bodies become MANAGER_HTTP_ERROR, never retryable" {

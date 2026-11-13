@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs"
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 import { inspect } from "node:util"
-import { BamlAbortError } from "@boundaryml/baml-bridge"
+import { BamlAbortError, BamlError } from "@boundaryml/baml-bridge"
 import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, test, vi } from "vitest"
 import { Alien, AlienError, AlienManager, type platform, shutdown } from "../src/index.js"
 import * as sdk from "../generated/index.js"
@@ -310,10 +310,119 @@ describe("errors", () => {
     expect(e.context?.hasOwnProperty("path")).toBe(true)
   })
 
-  test("an error without a response has no statusCode, hint or requestId", async () => {
+  test("an error without a response has no statusCode, hint, requestId, internal flag, source or cause", async () => {
     const alien = new Alien({ apiKey: KEY, serverURL: "http://127.0.0.1:9" })
     const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
-    expect([e.code, e.retryable, e.statusCode, e.hint, e.requestId]).toEqual(["COMMUNICATION_ERROR", true, null, null, null])
+    expect([e.code, e.retryable, e.statusCode, e.hint, e.requestId, e.internal, e.source]).toEqual([
+      "COMMUNICATION_ERROR",
+      true,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ])
+    expect("cause" in e).toBe(false)
+  })
+
+  // Every field of Alien's error, with a two-level `source` chain.
+  const chained = {
+    code: "DEPLOY_FAILED",
+    message: "deploy failed",
+    retryable: false,
+    internal: true,
+    hint: "see the source",
+    requestId: "req_top",
+    context: { step: 3 },
+    source: {
+      code: "SANDBOX_REFUSED",
+      message: "the sandbox refused",
+      retryable: true,
+      internal: false,
+      hint: "ask an admin",
+      requestId: "req_inner",
+      httpStatusCode: 403,
+      context: { policy: "p1" },
+      source: { code: "QUOTA", message: "quota exceeded", internal: true },
+    },
+  }
+
+  test("cause is the server's source chain, level by level, and nothing else", async () => {
+    const alien = new Alien({ apiKey: KEY, serverURL })
+    respond(500, chained)
+    const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
+    expect([e.code, e.statusCode, e.hint, e.requestId, e.internal]).toEqual(["DEPLOY_FAILED", 500, "see the source", "req_top", true])
+    const first = e.source
+    expect(first).toBeInstanceOf(AlienError)
+    expect(e.cause).toBe(first)
+    expect([first?.code, first?.message, first?.retryable, first?.statusCode]).toEqual(["SANDBOX_REFUSED", "the sandbox refused", true, 403])
+    expect([first?.hint, first?.requestId, first?.internal]).toEqual(["ask an admin", "req_inner", false])
+    expect(first?.context).toEqual({ details: '{"policy":"p1"}' })
+    const second = first?.source
+    expect(second).toBeInstanceOf(AlienError)
+    expect(first?.cause).toBe(second)
+    expect([second?.code, second?.statusCode, second?.hint, second?.requestId, second?.internal, second?.context]).toEqual([
+      "QUOTA",
+      null,
+      null,
+      null,
+      true,
+      null,
+    ])
+    // The chain ends there: no `cause` property, and no BAML runtime error anywhere in it.
+    expect(second?.source).toBeNull()
+    expect(second && "cause" in second).toBe(false)
+    for (let level: unknown = e; level !== undefined; level = (level as Error).cause) expect(level).not.toBeInstanceOf(BamlError)
+  })
+
+  test("an error without a source has no cause property", async () => {
+    const alien = new Alien({ apiKey: KEY, serverURL })
+    respond(404, { code: "NOT_FOUND", message: "Manager not found", internal: false })
+    const e = (await alien.managers.get("mgr_x").catch((e: unknown) => e)) as AlienError
+    expect(e.source).toBeNull()
+    expect("cause" in e).toBe(false)
+    expect(e.cause).toBeUndefined()
+  })
+
+  test("hint and requestId are the error's own fields, not read from its context", () => {
+    const base = { code: "X", message: "m", retryable: false }
+    const fromFields = new AlienError(new sdk.errors.AlienError({ ...base, hint: "h", request_id: "r", context: { path: "/v1/x" } }))
+    expect([fromFields.hint, fromFields.requestId]).toEqual(["h", "r"])
+    const contextOnly = new AlienError(new sdk.errors.AlienError({ ...base, context: { hint: "h", requestId: "r" } }))
+    expect([contextOnly.hint, contextOnly.requestId]).toEqual([null, null])
+  })
+
+  test("the facade maps every field of the generated error", async () => {
+    // The generated field, and the property of AlienError that holds it. A
+    // field BAML's AlienError gains fails here until the facade maps it.
+    const mapped: Record<string, keyof AlienError> = {
+      code: "code",
+      message: "message",
+      retryable: "retryable",
+      http_status: "statusCode",
+      context: "context",
+      hint: "hint",
+      request_id: "requestId",
+      source: "source",
+      internal: "internal",
+    }
+    respond(500, chained)
+    const client = new sdk.platform.PlatformClient({ base_url: serverURL, api_key: KEY })
+    const thrown = await sdk.platform.managers.get(client, "mgr_x").catch((e: unknown) => e)
+    expect(thrown).toBeInstanceOf(BamlError)
+    const value = (thrown as BamlError).value as sdk.errors.AlienError
+    expect(value).toBeInstanceOf(sdk.errors.AlienError)
+    // Every level sets every field, a null one included.
+    for (let level: sdk.errors.AlienError | null | undefined = value; level; level = level.source) {
+      expect(Object.keys(level).sort()).toEqual(Object.keys(mapped).sort())
+    }
+    const e = new AlienError(value)
+    for (const [field, property] of Object.entries(mapped)) {
+      const want = (value as unknown as Record<string, unknown>)[field]
+      expect(want, field).not.toBeNull()
+      if (field === "source") expect(e.source?.code).toBe(value.source?.code)
+      else expect(e[property], property).toEqual(want)
+    }
   })
 
   test("a cancelled call throws the runtime's BamlAbortError, not AlienError", async () => {
@@ -370,6 +479,10 @@ describe("types (checked by tsc -p test)", () => {
     const alien = new Alien({ apiKey: KEY, serverURL })
     expectTypeOf(alien.deployments.list).returns.resolves.toEqualTypeOf<platform.ListDeploymentsResponse>()
     expectTypeOf<AlienError["statusCode"]>().toEqualTypeOf<number | null>()
+    expectTypeOf<AlienError["hint"]>().toEqualTypeOf<string | null>()
+    expectTypeOf<AlienError["requestId"]>().toEqualTypeOf<string | null>()
+    expectTypeOf<AlienError["internal"]>().toEqualTypeOf<boolean | null>()
+    expectTypeOf<AlienError["source"]>().toEqualTypeOf<AlienError | null>()
     // @ts-expect-error: groups are on the client, without a `.platform` level
     expect(alien.platform).toBeUndefined()
     // @ts-expect-error: only the async functions are bound, not their `_sync` twins

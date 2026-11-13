@@ -28,7 +28,7 @@ against the same expectations.
 | `call.op`, `call.params` | Instead of `fn`: a generated operation and its parameter list ([Operation scenarios](#operation-scenarios)) |
 | `exchanges` | Requests the stub expects, in order, and its answers |
 | `expect_result.ok` | The expected result, compared after normalization |
-| `expect_error` | The expected error, reduced to `{code, retryable, http_status}`, plus `context` when the scenario lists one |
+| `expect_error` | The expected error, reduced to `{code, retryable, http_status}`, plus each of `context`, `hint`, `request_id`, `internal` and `source` that the scenario lists ([Normalization](#normalization)) |
 | `assert` | Extra checks on the request log: `no_requests`, `api_key_never_sent_to:<path prefix>` |
 | `capture_raw` | The harness also saves the raw result (the shared setup fixture) |
 
@@ -54,8 +54,12 @@ requested.
 - Members whose value is `null` are dropped, so absent and `null` compare
   equal across languages. (BAML-level absent-vs-null behavior is tested by
   the `ns_compat` functions, which return strings.)
-- Errors are reduced to `{code, retryable, http_status}`; `context` is
-  compared too when the expected error has it.
+- Errors are reduced to `{code, retryable, http_status}`; `context`, `hint`,
+  `request_id` and `internal` are each compared too when the expected error
+  lists them (`null` to require that the error has none). So is `source`,
+  and a listed `source` is compared whole, level by level: every field of
+  each level, `message` included, and a field the scenario leaves out must
+  be null. Every harness reports every field, under these names.
 
 The comparison lives in the stub (`stub-server/normalize.mjs`), so every
 language uses the same one.

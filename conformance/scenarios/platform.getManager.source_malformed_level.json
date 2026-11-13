@@ -1,0 +1,81 @@
+{
+  "id": "platform.getManager.source_malformed_level",
+  "phase": 1,
+  "notes": "A source level whose fields have the wrong types takes the defaults (NESTED_ERROR, Nested error, not retryable) and null for the rest; its own source, a list, is dropped. The error that carries it keeps the server's code: it does not become PLATFORM_HTTP_ERROR.",
+  "call": {
+    "fn": "platform.getManager",
+    "args": {
+      "client": {
+        "base_url": "${stub.base}",
+        "api_key": "${secrets.apiKey}",
+        "workspace": null
+      },
+      "id": "mgr_1"
+    }
+  },
+  "exchanges": [
+    {
+      "expect": {
+        "method": "GET",
+        "path": "/v1/managers/mgr_1"
+      },
+      "respond": {
+        "status": 409,
+        "json": {
+          "code": "CONFLICT",
+          "message": "The resource already exists.",
+          "retryable": true,
+          "internal": false,
+          "requestId": "req_conflict_1",
+          "source": {
+            "code": 7,
+            "message": [
+              "not",
+              "a",
+              "string"
+            ],
+            "retryable": "yes",
+            "hint": 3,
+            "requestId": {
+              "id": "r"
+            },
+            "internal": "no",
+            "httpStatusCode": "404",
+            "context": null,
+            "source": [
+              {
+                "code": "IN_A_LIST",
+                "message": "Not an error."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "expect_result": null,
+  "expect_error": {
+    "code": "CONFLICT",
+    "retryable": true,
+    "http_status": 409,
+    "context": {
+      "path": "/v1/managers/mgr_1",
+      "requestId": "req_conflict_1"
+    },
+    "hint": null,
+    "request_id": "req_conflict_1",
+    "internal": false,
+    "source": {
+      "code": "NESTED_ERROR",
+      "message": "Nested error",
+      "retryable": false,
+      "http_status": null,
+      "context": null,
+      "hint": null,
+      "request_id": null,
+      "internal": null,
+      "source": null
+    }
+  },
+  "assert": []
+}

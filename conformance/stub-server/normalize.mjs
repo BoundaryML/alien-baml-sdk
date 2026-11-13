@@ -5,8 +5,11 @@
 // - object members whose value is null are dropped, so "absent" and "null"
 //   compare equal across host languages (the BAML-level distinction is tested
 //   by the ns_compat presence functions, which return a string);
-// - errors are reduced to {code, retryable, http_status}, plus `context` when
-//   the scenario's expected error lists one.
+// - errors are reduced to {code, retryable, http_status}, plus each of
+//   `context`, `hint`, `request_id`, `internal` and `source` that the
+//   scenario's expected error lists. A listed `source` is compared whole,
+//   level by level: every field of each level, `message` included, and a
+//   field the scenario leaves out must be null.
 
 import { isDeepStrictEqual } from "node:util"
 
@@ -31,6 +34,20 @@ export function reduceError(error) {
   })
 }
 
+// What an error has besides code, retryable and http_status (and `source`).
+const LISTED_FIELDS = ["context", "hint", "request_id", "internal"]
+
+// One level of a `source` chain, and the levels below it, with every field:
+// a harness cannot pass by leaving one out, nor a scenario by not listing it.
+function wholeError(error) {
+  if (error === null || error === undefined) return null
+  if (typeof error !== "object" || Array.isArray(error)) return { not_an_error: error }
+  const out = { code: error.code, message: error.message, retryable: error.retryable, http_status: error.http_status ?? null }
+  for (const key of LISTED_FIELDS) out[key] = error[key] ?? null
+  out.source = wholeError(error.source)
+  return normalize(out)
+}
+
 export function compareOutcome(scenario, outcome) {
   const problems = []
   const wantError = scenario.expect_error ?? null
@@ -41,9 +58,15 @@ export function compareOutcome(scenario, outcome) {
     }
     const want = reduceError(wantError)
     const got = reduceError(outcome.error)
-    if ("context" in wantError) {
-      want.context = normalize(wantError.context)
-      got.context = normalize(outcome.error.context ?? null)
+    for (const key of LISTED_FIELDS) {
+      if (key in wantError) {
+        want[key] = normalize(wantError[key] ?? null)
+        got[key] = normalize(outcome.error[key] ?? null)
+      }
+    }
+    if ("source" in wantError) {
+      want.source = wholeError(wantError.source)
+      got.source = wholeError(outcome.error.source)
     }
     if (!isDeepStrictEqual(want, got)) {
       problems.push(`error: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)} (message: ${JSON.stringify(outcome.error.message)})`)

@@ -4,7 +4,7 @@ mod support;
 
 use std::{path::PathBuf, time::Duration};
 
-use alien_sdk::{Alien, AlienManager, Error, Options};
+use alien_sdk::{Alien, AlienError, AlienManager, Error, Options};
 use baml_bridge::BamlValue;
 use alien_api::compat;
 use serde_json::{Value, json};
@@ -204,6 +204,52 @@ fn every_operation_has_a_builder() {
     );
 }
 
+/// An error as the stub compares it: every field, under its BAML name,
+/// `source` level by level.
+fn error_outcome(e: &AlienError) -> Value {
+    json!({
+        "code": e.code,
+        "message": e.message,
+        "retryable": e.retryable,
+        "http_status": e.http_status_code,
+        "context": e.context,
+        "hint": e.hint,
+        "request_id": e.request_id,
+        "internal": e.internal,
+        "source": e.source.as_deref().map(error_outcome),
+    })
+}
+
+/// Checks that `std::error::Error::source()`, from the `Error::Alien` a call
+/// returned, walks the levels of the error's `source` field and nothing else.
+fn sources_follow_the_chain(returned: &Error, error: &AlienError) -> Result<(), String> {
+    let mut by_field = Vec::new();
+    let mut level = error.source.as_deref();
+    while let Some(e) = level {
+        by_field.push(e);
+        level = e.source.as_deref();
+    }
+    let mut by_trait = Vec::new();
+    let mut next = std::error::Error::source(returned);
+    while let Some(e) = next {
+        let Some(level) = e.downcast_ref::<AlienError>() else {
+            return Err(format!("source() gives an error that is not an AlienError: {e}"));
+        };
+        by_trait.push(level);
+        next = e.source();
+    }
+    let same = by_trait.len() == by_field.len()
+        && by_trait.iter().zip(&by_field).all(|(a, b)| std::ptr::eq(*a, *b));
+    if !same {
+        return Err(format!(
+            "source() walks {} levels, the source field has {}",
+            by_trait.len(),
+            by_field.len()
+        ));
+    }
+    Ok(())
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn conformance() {
     require_isolated_baml_home();
@@ -230,9 +276,14 @@ async fn conformance() {
         };
         let outcome = match &result {
             Ok(value) => json!({ "ok": value }),
-            Err(Error::Alien(e)) => json!({ "error": {
-                "code": e.code, "retryable": e.retryable, "http_status": e.http_status_code, "message": e.message, "context": e.context,
-            } }),
+            Err(error @ Error::Alien(e)) => {
+                if let Err(problem) = sources_follow_the_chain(error, e) {
+                    println!("FAIL {id}: {problem}");
+                    failures.push(format!("{id}: {problem}"));
+                    continue;
+                }
+                json!({ "error": error_outcome(e) })
+            }
             Err(other) => {
                 println!("FAIL {id}: {other}");
                 failures.push(format!("{id}: {other}"));
